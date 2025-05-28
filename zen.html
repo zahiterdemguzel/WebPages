@@ -293,22 +293,30 @@
                 this.opacity = 1;
 
                 if (this.type === 'fire') {
-                    this.baseSize = Math.random() * 6 + 2; // Slightly smaller base for fire
+                    this.baseSize = Math.random() * 6 + 2;
                     let currentSize = this.baseSize;
-                    // If in a fire zone and hot, make particles at cursor bigger
+                    let currentLife = 80; // Base life for fire particles
+
+                    // If in a fire zone and hot, make particles at cursor bigger and live longer
                     if (isInFireZone && cursorTemperature > FIRE_THRESHOLD_HOT) {
                         let tempEffectRatio = (cursorTemperature - FIRE_THRESHOLD_HOT) / (FIRE_THRESHOLD_BURNING - FIRE_THRESHOLD_HOT);
                         tempEffectRatio = Math.max(0, Math.min(tempEffectRatio, 1));
+
+                        // Increase size
                         let sizeMultiplier = 1 + tempEffectRatio * 2.0; // Max multiplier of 3 (1 + 2.0)
                         currentSize = this.baseSize * sizeMultiplier;
+
+                        // Increase life
+                        let lifeBonus = tempEffectRatio * 100; // Max bonus of 100 to life (e.g. 80 + 100 = 180)
+                        currentLife += lifeBonus;
                     }
                     this.size = currentSize;
+                    this.life = currentLife;
                     this.speedX = Math.random() * 0.6 - 0.3;
                     this.speedY = Math.random() * -1.5 - 0.5;
                     this.color = `hsl(${Math.random() * 60 + 0}, 100%, 50%)`;
-                    this.life = 80; // Slightly shorter life for more dynamic fire
                 } else if (this.type === 'water') {
-                    this.size = Math.random() * 5 + 1;
+                    this.size = Math.random() * 5 + 1; // Water particle size is currently static
                     this.speedX = Math.random() * 1 - 0.5;
                     this.speedY = Math.random() * 1 + 0.5;
                     this.color = `hsl(${Math.random() * 60 + 190}, 100%, 50%)`;
@@ -327,7 +335,7 @@
                 this.y += this.speedY;
 
                 if (this.type === 'fire') {
-                    this.opacity -= 0.015; // Fade out a bit faster
+                    this.opacity -= 0.015;
                     this.size *= 0.97;
                 } else if (this.type === 'water') {
                     this.opacity -= 0.006;
@@ -352,17 +360,17 @@
 
         // Function to generate particles at current mouse position
         function generateParticles(type, targetElement) {
-            if (isCursorLocked || !mouse.x || !mouse.y) return; // Don't generate if locked or mouse undefined
+            if (isCursorLocked || !mouse.x || !mouse.y) return;
 
             const rect = targetElement.getBoundingClientRect();
-            const currentMouseX = mouse.x; // Already includes scrollX
-            const currentMouseY = mouse.y; // Already includes scrollY
+            const currentMouseX = mouse.x;
+            const currentMouseY = mouse.y;
 
             if (currentMouseX >= rect.left + window.scrollX && currentMouseX <= rect.right + window.scrollX &&
                 currentMouseY >= rect.top + window.scrollY && currentMouseY <= rect.bottom + window.scrollY) {
-                let numParticles = (type === 'fire' || type === 'water') ? 3 : 2; // Adjusted particle count
+                let numParticles = (type === 'fire' || type === 'water') ? 3 : 2;
                 if (type === 'fire' && isInFireZone && cursorTemperature > FIRE_THRESHOLD_VERY_HOT) {
-                    numParticles = 5; // More particles when very hot
+                    numParticles = 5;
                 }
                 for (let i = 0; i < numParticles; i++) {
                     particles.push(new Particle(currentMouseX, currentMouseY, type));
@@ -373,7 +381,7 @@
         // Update mouse position on mousemove
         document.addEventListener('mousemove', (e) => {
             if (isCursorLocked) {
-                return; // If locked, custom cursor doesn't follow OS cursor
+                return;
             }
             mouse.x = e.clientX + window.scrollX;
             mouse.y = e.clientY + window.scrollY;
@@ -381,10 +389,9 @@
 
         // --- Temperature and Cursor Lock Logic ---
         function updateTemperaturePanel() {
-            if (!tempReadingElem) return; // Panel not initialized yet
+            if (!tempReadingElem) return;
 
-            if (isCursorLocked) { // Final state messages are set by burn/freeze
-                // tempReadingElem.textContent = `${Math.round(cursorTemperature)}°C`; // Already set
+            if (isCursorLocked) {
                 return;
             }
 
@@ -418,7 +425,7 @@
 
         function checkCurrentZone() {
             if (isCursorLocked || typeof mouse.x === 'undefined' || typeof mouse.y === 'undefined') {
-                if (typeof mouse.x === 'undefined') { // Reset if mouse hasn't moved yet
+                if (typeof mouse.x === 'undefined') {
                     isInFireZone = false;
                     isInWaterZone = false;
                 }
@@ -468,10 +475,10 @@
         function burnCursor() {
             if (isCursorLocked) return;
             isCursorLocked = true;
-            cursorTemperature = FIRE_THRESHOLD_BURNING; // Lock at burning temp
+            cursorTemperature = FIRE_THRESHOLD_BURNING;
             tempStatusElem.textContent = "BURNT OUT!";
             tempReadingElem.textContent = `${Math.round(cursorTemperature)}°C`;
-            tempSphereElem.style.background = `radial-gradient(circle, #ff4500, #8b0000)`; // Burnt orange/dark red
+            tempSphereElem.style.background = `radial-gradient(circle, #ff4500, #8b0000)`;
             document.body.style.cursor = 'not-allowed';
             if (temperatureUpdateInterval) clearInterval(temperatureUpdateInterval);
             clearAllSectionParticleIntervals();
@@ -480,10 +487,10 @@
         function freezeCursor() {
             if (isCursorLocked) return;
             isCursorLocked = true;
-            cursorTemperature = WATER_THRESHOLD_FROZEN; // Lock at frozen temp
+            cursorTemperature = WATER_THRESHOLD_FROZEN;
             tempStatusElem.textContent = "FROZEN SOLID!";
             tempReadingElem.textContent = `${Math.round(cursorTemperature)}°C`;
-            tempSphereElem.style.background = `radial-gradient(circle, #87cefa, #000080)`; // Light sky blue/navy
+            tempSphereElem.style.background = `radial-gradient(circle, #87cefa, #000080)`;
             document.body.style.cursor = 'not-allowed';
             if (temperatureUpdateInterval) clearInterval(temperatureUpdateInterval);
             clearAllSectionParticleIntervals();
@@ -501,13 +508,13 @@
                     cursorTemperature += TEMP_CHANGE_RATE;
                     if (cursorTemperature >= FIRE_THRESHOLD_BURNING && fireExposureStartTime !== 0 && (now - fireExposureStartTime) >= EXPOSURE_TIME_TO_EFFECT) {
                         burnCursor();
-                        return; // Stop further processing this tick
+                        return;
                     }
                 } else if (isInWaterZone) {
                     cursorTemperature -= TEMP_CHANGE_RATE;
                     if (cursorTemperature <= WATER_THRESHOLD_FROZEN && waterExposureStartTime !== 0 && (now - waterExposureStartTime) >= EXPOSURE_TIME_TO_EFFECT) {
                         freezeCursor();
-                        return; // Stop further processing this tick
+                        return;
                     }
                 } else { // Normalizing
                     if (cursorTemperature > NEUTRAL_TEMP) {
@@ -523,22 +530,19 @@
             }, TEMP_INTERVAL_DELAY);
         }
 
-        // --- Event listeners for section-specific particle generation ---
-        // These ensure particles only emit when directly over the section, and respect cursor lock.
         function setupSectionParticleListener(sectionElement, particleType) {
             let intervalId;
             sectionElement.addEventListener('mouseenter', () => {
                 if (isCursorLocked) return;
-                if (intervalId) clearInterval(intervalId); // Clear previous, if any
+                if (intervalId) clearInterval(intervalId);
                 intervalId = setInterval(() => {
                     if (isCursorLocked) { clearInterval(intervalId); return; }
                     generateParticles(particleType, sectionElement);
-                }, 70); // Slightly less frequent for section-specific
+                }, 70);
             });
             sectionElement.addEventListener('mouseleave', () => {
                 clearInterval(intervalId);
             });
-            // Return intervalId to store in global vars if needed for clearAllSectionParticleIntervals
             return intervalId;
         }
 
@@ -564,11 +568,9 @@
             tempReadingElem = document.getElementById('tempReading');
             tempStatusElem = document.getElementById('tempStatus');
 
-            updateTemperaturePanel(); // Initial panel state
-            startTemperatureCycle();   // Start temperature monitoring
+            updateTemperaturePanel();
+            startTemperatureCycle();
 
-            // Setup section-specific particle emitters
-            // Storing interval IDs to ensure they can be cleared by clearAllSectionParticleIntervals
             fireParticleInterval = setupSectionParticleListener(fireSection, 'fire');
             waterParticleInterval = setupSectionParticleListener(waterSection, 'water');
             steamParticleInterval = setupSectionParticleListener(steamSection, 'steam');
@@ -576,8 +578,8 @@
             waterStrengthsParticleInterval = setupSectionParticleListener(waterStrengthsSection, 'water');
             balanceParticleInterval = setupSectionParticleListener(balanceSection, 'steam');
 
-            animate(); // Start particle animation loop
-            resizeCanvas(); // Initial canvas size
+            animate();
+            resizeCanvas();
         };
     </script>
 </body>
