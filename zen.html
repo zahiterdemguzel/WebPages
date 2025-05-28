@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water and Fire: A Zen Perspective</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f0f0;
+            /* Light grey background */
+            overflow-x: hidden;
+            /* Prevent horizontal scroll due to particles */
+        }
+
+        .section-gradient-fire {
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            /* Warm gradient for fire */
+        }
+
+        .section-gradient-water {
+            background: linear-gradient(to right, #6dd5ed, #2193b0);
+            /* Cool gradient for water */
+        }
+
+        .zen-gradient {
+            background: linear-gradient(to right, #a1c4fd, #c2e9fb);
+            /* Soft gradient for Zen */
+        }
+
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Particle Canvas Styling */
+        #particleCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            /* Allows clicks to pass through to elements below */
+            z-index: 10;
+            /* Ensure particles are above other content */
+        }
+
+        /* Custom header gradient */
+        .header-gradient {
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 50%, #1a202c 100%);
+        }
+
+        /* New animation for the title gradient */
+        .animated-gradient-text {
+            background-size: 200% auto;
+            /* Make the gradient wider than the element */
+            animation: gradient-shift 4s linear infinite alternate;
+            /* Smoothly shift left and right */
+        }
+
+        @keyframes gradient-shift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            100% {
+                background-position: 100% 50%;
+            }
+        }
+    </style>
+</head>
+
+<body class="text-gray-800">
+    <canvas id="particleCanvas"></canvas>
+
+    <header class="header-gradient text-white py-8 shadow-lg">
+        <div class="container mx-auto px-4 text-center">
+            <h1 id="steam-section"
+                class="text-6xl font-extrabold mb-3 rounded-lg p-3 inline-block bg-gradient-to-r from-red-400 via-purple-400 to-blue-400 text-transparent bg-clip-text animated-gradient-text">
+                Water & Fire: A Balancing Act
+            </h1>
+            <p class="text-2xl text-gray-200 tracking-wide">Exploring the ancient dance of opposing forces</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-12">
+        <section id="fire-section" class="mb-16 p-8 rounded-xl section-gradient-fire text-white card relative">
+            <h2 class="text-4xl font-bold mb-6 text-center">The Essence of Fire</h2>
+            <div class="flex flex-col md:flex-row items-center md:space-x-8">
+                <div class="md:w-1/2 mb-6 md:mb-0">
+                    <img src="https://i.ibb.co/MyHzDnkF/Chat-GPT-Image-May-28-2025-11-51-58-AM.png"
+                        alt="Fire Element Illustration" class="w-full h-auto rounded-lg"
+                        onerror="this.onerror=null;this.src='https://placehold.co/600x400/orange/white?text=Fire+Image';">
+                </div>
+                <div class="md:w-1/2">
+                    <p class="text-lg leading-relaxed mb-4">
+                        Fire, a symbol of transformation, passion, and destruction, embodies raw energy. It purifies,
+                        ignites, and consumes, leaving behind ash and new potential. From the warmth of a hearth to the
+                        destructive power of a wildfire, fire's duality is undeniable. It represents action, dynamism,
+                        and the spark of creation.
+                    </p>
+                    <p class="text-lg leading-relaxed">
+                        In many philosophies, fire is associated with the active principle, the masculine, and the
+                        spirit. It's the force that drives change, illuminates darkness, and can be both a source of
+                        comfort and fear.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section id="water-section" class="mb-16 p-8 rounded-xl section-gradient-water text-white card relative">
+            <h2 class="text-4xl font-bold mb-6 text-center">The Flow of Water</h2>
+            <div class="flex flex-col md:flex-row-reverse items-center md:space-x-reverse md:space-x-8">
+                <div class="md:w-1/2 mb-6 md:mb-0">
+                    <img src="https://i.ibb.co/XxKKpkc8/Chat-GPT-Image-May-28-2025-11-54-27-AM.png"
+                        alt="Water Element Illustration" class="w-full h-auto rounded-lg"
+                        onerror="this.onerror=null;this.src='https://placehold.co/600x400/blue/white?text=Water+Image';">
+                </div>
+                <div class="md:w-1/2">
+                    <p class="text-lg leading-relaxed mb-4">
+                        Water, in stark contrast, represents fluidity, adaptability, and emotional depth. It cleanses,
+                        nourishes, and sustains life. Like a river carving its path, water finds its way around
+                        obstacles, always seeking the lowest point, symbolizing humility and perseverance.
+                    </p>
+                    <p class="text-lg leading-relaxed">
+                        Often linked to the passive principle, the feminine, and the emotions, water embodies intuition,
+                        reflection, and the subconscious. It can be calm and serene, or powerful and overwhelming,
+                        mirroring the vastness of human emotion.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="p-8 rounded-xl bg-white text-gray-800 card">
+            <h2 class="text-4xl font-bold mb-6 text-center">The Interplay: Harmony and Conflict</h2>
+            <div class="flex flex-col md:flex-row items-start md:space-x-8">
+                <div class="md:w-1/2 mb-6 md:mb-0">
+                    <p class="text-lg leading-relaxed mb-4">
+                        Water and fire are fundamental opposites yet interdependent. Fire needs fuel, and water can
+                        extinguish it. Yet, fire can heat water to create steam, a powerful force. This dynamic
+                        interplay symbolizes life's balance.
+                    </p>
+                    <p class="text-lg leading-relaxed">
+                        Finding harmony between these elements within ourselves and our environment is key. It's about
+                        knowing when to be passionate (fire) and when to be adaptable (water).
+                    </p>
+                </div>
+                <div class="md:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div id="fire-strengths-section" class="p-4 bg-red-100 rounded-lg shadow-md relative">
+                        <h3 class="text-2xl font-semibold mb-2 text-red-700">Fire's Strengths</h3>
+                        <ul class="list-disc list-inside text-red-600">
+                            <li>Energy & Drive</li>
+                            <li>Passion & Creativity</li>
+                            <li>Transformation & Purification</li>
+                            <li>Action & Initiative</li>
+                        </ul>
+                    </div>
+                    <div id="water-strengths-section" class="p-4 bg-blue-100 rounded-lg shadow-md relative">
+                        <h3 class="text-2xl font-semibold mb-2 text-blue-700">Water's Strengths</h3>
+                        <ul class="list-disc list-inside text-blue-600">
+                            <li>Adaptability & Flow</li>
+                            <li>Empathy & Intuition</li>
+                            <li>Nourishment & Cleansing</li>
+                            <li>Calmness & Reflection</li>
+                        </ul>
+                    </div>
+                    <div id="balance-section" class="p-4 bg-yellow-100 rounded-lg shadow-md col-span-full relative">
+                        <h3 class="text-2xl font-semibold mb-2 text-yellow-700">The Balance</h3>
+                        <p class="text-yellow-600">
+                            Too much fire leads to burnout; too much water leads to stagnation. The ideal is a dynamic
+                            equilibrium where both forces complement and temper each other.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <section class="zen-gradient py-12 text-gray-800">
+        <div class="container mx-auto px-4 text-center p-8 rounded-xl card">
+            <h2 class="text-4xl font-bold mb-6">Zen and the Elements</h2>
+            <p class="text-lg leading-relaxed mb-6 max-w-3xl mx-auto">
+                In Zen philosophy, the understanding of interconnectedness and balance is paramount. The interplay of
+                water and fire can be seen as a metaphor for the dualistic nature of existence and the path to
+                enlightenment. Zen encourages us to observe these forces within ourselves and the world, not as separate
+                entities, but as aspects of a unified whole.
+            </p>
+            <p class="text-lg leading-relaxed max-w-3xl mx-auto">
+                Just as water and fire, though seemingly opposite, are essential for life's processes, Zen teaches us to
+                embrace all aspects of our experience – the calm and the turbulent, the active and the passive – to find
+                inner peace and harmony. Through mindfulness and meditation, one learns to navigate these internal and
+                external dynamics, achieving a state of balanced awareness.
+            </p>
+            <div class="mt-8">
+                <span class="text-6xl" role="img" aria-label="Zen Symbol">&#x262F;</span>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2025 Elemental Harmony. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <div id="temperaturePanel"
+        class="fixed bottom-4 left-4 bg-gray-800 bg-opacity-80 text-white p-3 rounded-lg shadow-2xl z-[100] transition-all duration-300 ease-in-out w-64">
+        <div class="flex items-center space-x-3">
+            <div id="tempSphere"
+                class="w-10 h-10 rounded-full border-2 border-gray-500 transition-all duration-200 ease-in-out flex-shrink-0">
+            </div>
+            <div class="overflow-hidden">
+                <p id="tempReading" class="text-xl font-bold tracking-tight">--°C</p>
+                <p id="tempStatus" class="text-xs text-gray-300 truncate">Initializing...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        const fireSection = document.getElementById('fire-section');
+        const waterSection = document.getElementById('water-section');
+        const steamSection = document.getElementById('steam-section');
+        const fireStrengthsSection = document.getElementById('fire-strengths-section');
+        const waterStrengthsSection = document.getElementById('water-strengths-section');
+        const balanceSection = document.getElementById('balance-section');
+
+        let particles = [];
+        let mouse = { x: undefined, y: undefined };
+
+        // Particle generation intervals for specific sections
+        let fireParticleInterval;
+        let waterParticleInterval;
+        let steamParticleInterval;
+        let fireStrengthsParticleInterval;
+        let waterStrengthsParticleInterval;
+        let balanceParticleInterval;
+
+        // Temperature and cursor state variables
+        let cursorTemperature = 25; // Celsius
+        const NEUTRAL_TEMP = 25;
+        const MIN_TEMP_DISPLAY = -20;
+        const MAX_TEMP_DISPLAY = 120;
+
+        const TEMP_CHANGE_RATE = 1.5; // Degrees per interval for heating/cooling
+        const TEMP_NORMALIZATION_RATE = 0.75; // Degrees per interval for returning to neutral
+
+        const FIRE_THRESHOLD_HOT = 40;
+        const FIRE_THRESHOLD_VERY_HOT = 70;
+        const FIRE_THRESHOLD_BURNING = 100;
+        const WATER_THRESHOLD_COLD = 10;
+        const WATER_THRESHOLD_VERY_COLD = -5;
+        const WATER_THRESHOLD_FROZEN = -10;
+
+        const EXPOSURE_TIME_TO_EFFECT = 3000; // ms (3 seconds) to burn or freeze
+
+        let isInFireZone = false;
+        let isInWaterZone = false;
+        let fireExposureStartTime = 0;
+        let waterExposureStartTime = 0;
+
+        let isCursorLocked = false;
+
+        let temperatureUpdateInterval = null;
+        const TEMP_INTERVAL_DELAY = 100; // ms, for temp changes
+
+        // DOM Elements for temperature panel
+        let tempPanelElem, tempSphereElem, tempReadingElem, tempStatusElem;
+
+
+        // Set canvas size to cover the entire document
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = document.body.scrollHeight;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('load', resizeCanvas);
+
+        // Particle class definition
+        class Particle {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.opacity = 1;
+
+                if (this.type === 'fire') {
+                    this.baseSize = Math.random() * 6 + 2; // Slightly smaller base for fire
+                    let currentSize = this.baseSize;
+                    // If in a fire zone and hot, make particles at cursor bigger
+                    if (isInFireZone && cursorTemperature > FIRE_THRESHOLD_HOT) {
+                        let tempEffectRatio = (cursorTemperature - FIRE_THRESHOLD_HOT) / (FIRE_THRESHOLD_BURNING - FIRE_THRESHOLD_HOT);
+                        tempEffectRatio = Math.max(0, Math.min(tempEffectRatio, 1));
+                        let sizeMultiplier = 1 + tempEffectRatio * 2.0; // Max multiplier of 3 (1 + 2.0)
+                        currentSize = this.baseSize * sizeMultiplier;
+                    }
+                    this.size = currentSize;
+                    this.speedX = Math.random() * 0.6 - 0.3;
+                    this.speedY = Math.random() * -1.5 - 0.5;
+                    this.color = `hsl(${Math.random() * 60 + 0}, 100%, 50%)`;
+                    this.life = 80; // Slightly shorter life for more dynamic fire
+                } else if (this.type === 'water') {
+                    this.size = Math.random() * 5 + 1;
+                    this.speedX = Math.random() * 1 - 0.5;
+                    this.speedY = Math.random() * 1 + 0.5;
+                    this.color = `hsl(${Math.random() * 60 + 190}, 100%, 50%)`;
+                    this.life = 150;
+                } else if (this.type === 'steam') {
+                    this.size = Math.random() * 10 + 5;
+                    this.speedX = Math.random() * 0.4 - 0.2;
+                    this.speedY = Math.random() * -0.8 - 0.2;
+                    this.color = `rgba(255, 255, 255, 0.8)`;
+                    this.life = 200;
+                }
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.type === 'fire') {
+                    this.opacity -= 0.015; // Fade out a bit faster
+                    this.size *= 0.97;
+                } else if (this.type === 'water') {
+                    this.opacity -= 0.006;
+                    this.speedY += 0.05;
+                } else if (this.type === 'steam') {
+                    this.opacity -= 0.005;
+                    this.size += 0.05;
+                }
+                this.life--;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, Math.max(0, this.size), 0, Math.PI * 2); // Ensure size is not negative
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Function to generate particles at current mouse position
+        function generateParticles(type, targetElement) {
+            if (isCursorLocked || !mouse.x || !mouse.y) return; // Don't generate if locked or mouse undefined
+
+            const rect = targetElement.getBoundingClientRect();
+            const currentMouseX = mouse.x; // Already includes scrollX
+            const currentMouseY = mouse.y; // Already includes scrollY
+
+            if (currentMouseX >= rect.left + window.scrollX && currentMouseX <= rect.right + window.scrollX &&
+                currentMouseY >= rect.top + window.scrollY && currentMouseY <= rect.bottom + window.scrollY) {
+                let numParticles = (type === 'fire' || type === 'water') ? 3 : 2; // Adjusted particle count
+                if (type === 'fire' && isInFireZone && cursorTemperature > FIRE_THRESHOLD_VERY_HOT) {
+                    numParticles = 5; // More particles when very hot
+                }
+                for (let i = 0; i < numParticles; i++) {
+                    particles.push(new Particle(currentMouseX, currentMouseY, type));
+                }
+            }
+        }
+
+        // Update mouse position on mousemove
+        document.addEventListener('mousemove', (e) => {
+            if (isCursorLocked) {
+                return; // If locked, custom cursor doesn't follow OS cursor
+            }
+            mouse.x = e.clientX + window.scrollX;
+            mouse.y = e.clientY + window.scrollY;
+        });
+
+        // --- Temperature and Cursor Lock Logic ---
+        function updateTemperaturePanel() {
+            if (!tempReadingElem) return; // Panel not initialized yet
+
+            if (isCursorLocked) { // Final state messages are set by burn/freeze
+                // tempReadingElem.textContent = `${Math.round(cursorTemperature)}°C`; // Already set
+                return;
+            }
+
+            tempReadingElem.textContent = `${Math.round(cursorTemperature)}°C`;
+            let statusText = "Normal";
+            let sphereHue = 100; // Neutral green-yellow
+
+            if (cursorTemperature > NEUTRAL_TEMP) {
+                let normalizedTemp = (cursorTemperature - NEUTRAL_TEMP) / (MAX_TEMP_DISPLAY - NEUTRAL_TEMP);
+                normalizedTemp = Math.min(Math.max(normalizedTemp, 0), 1);
+                sphereHue = 60 - (normalizedTemp * 60); // Yellow (60) to Red (0)
+                if (cursorTemperature >= FIRE_THRESHOLD_BURNING) statusText = "DANGER! MELTDOWN IMMINENT!";
+                else if (cursorTemperature >= FIRE_THRESHOLD_VERY_HOT) statusText = "Extremely Hot!";
+                else if (cursorTemperature >= FIRE_THRESHOLD_HOT) statusText = "Very Hot!";
+                else statusText = "Warm";
+            } else if (cursorTemperature < NEUTRAL_TEMP) {
+                let normalizedTemp = (NEUTRAL_TEMP - cursorTemperature) / (NEUTRAL_TEMP - MIN_TEMP_DISPLAY);
+                normalizedTemp = Math.min(Math.max(normalizedTemp, 0), 1);
+                sphereHue = 180 + (normalizedTemp * 60); // Cyan (180) to Blue (240)
+                if (cursorTemperature <= WATER_THRESHOLD_FROZEN) statusText = "DANGER! DEEP FREEZE!";
+                else if (cursorTemperature <= WATER_THRESHOLD_VERY_COLD) statusText = "Extremely Cold!";
+                else if (cursorTemperature <= WATER_THRESHOLD_COLD) statusText = "Very Cold!";
+                else statusText = "Cool";
+            }
+
+            let lightColor = `hsl(${sphereHue}, 100%, 70%)`;
+            let darkColor = `hsl(${sphereHue}, 100%, 50%)`;
+            tempSphereElem.style.background = `radial-gradient(circle at 30% 30%, ${lightColor}, ${darkColor})`;
+            tempStatusElem.textContent = statusText;
+        }
+
+        function checkCurrentZone() {
+            if (isCursorLocked || typeof mouse.x === 'undefined' || typeof mouse.y === 'undefined') {
+                if (typeof mouse.x === 'undefined') { // Reset if mouse hasn't moved yet
+                    isInFireZone = false;
+                    isInWaterZone = false;
+                }
+                return;
+            }
+
+            let currentlyInFire = false;
+            let currentlyInWater = false;
+            const fireElements = [fireSection, fireStrengthsSection];
+            const waterElements = [waterSection, waterStrengthsSection];
+
+            for (const el of fireElements) {
+                const rect = el.getBoundingClientRect();
+                if (mouse.x >= (rect.left + window.scrollX) && mouse.x <= (rect.right + window.scrollX) &&
+                    mouse.y >= (rect.top + window.scrollY) && mouse.y <= (rect.bottom + window.scrollY)) {
+                    currentlyInFire = true;
+                    break;
+                }
+            }
+            for (const el of waterElements) {
+                const rect = el.getBoundingClientRect();
+                if (mouse.x >= (rect.left + window.scrollX) && mouse.x <= (rect.right + window.scrollX) &&
+                    mouse.y >= (rect.top + window.scrollY) && mouse.y <= (rect.bottom + window.scrollY)) {
+                    currentlyInWater = true;
+                    break;
+                }
+            }
+
+            if (currentlyInFire && !isInFireZone) fireExposureStartTime = Date.now();
+            else if (!currentlyInFire && isInFireZone) fireExposureStartTime = 0;
+            isInFireZone = currentlyInFire;
+
+            if (currentlyInWater && !isInWaterZone) waterExposureStartTime = Date.now();
+            else if (!currentlyInWater && isInWaterZone) waterExposureStartTime = 0;
+            isInWaterZone = currentlyInWater;
+        }
+
+        function clearAllSectionParticleIntervals() {
+            if (fireParticleInterval) clearInterval(fireParticleInterval);
+            if (waterParticleInterval) clearInterval(waterParticleInterval);
+            if (steamParticleInterval) clearInterval(steamParticleInterval);
+            if (fireStrengthsParticleInterval) clearInterval(fireStrengthsParticleInterval);
+            if (waterStrengthsParticleInterval) clearInterval(waterStrengthsParticleInterval);
+            if (balanceParticleInterval) clearInterval(balanceParticleInterval);
+        }
+
+        function burnCursor() {
+            if (isCursorLocked) return;
+            isCursorLocked = true;
+            cursorTemperature = FIRE_THRESHOLD_BURNING; // Lock at burning temp
+            tempStatusElem.textContent = "BURNT OUT!";
+            tempReadingElem.textContent = `${Math.round(cursorTemperature)}°C`;
+            tempSphereElem.style.background = `radial-gradient(circle, #ff4500, #8b0000)`; // Burnt orange/dark red
+            document.body.style.cursor = 'not-allowed';
+            if (temperatureUpdateInterval) clearInterval(temperatureUpdateInterval);
+            clearAllSectionParticleIntervals();
+        }
+
+        function freezeCursor() {
+            if (isCursorLocked) return;
+            isCursorLocked = true;
+            cursorTemperature = WATER_THRESHOLD_FROZEN; // Lock at frozen temp
+            tempStatusElem.textContent = "FROZEN SOLID!";
+            tempReadingElem.textContent = `${Math.round(cursorTemperature)}°C`;
+            tempSphereElem.style.background = `radial-gradient(circle, #87cefa, #000080)`; // Light sky blue/navy
+            document.body.style.cursor = 'not-allowed';
+            if (temperatureUpdateInterval) clearInterval(temperatureUpdateInterval);
+            clearAllSectionParticleIntervals();
+        }
+
+        function startTemperatureCycle() {
+            if (temperatureUpdateInterval) clearInterval(temperatureUpdateInterval);
+            temperatureUpdateInterval = setInterval(() => {
+                if (isCursorLocked) return;
+
+                checkCurrentZone();
+                let now = Date.now();
+
+                if (isInFireZone) {
+                    cursorTemperature += TEMP_CHANGE_RATE;
+                    if (cursorTemperature >= FIRE_THRESHOLD_BURNING && fireExposureStartTime !== 0 && (now - fireExposureStartTime) >= EXPOSURE_TIME_TO_EFFECT) {
+                        burnCursor();
+                        return; // Stop further processing this tick
+                    }
+                } else if (isInWaterZone) {
+                    cursorTemperature -= TEMP_CHANGE_RATE;
+                    if (cursorTemperature <= WATER_THRESHOLD_FROZEN && waterExposureStartTime !== 0 && (now - waterExposureStartTime) >= EXPOSURE_TIME_TO_EFFECT) {
+                        freezeCursor();
+                        return; // Stop further processing this tick
+                    }
+                } else { // Normalizing
+                    if (cursorTemperature > NEUTRAL_TEMP) {
+                        cursorTemperature -= TEMP_NORMALIZATION_RATE;
+                        if (cursorTemperature < NEUTRAL_TEMP) cursorTemperature = NEUTRAL_TEMP;
+                    } else if (cursorTemperature < NEUTRAL_TEMP) {
+                        cursorTemperature += TEMP_NORMALIZATION_RATE;
+                        if (cursorTemperature > NEUTRAL_TEMP) cursorTemperature = NEUTRAL_TEMP;
+                    }
+                }
+                cursorTemperature = Math.max(MIN_TEMP_DISPLAY, Math.min(cursorTemperature, MAX_TEMP_DISPLAY));
+                updateTemperaturePanel();
+            }, TEMP_INTERVAL_DELAY);
+        }
+
+        // --- Event listeners for section-specific particle generation ---
+        // These ensure particles only emit when directly over the section, and respect cursor lock.
+        function setupSectionParticleListener(sectionElement, particleType) {
+            let intervalId;
+            sectionElement.addEventListener('mouseenter', () => {
+                if (isCursorLocked) return;
+                if (intervalId) clearInterval(intervalId); // Clear previous, if any
+                intervalId = setInterval(() => {
+                    if (isCursorLocked) { clearInterval(intervalId); return; }
+                    generateParticles(particleType, sectionElement);
+                }, 70); // Slightly less frequent for section-specific
+            });
+            sectionElement.addEventListener('mouseleave', () => {
+                clearInterval(intervalId);
+            });
+            // Return intervalId to store in global vars if needed for clearAllSectionParticleIntervals
+            return intervalId;
+        }
+
+        // Animation loop
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].opacity <= 0 || particles[i].life <= 0 || particles[i].size <= 0.1) {
+                    particles.splice(i, 1);
+                    i--;
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        // Initialize on window load
+        window.onload = function () {
+            tempPanelElem = document.getElementById('temperaturePanel');
+            tempSphereElem = document.getElementById('tempSphere');
+            tempReadingElem = document.getElementById('tempReading');
+            tempStatusElem = document.getElementById('tempStatus');
+
+            updateTemperaturePanel(); // Initial panel state
+            startTemperatureCycle();   // Start temperature monitoring
+
+            // Setup section-specific particle emitters
+            // Storing interval IDs to ensure they can be cleared by clearAllSectionParticleIntervals
+            fireParticleInterval = setupSectionParticleListener(fireSection, 'fire');
+            waterParticleInterval = setupSectionParticleListener(waterSection, 'water');
+            steamParticleInterval = setupSectionParticleListener(steamSection, 'steam');
+            fireStrengthsParticleInterval = setupSectionParticleListener(fireStrengthsSection, 'fire');
+            waterStrengthsParticleInterval = setupSectionParticleListener(waterStrengthsSection, 'water');
+            balanceParticleInterval = setupSectionParticleListener(balanceSection, 'steam');
+
+            animate(); // Start particle animation loop
+            resizeCanvas(); // Initial canvas size
+        };
+    </script>
+</body>
+
+</html>
