@@ -249,8 +249,8 @@
         const MIN_TEMP_DISPLAY = -20;
         const MAX_TEMP_DISPLAY = 120;
 
-        const TEMP_CHANGE_RATE = 1.5; // Degrees per interval for heating/cooling
-        const TEMP_NORMALIZATION_RATE = 0.75; // Degrees per interval for returning to neutral
+        const TEMP_CHANGE_RATE = 1.5;
+        const TEMP_NORMALIZATION_RATE = 0.75;
 
         const FIRE_THRESHOLD_HOT = 40;
         const FIRE_THRESHOLD_VERY_HOT = 70;
@@ -293,34 +293,59 @@
                 this.opacity = 1;
 
                 if (this.type === 'fire') {
-                    this.baseSize = Math.random() * 6 + 2;
+                    this.baseSize = Math.random() * 5 + 1.5; // Slightly smaller base for more "flicker"
                     let currentSize = this.baseSize;
-                    let currentLife = 80; // Base life for fire particles
+                    let currentLife = 70; // Base life for fire particles
+                    let currentSpeedXFactor = 0.6;
+                    let currentSpeedYFactor = 1.5;
+                    let currentSpeedYBase = 0.5;
 
-                    // If in a fire zone and hot, make particles at cursor bigger and live longer
                     if (isInFireZone && cursorTemperature > FIRE_THRESHOLD_HOT) {
                         let tempEffectRatio = (cursorTemperature - FIRE_THRESHOLD_HOT) / (FIRE_THRESHOLD_BURNING - FIRE_THRESHOLD_HOT);
                         tempEffectRatio = Math.max(0, Math.min(tempEffectRatio, 1));
 
-                        // Increase size
-                        let sizeMultiplier = 1 + tempEffectRatio * 2.0; // Max multiplier of 3 (1 + 2.0)
+                        let sizeMultiplier = 1 + tempEffectRatio * 2.5; // Max multiplier of 3.5
                         currentSize = this.baseSize * sizeMultiplier;
 
-                        // Increase life
-                        let lifeBonus = tempEffectRatio * 100; // Max bonus of 100 to life (e.g. 80 + 100 = 180)
+                        let lifeBonus = tempEffectRatio * 120; // Max bonus of 120 to life
                         currentLife += lifeBonus;
+
+                        // Increase speed and erraticness for "craziness"
+                        currentSpeedXFactor += tempEffectRatio * 1.2; // More horizontal spread
+                        currentSpeedYFactor += tempEffectRatio * 1.8; // Faster upward
+                        currentSpeedYBase += tempEffectRatio * 0.7;
                     }
                     this.size = currentSize;
                     this.life = currentLife;
-                    this.speedX = Math.random() * 0.6 - 0.3;
-                    this.speedY = Math.random() * -1.5 - 0.5;
+                    this.speedX = Math.random() * (currentSpeedXFactor * 2) - currentSpeedXFactor;
+                    this.speedY = Math.random() * -currentSpeedYFactor - currentSpeedYBase;
                     this.color = `hsl(${Math.random() * 60 + 0}, 100%, 50%)`;
                 } else if (this.type === 'water') {
-                    this.size = Math.random() * 5 + 1; // Water particle size is currently static
-                    this.speedX = Math.random() * 1 - 0.5;
-                    this.speedY = Math.random() * 1 + 0.5;
+                    this.baseSize = Math.random() * 4 + 1;
+                    let currentSize = this.baseSize;
+                    let currentLife = 120; // Base life for water
+                    let currentSpeedXFactor = 1.0;
+                    let currentSpeedYFactor = 1.0;
+                    let currentSpeedYBase = 0.5;
+
+                    if (isInWaterZone && cursorTemperature < WATER_THRESHOLD_COLD) {
+                        let tempEffectRatioCold = (WATER_THRESHOLD_COLD - cursorTemperature) / (WATER_THRESHOLD_COLD - WATER_THRESHOLD_FROZEN);
+                        tempEffectRatioCold = Math.max(0, Math.min(tempEffectRatioCold, 1));
+
+                        currentSize = this.baseSize * (1 + tempEffectRatioCold * 1.5); // Larger size
+                        currentLife += tempEffectRatioCold * 100; // Longer life
+
+                        // Increase speed and "splash" for "craziness"
+                        currentSpeedXFactor += tempEffectRatioCold * 2.0; // Wider splash
+                        currentSpeedYFactor += tempEffectRatioCold * 0.8; // Faster downward
+                        currentSpeedYBase += tempEffectRatioCold * 0.3;
+                    }
+
+                    this.size = currentSize;
+                    this.life = currentLife;
+                    this.speedX = Math.random() * (currentSpeedXFactor * 2) - currentSpeedXFactor;
+                    this.speedY = (Math.random() * currentSpeedYFactor + currentSpeedYBase);
                     this.color = `hsl(${Math.random() * 60 + 190}, 100%, 50%)`;
-                    this.life = 150;
                 } else if (this.type === 'steam') {
                     this.size = Math.random() * 10 + 5;
                     this.speedX = Math.random() * 0.4 - 0.2;
@@ -339,7 +364,7 @@
                     this.size *= 0.97;
                 } else if (this.type === 'water') {
                     this.opacity -= 0.006;
-                    this.speedY += 0.05;
+                    this.speedY += 0.05; // Gravity for water
                 } else if (this.type === 'steam') {
                     this.opacity -= 0.005;
                     this.size += 0.05;
@@ -351,7 +376,7 @@
                 ctx.save();
                 ctx.globalAlpha = this.opacity;
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, Math.max(0, this.size), 0, Math.PI * 2); // Ensure size is not negative
+                ctx.arc(this.x, this.y, Math.max(0, this.size), 0, Math.PI * 2);
                 ctx.fillStyle = this.color;
                 ctx.fill();
                 ctx.restore();
@@ -368,10 +393,22 @@
 
             if (currentMouseX >= rect.left + window.scrollX && currentMouseX <= rect.right + window.scrollX &&
                 currentMouseY >= rect.top + window.scrollY && currentMouseY <= rect.bottom + window.scrollY) {
-                let numParticles = (type === 'fire' || type === 'water') ? 3 : 2;
-                if (type === 'fire' && isInFireZone && cursorTemperature > FIRE_THRESHOLD_VERY_HOT) {
-                    numParticles = 5;
+
+                let numParticles = 2; // Default for steam
+                if (type === 'fire') {
+                    numParticles = 3;
+                    if (isInFireZone && cursorTemperature > FIRE_THRESHOLD_VERY_HOT) {
+                        numParticles = 5 + Math.floor(((cursorTemperature - FIRE_THRESHOLD_VERY_HOT) / (FIRE_THRESHOLD_BURNING - FIRE_THRESHOLD_VERY_HOT)) * 3); // Up to 8
+                    }
+                } else if (type === 'water') {
+                    numParticles = 3;
+                    if (isInWaterZone && cursorTemperature < WATER_THRESHOLD_VERY_COLD) {
+                        let tempEffectRatioCold = (WATER_THRESHOLD_VERY_COLD - cursorTemperature) / (WATER_THRESHOLD_VERY_COLD - WATER_THRESHOLD_FROZEN);
+                        tempEffectRatioCold = Math.max(0, Math.min(tempEffectRatioCold, 1));
+                        numParticles = 5 + Math.floor(tempEffectRatioCold * 4); // Up to 9
+                    }
                 }
+
                 for (let i = 0; i < numParticles; i++) {
                     particles.push(new Particle(currentMouseX, currentMouseY, type));
                 }
@@ -397,12 +434,12 @@
 
             tempReadingElem.textContent = `${Math.round(cursorTemperature)}°C`;
             let statusText = "Normal";
-            let sphereHue = 100; // Neutral green-yellow
+            let sphereHue = 100;
 
             if (cursorTemperature > NEUTRAL_TEMP) {
                 let normalizedTemp = (cursorTemperature - NEUTRAL_TEMP) / (MAX_TEMP_DISPLAY - NEUTRAL_TEMP);
                 normalizedTemp = Math.min(Math.max(normalizedTemp, 0), 1);
-                sphereHue = 60 - (normalizedTemp * 60); // Yellow (60) to Red (0)
+                sphereHue = 60 - (normalizedTemp * 60);
                 if (cursorTemperature >= FIRE_THRESHOLD_BURNING) statusText = "DANGER! MELTDOWN IMMINENT!";
                 else if (cursorTemperature >= FIRE_THRESHOLD_VERY_HOT) statusText = "Extremely Hot!";
                 else if (cursorTemperature >= FIRE_THRESHOLD_HOT) statusText = "Very Hot!";
@@ -410,7 +447,7 @@
             } else if (cursorTemperature < NEUTRAL_TEMP) {
                 let normalizedTemp = (NEUTRAL_TEMP - cursorTemperature) / (NEUTRAL_TEMP - MIN_TEMP_DISPLAY);
                 normalizedTemp = Math.min(Math.max(normalizedTemp, 0), 1);
-                sphereHue = 180 + (normalizedTemp * 60); // Cyan (180) to Blue (240)
+                sphereHue = 180 + (normalizedTemp * 60);
                 if (cursorTemperature <= WATER_THRESHOLD_FROZEN) statusText = "DANGER! DEEP FREEZE!";
                 else if (cursorTemperature <= WATER_THRESHOLD_VERY_COLD) statusText = "Extremely Cold!";
                 else if (cursorTemperature <= WATER_THRESHOLD_COLD) statusText = "Very Cold!";
@@ -538,7 +575,7 @@
                 intervalId = setInterval(() => {
                     if (isCursorLocked) { clearInterval(intervalId); return; }
                     generateParticles(particleType, sectionElement);
-                }, 70);
+                }, 60); // Slightly faster generation for more "craziness"
             });
             sectionElement.addEventListener('mouseleave', () => {
                 clearInterval(intervalId);
