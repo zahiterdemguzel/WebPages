@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Better Meeting Rooms Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* Custom CSS for Inter font and animations */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        .animate-slide-up {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        /* Additional styles for the particle effect */
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            user-select: none;
+            transform: translate(-50%, -50%); /* Center the particle image */
+            will-change: transform, opacity;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 antialiased flex flex-col md:flex-row">
+    <aside id="sidebar" class="w-full md:w-64 bg-emerald-900 text-gray-200 flex flex-col p-4 shadow-xl">
+        <div class="flex items-center justify-center md:justify-start mb-8 py-4">
+            <img src="https://cdn.prod.website-files.com/670fcf1021f8b3655bb0ac84/670fd235affdf8ce5f4cc2e8_bmr-logo1.svg" alt="Better Rooms Logo" class="mr-3 h-16 md:h-12">
+            <h1 class="text-xl font-bold text-white hidden md:block">Better Meeting Rooms</h1>
+        </div>
+        <nav class="flex-grow">
+            <ul>
+                <li class="mb-2">
+                    <a href="#" id="nav-overview" class="flex items-center py-3 px-4 rounded-lg text-lg transition duration-200 ease-in-out">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        Overview
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="#" id="nav-roomsOverview" class="flex items-center py-3 px-4 rounded-lg text-lg transition duration-200 ease-in-out">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+                        Rooms
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a
+                        href="#"
+                        id="nav-administration"
+                        class="flex items-center py-3 px-4 rounded-lg text-lg transition duration-200 ease-in-out"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>
+                        Administration
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="#" id="nav-settings" class="flex items-center py-3 px-4 rounded-lg text-lg transition duration-200 ease-in-out">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.04.02a2 2 0 0 1 .97 1.95v.44a2 2 0 0 1-.97 1.95l-.04.02a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.04-.02a2 2 0 0 1-.97-1.95v-.44a2 2 0 0 1 .97-1.95l.04-.02a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Settings
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="mt-auto pt-6 border-t border-emerald-800">
+            <a href="#" id="sign-out" class="flex items-center py-3 px-4 rounded-lg hover:bg-emerald-800 transition duration-200 ease-in-out text-gray-200 text-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="17 17 22 12 17 7"/><line x1="22" x2="10" y1="12" y2="12"/></svg>
+                Sign out
+            </a>
+            <p class="text-xs text-gray-400 mt-4 text-center md:text-left">© 2025 Better Meeting Rooms</p>
+        </div>
+    </aside>
+
+    <main id="main-content" class="flex-1 p-6 md:p-8 overflow-y-auto">
+        </main>
+
+    <div id="custom-modal-container"></div>
+
+    <div id="create-room-modal-container"></div>
+
+    <div id="edit-room-modal-container"></div>
+
+    <div id="particle-explosion-container"></div>
+
+    <script>
+        // Dummy data (as provided in React code)
+        const dummyRooms = [
+            { id: 'room-1', name: 'A_BREMEN Alex Playground', location: 'Mariahilferstrasse', state: 'Design Requested', size: 42, people: 4, description: 'A well-equipped meeting room suitable for small teams and collaborative sessions.', floor: 'Ground Floor, Section A', managedBy: 'Users', overallScore: 8.5, techScore: 9.0, acousticScore: 7.8, sharingTech: 'Wireless & Wired', meetingProvider: 'Zoom, Google Meet', bookingCapability: 'Integrated Calendar', },
+            { id: 'room-2', name: 'B_VIENNA Collaboration Hub', location: 'Stephansplatz', state: 'Completed', size: 60, people: 8, description: 'Large collaboration space with interactive whiteboards and advanced video conferencing.', floor: '1st Floor, East Wing', managedBy: 'IT Department', overallScore: 9.2, techScore: 9.5, acousticScore: 8.9, sharingTech: 'Wireless & Wired', meetingProvider: 'Microsoft Teams, Webex', bookingCapability: 'Outlook Calendar', },
+            { id: 'room-3', name: 'C_BERLIN Focus Pod', location: 'Brandenburg Gate', state: 'In Progress', size: 15, people: 2, description: 'Small, quiet pod for individual focus work or small, private calls.', floor: '2nd Floor, North Section', managedBy: 'Facilities', overallScore: 7.0, techScore: 6.5, acousticScore: 7.5, sharingTech: 'Wired Only', meetingProvider: 'None', bookingCapability: 'Manual Sign-up', },
+            { id: 'room-4', name: 'D_MUNICH Innovation Lab', location: 'Marienplatz', state: 'Design Requested', size: 120, people: 12, description: 'A cutting-edge lab for prototyping and creative workshops.', floor: 'Basement, Innovation Zone', managedBy: 'R&D Team', overallScore: 8.8, techScore: 9.3, acousticScore: 8.0, sharingTech: 'Wireless, Wired & VR', meetingProvider: 'Custom Software', bookingCapability: 'Dedicated App', },
+            { id: 'room-5', name: 'E_PARIS Creative Studio', location: 'Eiffel Tower', state: 'Completed', size: 75, people: 6, description: 'A vibrant studio designed for brainstorming and creative sessions.', floor: '3rd Floor, West Wing', managedBy: 'Marketing Team', overallScore: 9.0, techScore: 8.8, acousticScore: 9.1, sharingTech: 'Wireless', meetingProvider: 'Google Meet', bookingCapability: 'Integrated Calendar', },
+            { id: 'room-6', name: 'F_ROME Amphitheater', location: 'Colosseum', state: 'In Progress', size: 200, people: 25, description: 'Large tiered room for presentations and large group meetings.', floor: 'Ground Floor, Main Hall', managedBy: 'Event Management', overallScore: 8.0, techScore: 8.5, acousticScore: 7.0, sharingTech: 'Wired Only', meetingProvider: 'Webex', bookingCapability: 'Manual Booking', },
+            { id: 'room-7', name: 'G_LONDON Meeting Suite', location: 'Piccadilly Circus', state: 'Completed', size: 50, people: 6, description: 'Modern meeting suite with flexible seating arrangements.', floor: '4th Floor, North Tower', managedBy: 'Office Admin', overallScore: 8.7, techScore: 8.5, acousticScore: 8.2, sharingTech: 'Wireless', meetingProvider: 'Zoom', bookingCapability: 'Integrated Calendar', },
+            { id: 'room-8', name: 'H_TOKYO Tech Hub', location: 'Shibuya Crossing', state: 'In Progress', size: 90, people: 10, description: 'High-tech hub for software development teams.', floor: '5th Floor, Innovation Wing', managedBy: 'Engineering Dept', overallScore: 9.1, techScore: 9.6, acousticScore: 8.8, sharingTech: 'Wireless & Wired', meetingProvider: 'Google Meet', bookingCapability: 'Dedicated App', },
+            { id: 'room-9', name: 'I_SYDNEY Conference Room', location: 'Opera House', state: 'In Progress', size: 150, people: 18, description: 'Large conference room for international presentations.', floor: 'Ground Floor, Main Building', managedBy: 'Global Events', overallScore: 8.9, techScore: 9.0, acousticScore: 8.5, sharingTech: 'Wired Only', meetingProvider: 'Webex', bookingCapability: 'Manual Booking', },
+        ];
+        const dummyOrganizations = [
+            { id: 1, name: 'Hotel Nationalpark' },
+            { id: 2, name: 'BETTERMEETINGROOMS GmbH' },
+            { id: 3, name: 'Dramaier' },
+            { id: 4, name: 'Voest Alpine' },
+            { id: 5, name: 'Steelcase' },
+            { id: 6, name: 'Coco Systems' },
+            { id: 7, name: 'Bosch Proc Demo' },
+        ];
+        const dummyProcesses = [
+            { id: 1, name: 'BMR' },
+            { id: 2, name: 'Create Process' },
+        ];
+        const dummyMarkers = [
+            { id: 1, name: 'Marker_001.png', url: 'https://placehold.co/150x266/A7F3D0/065F46?text=Marker+1', description: 'Front view marker' }, // 150x266 is approx 9:16
+            { id: 2, name: 'Marker_002.png', url: 'https://placehold.co/150x266/D1FAE5/065F46?text=Marker+2', description: 'Side view marker' },
+            { id: 3, name: 'Marker_003.png', url: 'https://placehold.co/150x266/6EE7B7/065F46?text=Marker+3', description: 'Overhead view marker' },
+            { id: 4, name: 'Marker_004.png', url: 'https://placehold.co/150x266/34D399/065F46?text=Marker+4', description: 'Detail view marker' },
+        ];
+
+        // Global state variables
+        let currentView = 'overview';
+        let selectedRoom = null;
+        let rooms = [...dummyRooms]; // Make a copy to allow modifications
+        let showModal = false;
+        let modalMessage = '';
+        let modalType = 'info';
+        let showCreateRoomModal = false;
+        let showEditRoomModal = false;
+        let activeAdminTab = 'organizations'; // Default for administration view
+        let activeRoomDetailTab = 'generalInformation'; // Default for room detail view
+
+        // --- PARTICLE EXPLOSION LOGIC (HTML/JS) ---
+        const LOGO_URL = 'https://cdn.prod.website-files.com/670fcf1021f8b3655bb0ac84/670fd235affdf8ce5f4cc2e8_bmr-logo1.svg';
+        const PARTICLE_COUNT = 30;
+        const PARTICLE_LIFESPAN_MS = 1800;
+        const PARTICLE_INITIAL_SPEED = 7;
+        const PARTICLE_GRAVITY = 0.15;
+        const PARTICLE_ROTATION_SPEED = 8;
+        const PARTICLE_SIZE = 30;
+
+        let particles = [];
+        let animationFrameId = null;
+
+        /**
+         * Creates an explosion of particles at a given screen position.
+         * @param {number} startX - The X coordinate for the explosion origin.
+         * @param {number} startY - The Y coordinate for the explosion origin.
+         */
+        const createExplosion = (startX, startY) => {
+            const newParticles = Array.from({ length: PARTICLE_COUNT }).map(() => {
+                const angle = Math.random() * Math.PI * 2; // Random angle for particle trajectory
+                const speed = Math.random() * PARTICLE_INITIAL_SPEED + PARTICLE_INITIAL_SPEED * 0.5; // Random speed
+                return {
+                    id: Math.random().toString(36).substring(2) + Date.now(), // Unique ID for each particle
+                    x: startX,
+                    y: startY,
+                    vx: Math.cos(angle) * speed, // Velocity x
+                    vy: Math.sin(angle) * speed - (PARTICLE_INITIAL_SPEED / 2.5), // Velocity y (initial upward boost)
+                    rotation: Math.random() * 360, // Initial rotation
+                    vRotation: (Math.random() - 0.5) * PARTICLE_ROTATION_SPEED * 2, // Rotational velocity
+                    opacity: 1,
+                    scale: 0.4 + Math.random() * 0.6, // Random scale (0.4 to 1.0)
+                    createdAt: Date.now(), // Timestamp for lifespan calculation
+                };
+            });
+            particles = [...particles, ...newParticles]; // Add new particles to the existing array
+            if (!animationFrameId) {
+                animateParticles(); // Start animation loop if not already running
+            }
+            renderParticles(); // Immediately render new particles
+        };
+
+        /**
+         * The main animation loop for particles. Updates particle positions and properties.
+         */
+        const animateParticles = () => {
+            const now = Date.now();
+            particles = particles
+                .map(p => {
+                    const age = now - p.createdAt;
+                    if (age > PARTICLE_LIFESPAN_MS) {
+                        return null; // Mark particle for removal if its lifespan is over
+                    }
+                    return {
+                        ...p,
+                        x: p.x + p.vx,
+                        y: p.y + p.vy,
+                        vy: p.vy + PARTICLE_GRAVITY, // Apply gravity to vertical velocity
+                        rotation: p.rotation + p.vRotation, // Update rotation
+                        opacity: 1 - (age / PARTICLE_LIFESPAN_MS), // Fade out over time
+                    };
+                })
+                .filter(p => p !== null); // Remove dead particles
+
+            renderParticles(); // Re-render particles after updating their state
+
+            if (particles.length > 0) {
+                animationFrameId = requestAnimationFrame(animateParticles); // Continue animation if particles exist
+            } else {
+                cancelAnimationFrame(animationFrameId); // Stop animation loop
+                animationFrameId = null;
+                document.getElementById('particle-explosion-container').innerHTML = ''; // Clear container when no particles
+            }
+        };
+
+        /**
+         * Renders (or updates) particle elements in the DOM.
+         */
+        const renderParticles = () => {
+            const container = document.getElementById('particle-explosion-container');
+            // Keep track of existing particle elements to remove stale ones
+            const existingParticleElements = new Set();
+            container.querySelectorAll('.particle').forEach(el => existingParticleElements.add(el.id));
+
+            particles.forEach(p => {
+                let particleEl = document.getElementById(p.id);
+                if (!particleEl) {
+                    // Create new particle element if it doesn't exist
+                    particleEl = document.createElement('img');
+                    particleEl.src = LOGO_URL;
+                    particleEl.alt = "logo particle";
+                    particleEl.className = "particle pointer-events-none select-none";
+                    particleEl.id = p.id;
+                    container.appendChild(particleEl);
+                }
+                // Update particle element's style based on its current state
+                particleEl.style.left = `${p.x}px`;
+                particleEl.style.top = `${p.y}px`;
+                particleEl.style.width = `${PARTICLE_SIZE * p.scale}px`;
+                particleEl.style.height = `${PARTICLE_SIZE * p.scale}px`;
+                particleEl.style.opacity = p.opacity;
+                particleEl.style.transform = `translate(-50%, -50%) rotate(${p.rotation}deg) scale(${p.scale})`;
+                existingParticleElements.delete(p.id); // Mark as updated
+            });
+
+            // Remove particles that are no longer in the `particles` array (i.e., they died)
+            existingParticleElements.forEach(id => {
+                const elToRemove = document.getElementById(id);
+                if (elToRemove) {
+                    elToRemove.remove();
+                }
+            });
+        };
+        // --- END PARTICLE EXPLOSION LOGIC ---
+
+
+        // --- Custom Modal Functions ---
+        /**
+         * Displays a custom modal with a given message and type.
+         * @param {string} message - The message to display in the modal.
+         * @param {'info'|'success'|'error'} type - The type of modal (influences styling and icon).
+         */
+        const showCustomModal = (message, type = 'info') => {
+            modalMessage = message;
+            modalType = type;
+            showModal = true;
+            renderCustomModal();
+        };
+
+        /**
+         * Closes the custom modal and resets its state.
+         */
+        const closeModal = () => {
+            showModal = false;
+            modalMessage = '';
+            modalType = 'info';
+            renderCustomModal();
+        };
+
+        /**
+         * Renders the custom modal HTML into its container based on current state.
+         */
+        const renderCustomModal = () => {
+            const container = document.getElementById('custom-modal-container');
+            if (!showModal) {
+                container.innerHTML = ''; // Clear modal content if not shown
+                return;
+            }
+
+            let iconSvg;
+            let bgColor;
+            let textColor;
+            let borderColor;
+
+            // Determine modal styling based on type
+            switch (modalType) {
+                case 'success':
+                    iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-green-600"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>`;
+                    bgColor = 'bg-green-50';
+                    textColor = 'text-green-800';
+                    borderColor = 'border-green-400';
+                    break;
+                case 'error':
+                    iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-red-600"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>`;
+                    bgColor = 'bg-red-50';
+                    textColor = 'text-red-800';
+                    borderColor = 'border-red-400';
+                    break;
+                case 'info':
+                default:
+                    iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-blue-600"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.04.02a2 2 0 0 1 .97 1.95v.44a2 2 0 0 1-.97 1.95l-.04.02a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.04-.02a2 2 0 0 1-.97-1.95v-.44a2 2 0 0 1 .97-1.95l.04-.02a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>`;
+                    bgColor = 'bg-blue-50';
+                    textColor = 'text-blue-800';
+                    borderColor = 'border-blue-400';
+                    break;
+            }
+
+            container.innerHTML = `
+                <div class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
+                    <div class="${bgColor} rounded-xl border-2 ${borderColor} shadow-2xl p-6 max-w-sm w-full transform scale-100 opacity-100 animate-slide-up">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                ${iconSvg}
+                                <h3 class="ml-3 text-lg font-semibold ${textColor}">Notification</h3>
+                            </div>
+                            <button id="modal-close-button" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                            </button>
+                        </div>
+                        <p class="text-sm ${textColor} mb-6">${modalMessage}</p>
+                        <div class="flex justify-end">
+                            <button
+                                id="modal-confirm-button"
+                                class="px-5 py-2 rounded-lg font-medium shadow-md transition duration-300 ease-in-out
+                                ${modalType === 'success' ? 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500' :
+                                modalType === 'error' ? 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500' :
+                                'bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500'}
+                                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-opacity-75"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            // Add event listeners to modal buttons
+            document.getElementById('modal-close-button').addEventListener('click', closeModal);
+            document.getElementById('modal-confirm-button').addEventListener('click', closeModal);
+        };
+
+        // --- Room Detail View Functions ---
+        /**
+         * Renders the detailed view for a specific room.
+         * @param {object} room - The room object to display.
+         */
+        const renderRoomDetailView = (room) => {
+            selectedRoom = room; // Update global selectedRoom
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-gray-900 mb-2">${room.name}</h1>
+                        <p class="text-gray-600 text-lg">Detailed view and management for ${room.name} room.</p>
+                    </div>
+                    <button id="resubmit-design-request-btn"
+                        class="mt-4 sm:mt-0 px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition duration-300 ease-in-out">
+                        Resubmit Design Request
+                    </button>
+                </header>
+
+                <div class="bg-white rounded-xl shadow-lg p-2 mb-6 flex flex-wrap justify-center gap-2 md:gap-4">
+                    <button id="tab-generalInformation" class="px-6 py-3 rounded-lg text-base font-medium transition duration-300 ease-in-out">
+                        General Information
+                    </button>
+                    <button id="tab-designsScans" class="px-6 py-3 rounded-lg text-base font-medium transition duration-300 ease-in-out">
+                        Designs / Scans
+                    </button>
+                    <button id="tab-markers" class="px-6 py-3 rounded-lg text-base font-medium transition duration-300 ease-in-out">
+                        Markers
+                    </button>
+                </div>
+
+                <div id="room-detail-content"></div>
+
+                <footer class="mt-8 flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-lg shadow-md border border-gray-200">
+                    <button id="back-to-rooms-btn"
+                        class="flex items-center px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition duration-300 ease-in-out shadow-sm mb-4 sm:mb-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                        Back to Rooms
+                    </button>
+                    <div class="flex items-center gap-4">
+                        <button id="edit-room-details-btn"
+                            class="flex items-center px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition duration-300 ease-in-out shadow-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                            Edit Room Details
+                        </button>
+                    </div>
+                </footer>
+            `;
+
+            // Add event listeners for buttons
+            document.getElementById('resubmit-design-request-btn').addEventListener('click', (e) => {
+                triggerExplosion(e);
+                showCustomModal('Resubmitting design request...', 'info');
+            });
+            document.getElementById('back-to-rooms-btn').addEventListener('click', () => {
+                currentView = 'roomsOverview';
+                renderApp();
+            });
+            document.getElementById('edit-room-details-btn').addEventListener('click', () => {
+                showEditRoomModal = true;
+                renderEditRoomModal(room);
+            });
+
+            // Add event listeners for tabs
+            document.getElementById('tab-generalInformation').addEventListener('click', () => {
+                activeRoomDetailTab = 'generalInformation';
+                updateRoomDetailTabContent(room);
+            });
+            document.getElementById('tab-designsScans').addEventListener('click', () => {
+                activeRoomDetailTab = 'designsScans';
+                updateRoomDetailTabContent(room);
+            });
+            document.getElementById('tab-markers').addEventListener('click', () => {
+                activeRoomDetailTab = 'markers';
+                updateRoomDetailTabContent(room);
+            });
+
+            updateRoomDetailTabContent(room); // Initial content load for the active tab
+        };
+
+        /**
+         * Updates the content of the room detail view based on the active tab.
+         * @param {object} room - The room object currently being displayed.
+         */
+        const updateRoomDetailTabContent = (room) => {
+            const contentDiv = document.getElementById('room-detail-content');
+            // Update tab button styles
+            ['generalInformation', 'designsScans', 'markers'].forEach(tab => {
+                const btn = document.getElementById(`tab-${tab}`);
+                if (btn) {
+                    if (activeRoomDetailTab === tab) {
+                        btn.classList.add('bg-emerald-600', 'text-white', 'shadow-md');
+                        btn.classList.remove('text-gray-700', 'hover:bg-gray-100', 'hover:text-emerald-700');
+                    } else {
+                        btn.classList.remove('bg-emerald-600', 'text-white', 'shadow-md');
+                        btn.classList.add('text-gray-700', 'hover:bg-gray-100', 'hover:text-emerald-700');
+                    }
+                }
+            });
+
+            if (activeRoomDetailTab === 'generalInformation') {
+                contentDiv.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Room Details</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
+                                <h3 class="text-sm font-semibold text-gray-500 mb-1">Room Type</h3>
+                                <p class="text-lg font-medium text-gray-800">MEETING ROOM</p>
+                            </div>
+                            <div class="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
+                                <h3 class="text-sm font-semibold text-gray-500 mb-1">State</h3>
+                                <p class="text-lg font-medium text-gray-800">${room.state}</p>
+                            </div>
+                            <div class="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
+                                <h3 class="text-sm font-semibold text-gray-500 mb-1">Size in m²</h3>
+                                <p class="text-lg font-medium text-gray-800">${room.size}</p>
+                            </div>
+                            <div class="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
+                                <h3 class="text-sm font-semibold text-gray-500 mb-1">Number Of People</h3>
+                                <p class="text-lg font-medium text-gray-800">${room.people}</p>
+                            </div>
+                            <div class="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
+                                <h3 class="text-sm font-semibold text-gray-500 mb-1">Location</h3>
+                                <p class="text-lg font-medium text-gray-800">${room.location}</p>
+                            </div>
+                            <div class="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
+                                <h3 class="text-sm font-semibold text-gray-500 mb-1">Assessment Notes</h3>
+                                <p class="text-lg font-medium text-gray-800">-</p>
+                            </div>
+                            <div class="bg-gray-50 p-6 rounded-lg shadow-sm col-span-1 md:col-span-2 border border-gray-200">
+                                <h3 class="text-sm font-semibold text-gray-500 mb-1">Description</h3>
+                                <p class="text-lg font-medium text-gray-800">${room.description}</p>
+                            </div>
+                            <div class="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
+                                <h3 class="text-sm font-semibold text-gray-500 mb-1">Floor Or Section</h3>
+                                <p class="text-lg font-medium text-gray-800">${room.floor}</p>
+                            </div>
+                            <div class="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
+                                <h3 class="text-sm font-semibold text-gray-500 mb-1">Managed By</h3>
+                                <p class="text-lg font-medium text-gray-800">${room.managedBy}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Rating</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="flex flex-col items-center p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                                <h3 class="text-md font-medium text-emerald-700">Overall Score</h3>
+                                <p class="text-2xl font-bold text-emerald-800 mt-2">${room.overallScore} / 10</p>
+                            </div>
+                            <div class="flex flex-col items-center p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                                <h3 class="text-md font-medium text-emerald-700">Tech Score</h3>
+                                <p class="text-2xl font-bold text-emerald-800 mt-2">${room.techScore} / 10</p>
+                            </div>
+                            <div class="flex flex-col items-center p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                                <h3 class="text-md font-medium text-emerald-700">Acoustic Score</h3>
+                                <p class="text-2xl font-bold text-emerald-800 mt-2">${room.acousticScore} / 10</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Capabilities</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="flex flex-col items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <h3 class="text-md font-medium text-gray-600">Sharing Tech</h3>
+                                <p class="text-lg font-medium text-gray-800 mt-2">${room.sharingTech}</p>
+                            </div>
+                            <div class="flex flex-col items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <h3 class="text-md font-medium text-gray-600">Meeting Provider</h3>
+                                <p class="text-lg font-medium text-gray-800 mt-2">${room.meetingProvider}</p>
+                            </div>
+                            <div class="flex flex-col items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <h3 class="text-md font-medium text-gray-600">Booking Capability</h3>
+                                <p class="text-lg font-medium text-gray-800 mt-2">${room.bookingCapability}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (activeRoomDetailTab === 'designsScans') {
+                const designs = [
+                    { id: 1, description: "U Table 2", createDate: "2023-01-15", type: "DESIGN" },
+                    { id: 2, description: "Meeting 2", createDate: "2023-02-20", type: "DESIGN" },
+                    { id: 3, description: "Design 1", createDate: "2023-03-10", type: "DESIGN" },
+                    { id: 4, description: "Meeting", createDate: "2023-04-05", type: "DESIGN" },
+                    { id: 5, description: "Stand Up", createDate: "2023-05-12", type: "DESIGN" },
+                ];
+                let designsHtml = designs.map((design, index) => `
+                    <tr class="${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <button onclick="handleViewDesign('${design.description}')"
+                                class="text-emerald-600 hover:text-emerald-800 font-medium transition-colors duration-200">
+                                View
+                            </button>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${design.description}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${design.createDate}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${design.type}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <button onclick="handleDownloadDesign('${design.description}')"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-300 ease-in-out">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                Download
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                contentDiv.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                            <h2 class="text-xl font-semibold text-gray-800">Designs / Scans</h2>
+                            <button id="upload-new-scan-design-btn"
+                                class="flex items-center px-5 py-2 bg-emerald-600 text-white rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition duration-300 ease-in-out">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4 4-4-4"/></svg>
+                                Upload new Scan/Design
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto rounded-lg border border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Action
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Description
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Create Date
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Type
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Export
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    ${designsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('upload-new-scan-design-btn').addEventListener('click', (e) => {
+                    triggerExplosion(e);
+                    showCustomModal('Opening upload dialog...', 'info');
+                    setTimeout(() => {
+                        showCustomModal('File uploaded successfully!', 'success');
+                    }, 2000);
+                });
+            } else if (activeRoomDetailTab === 'markers') {
+                let markersHtml = '';
+                if (dummyMarkers.length > 0) {
+                    markersHtml = dummyMarkers.map(marker => `
+                        <div class="bg-gray-50 p-4 rounded-lg shadow-sm flex flex-col items-center text-center relative group border border-gray-200">
+                            <img
+                                src="${marker.url}"
+                                alt="Marker ${marker.id}"
+                                class="w-48 h-80 object-cover rounded-md mb-2 border border-gray-300"
+                                onerror="this.onerror=null; this.src='https://placehold.co/150x266/CCCCCC/666666?text=Image+Error';"
+                            />
+                            <p class="text-sm font-medium text-gray-700 mb-2">${marker.name}</p>
+                            <button onclick="handleDownloadMarker('${marker.name}')"
+                                class="absolute bottom-4 right-4 p-2 rounded-lg bg-emerald-600 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 shadow-md"
+                                title="Download Marker">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                            </button>
+                        </div>
+                    `).join('');
+                } else {
+                    markersHtml = `
+                        <div class="col-span-full text-center py-10 text-gray-500">
+                            No markers available for this room yet.
+                            <button id="add-new-marker-btn"
+                                class="mt-4 px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition duration-300 ease-in-out shadow-sm">
+                                Add New Marker
+                            </button>
+                        </div>
+                    `;
+                }
+
+                contentDiv.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                            <h2 class="text-xl font-semibold text-gray-800">Markers</h2>
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <button id="upload-markers-btn"
+                                    class="flex items-center px-5 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 ease-in-out">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4 4-4-4"/></svg>
+                                    Upload Markers
+                                </button>
+                                <button id="download-all-markers-btn"
+                                    class="flex items-center px-5 py-2 bg-emerald-600 text-white rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition duration-300 ease-in-out">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                    Download All Markers
+                                </button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            ${markersHtml}
+                        </div>
+                    </div>
+                `;
+                if (dummyMarkers.length > 0) {
+                    document.getElementById('download-all-markers-btn').addEventListener('click', (e) => {
+                        triggerExplosion(e);
+                        showCustomModal('Downloading all markers...', 'info');
+                        setTimeout(() => {
+                            showCustomModal('All markers downloaded successfully!', 'success');
+                        }, 2500);
+                    });
+                    document.getElementById('upload-markers-btn').addEventListener('click', (e) => {
+                        triggerExplosion(e);
+                        showCustomModal('Opening marker upload dialog...', 'info');
+                        setTimeout(() => {
+                            showCustomModal('Marker upload initiated. Please select files.', 'success');
+                        }, 1500);
+                    });
+                } else {
+                    document.getElementById('add-new-marker-btn').addEventListener('click', (e) => {
+                        triggerExplosion(e);
+                        showCustomModal('This feature is under development.', 'info');
+                    });
+                }
+            }
+        };
+
+        /**
+         * Handles the download action for a design.
+         * @param {string} description - The description of the design to download.
+         */
+        const handleDownloadDesign = (description) => {
+            showCustomModal(`Downloading "${description}"...`, 'info');
+            setTimeout(() => {
+                showCustomModal(`"${description}" downloaded successfully!`, 'success');
+            }, 1500);
+        };
+
+        /**
+         * Handles the view action for a design.
+         * @param {string} description - The description of the design to view.
+         */
+        const handleViewDesign = (description) => {
+            showCustomModal(`Viewing "${description}"...`, 'info');
+            setTimeout(() => {
+                showCustomModal(`Opened viewer for "${description}".`, 'success');
+            }, 1500);
+        };
+
+        /**
+         * Handles the download action for a marker.
+         * @param {string} markerName - The name of the marker to download.
+         */
+        const handleDownloadMarker = (markerName) => {
+            showCustomModal(`Downloading "${markerName}"...`, 'info');
+            setTimeout(() => {
+                showCustomModal(`"${markerName}" downloaded successfully!`, 'success');
+            }, 1500);
+        };
+
+        // --- Rooms Overview Functions ---
+        let searchTerm = '';
+        let filterState = 'All';
+
+        /**
+         * Renders the overview page for all rooms.
+         */
+        const renderRoomsOverview = () => {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <header class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-gray-900 mb-2">All Meeting Rooms</h1>
+                        <p class="text-gray-600 text-lg">Browse and manage your meeting room inventory.</p>
+                    </div>
+                    <button id="create-new-room-btn"
+                        class="mt-4 sm:mt-0 flex items-center px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition duration-300 ease-in-out">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+                        Create New Room
+                    </button>
+                </header>
+
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6 flex flex-col sm:flex-row gap-4 border border-gray-200">
+                    <div class="relative flex-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        <input type="text" id="search-term-input"
+                            placeholder="Search by room name or location..."
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition duration-200 ease-in-out"
+                            value="${searchTerm}">
+                    </div>
+                    <div class="flex-shrink-0">
+                        <select id="filter-state-select"
+                            class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition duration-200 ease-in-out">
+                        </select>
+                    </div>
+                </div>
+
+                <div id="rooms-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    </div>
+            `;
+
+            // Add event listener for "Create New Room" button
+            document.getElementById('create-new-room-btn').addEventListener('click', (e) => {
+                triggerExplosion(e);
+                showCreateRoomModal = true;
+                renderCreateRoomModal();
+            });
+
+            // Add event listener for search input
+            const searchTermInput = document.getElementById('search-term-input');
+            searchTermInput.addEventListener('input', (e) => {
+                searchTerm = e.target.value;
+                updateRoomsGrid(); // Re-render grid on search input
+            });
+            searchTermInput.value = searchTerm; // Set initial value
+
+            // Populate and add event listener for filter select
+            const filterStateSelect = document.getElementById('filter-state-select');
+            const availableStates = ['All', ...new Set(rooms.map(room => room.state))];
+            filterStateSelect.innerHTML = availableStates.map(state => `<option value="${state}" ${filterState === state ? 'selected' : ''}>${state}</option>`).join('');
+            filterStateSelect.addEventListener('change', (e) => {
+                filterState = e.target.value;
+                updateRoomsGrid(); // Re-render grid on filter change
+            });
+
+            updateRoomsGrid(); // Initial render of the rooms grid
+        };
+
+        /**
+         * Updates the display of rooms based on current search and filter criteria.
+         */
+        const updateRoomsGrid = () => {
+            const roomsGrid = document.getElementById('rooms-grid');
+            const filteredRooms = rooms.filter(room => {
+                const matchesSearch = room.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                      room.location.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesFilter = filterState === 'All' || room.state === filterState;
+                return matchesSearch && matchesFilter;
+            });
+
+            if (filteredRooms.length > 0) {
+                roomsGrid.innerHTML = filteredRooms.map(room => `
+                    <div class="bg-white p-6 rounded-lg shadow-lg flex flex-col justify-between border border-gray-200 hover:shadow-xl transition-shadow duration-300 ease-in-out">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-800 mb-2">${room.name}</h3>
+                            <p class="text-gray-600 mb-1"><span class="font-medium">Location:</span> ${room.location}</p>
+                            <p class="text-gray-600 mb-1"><span class="font-medium">State:</span> <span class="font-semibold ${room.state === 'Completed' ? 'text-green-600' : room.state === 'Design Requested' ? 'text-blue-600' : 'text-yellow-600'}">${room.state}</span></p>
+                            <p class="text-gray-600 mb-1"><span class="font-medium">Size:</span> ${room.size} m²</p>
+                            <p class="text-gray-600 mb-4"><span class="font-medium">Capacity:</span> ${room.people} people</p>
+                        </div>
+                        <button onclick="handleViewDetails('${room.id}')"
+                            class="mt-4 w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition duration-300 ease-in-out shadow-md">
+                            View Details
+                        </button>
+                    </div>
+                `).join('');
+            } else {
+                roomsGrid.innerHTML = `
+                    <div class="col-span-full text-center py-10 text-gray-500 text-lg">
+                        No rooms found matching your criteria.
+                    </div>
+                `;
+            }
+        };
+
+        /**
+         * Handles viewing the details of a specific room.
+         * @param {string} roomId - The ID of the room to view.
+         */
+        const handleViewDetails = (roomId) => {
+            const room = rooms.find(r => r.id === roomId);
+            if (room) {
+                selectedRoom = room;
+                currentView = 'roomDetail';
+                renderApp();
+            }
+        };
+
+        // --- Create Room Modal Functions ---
+        /**
+         * Renders the modal for creating a new room.
+         */
+        const renderCreateRoomModal = () => {
+            const container = document.getElementById('create-room-modal-container');
+            if (!showCreateRoomModal) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
+                    <div class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full transform scale-100 opacity-100 overflow-y-auto max-h-[90vh] animate-slide-up border border-gray-200">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800">Create New Room</h2>
+                            <button id="create-room-close-btn" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                            </button>
+                        </div>
+                        <form id="create-room-form" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                            <div>
+                                <label for="newRoomName" class="block text-sm font-medium text-gray-700 mb-1">Room Name <span class="text-red-500">*</span></label>
+                                <input type="text" id="newRoomName" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 ease-in-out" required>
+                            </div>
+                            <div>
+                                <label for="newLocation" class="block text-sm font-medium text-gray-700 mb-1">Location <span class="text-red-500">*</span></label>
+                                <input type="text" id="newLocation" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 ease-in-out" required>
+                            </div>
+                            <div>
+                                <label for="newState" class="block text-sm font-medium text-gray-700 mb-1">State</label>
+                                <select id="newState" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 bg-white text-gray-800 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 ease-in-out">
+                                    <option>Design Requested</option>
+                                    <option>Completed</option>
+                                    <option>In Progress</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="newSize" class="block text-sm font-medium text-gray-700 mb-1">Size in m² <span class="text-red-500">*</span></label>
+                                <input type="number" id="newSize" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 ease-in-out" required>
+                            </div>
+                            <div>
+                                <label for="newPeople" class="block text-sm font-medium text-gray-700 mb-1">Number Of People <span class="text-red-500">*</span></label>
+                                <input type="number" id="newPeople" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 ease-in-out" required>
+                            </div>
+                            <div>
+                                <label for="newFloor" class="block text-sm font-medium text-gray-700 mb-1">Floor Or Section</label>
+                                <input type="text" id="newFloor" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 ease-in-out">
+                            </div>
+                            <div>
+                                <label for="newManagedBy" class="block text-sm font-medium text-gray-700 mb-1">Managed By</label>
+                                <input type="text" id="newManagedBy" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 ease-in-out">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="newDescription" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                <textarea id="newDescription" rows="3" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 ease-in-out"></textarea>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="file-upload" class="block text-sm font-medium text-gray-700 mb-1">Upload 3D Scan (Optional)</label>
+                                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
+                                    <div class="space-y-1 text-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto h-12 w-12 text-gray-400"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="12" x2="12" y1="17" y2="11"/><line x1="9" x2="15" y1="14" y2="14"/></svg>
+                                        <div class="flex text-sm text-gray-600">
+                                            <label for="newFileUpload" class="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-emerald-500">
+                                                <span>Upload a file</span>
+                                                <input id="newFileUpload" name="file-upload" type="file" class="sr-only">
+                                            </label>
+                                            <p class="pl-1">or drag and drop</p>
+                                        </div>
+                                        <p id="new-file-chosen" class="text-xs text-gray-500">No file chosen</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="md:col-span-2 flex justify-end gap-3 mt-6">
+                                <button type="button" id="create-room-cancel-btn"
+                                    class="px-5 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-300 ease-in-out">
+                                    Cancel
+                                </button>
+                                <button type="submit" id="create-room-submit-btn"
+                                    class="px-5 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-300 ease-in-out">
+                                    Create Room
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+
+            // Add event listeners for modal buttons
+            document.getElementById('create-room-close-btn').addEventListener('click', () => {
+                showCreateRoomModal = false;
+                renderCreateRoomModal();
+            });
+            document.getElementById('create-room-cancel-btn').addEventListener('click', () => {
+                showCreateRoomModal = false;
+                renderCreateRoomModal();
+            });
+
+            let selectedFile = null;
+            const newFileUploadInput = document.getElementById('newFileUpload');
+            const newFileChosenText = document.getElementById('new-file-chosen');
+
+            newFileUploadInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    selectedFile = e.target.files[0];
+                    newFileChosenText.textContent = selectedFile.name;
+                } else {
+                    selectedFile = null;
+                    newFileChosenText.textContent = 'No file chosen';
+                }
+            });
+
+            // Handle form submission
+            document.getElementById('create-room-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                triggerExplosion(e); // Trigger explosion on form submission button click
+
+                const roomName = document.getElementById('newRoomName').value;
+                const location = document.getElementById('newLocation').value;
+                const state = document.getElementById('newState').value;
+                const size = document.getElementById('newSize').value;
+                const people = document.getElementById('newPeople').value;
+                const description = document.getElementById('newDescription').value;
+                const floor = document.getElementById('newFloor').value;
+                const managedBy = document.getElementById('newManagedBy').value;
+
+                if (!roomName || !location || !size || !people) {
+                    showCustomModal('Please fill in all required fields (Room Name, Location, Size, Number of People).', 'error');
+                    return;
+                }
+
+                const newRoom = {
+                    id: `room-${Date.now()}`, // Simple unique ID
+                    name: roomName,
+                    location,
+                    state,
+                    size: parseInt(size),
+                    people: parseInt(people),
+                    description,
+                    floor,
+                    managedBy,
+                    overallScore: 0, // Default scores for new rooms
+                    techScore: 0,
+                    acousticScore: 0,
+                    sharingTech: 'N/A',
+                    meetingProvider: 'N/A',
+                    bookingCapability: 'N/A',
+                };
+
+                showCustomModal('Creating new room and uploading file...', 'info');
+
+                setTimeout(() => {
+                    rooms.push(newRoom); // Add new room to the global rooms array
+                    if (selectedFile) {
+                        showCustomModal(`Room "${newRoom.name}" created and file "${selectedFile.name}" uploaded successfully!`, 'success');
+                    } else {
+                        showCustomModal(`Room "${newRoom.name}" created successfully!`, 'success');
+                    }
+                    showCreateRoomModal = false;
+                    renderCreateRoomModal(); // Close modal
+                    currentView = 'roomsOverview'; // Go back to rooms overview
+                    renderApp(); // Re-render the app to show updated rooms list
+                }, 2000);
+            });
+        };
+
+        // --- Edit Room Modal Functions ---
+        /**
+         * Renders the modal for editing an existing room.
+         * @param {object} roomToEdit - The room object to be edited.
+         */
+        const renderEditRoomModal = (roomToEdit) => {
+            const container = document.getElementById('edit-room-modal-container');
+            if (!showEditRoomModal) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
+                    <div class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full transform scale-100 opacity-100 overflow-y-auto max-h-[90vh] animate-slide-up border border-gray-200">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800">Edit Room Details</h2>
+                            <button id="edit-room-close-btn" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                            </button>
+                        </div>
+                        <form id="edit-room-form" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                            <div>
+                                <label for="editRoomName" class="block text-sm font-medium text-gray-700 mb-1">Room Name <span class="text-red-500">*</span></label>
+                                <input type="text" id="editRoomName" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 ease-in-out" value="${roomToEdit.name}" required>
+                            </div>
+                            <div>
+                                <label for="editLocation" class="block text-sm font-medium text-gray-700 mb-1">Location <span class="text-red-500">*</span></label>
+                                <input type="text" id="editLocation" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 ease-in-out" value="${roomToEdit.location}" required>
+                            </div>
+                            <div>
+                                <label for="editState" class="block text-sm font-medium text-gray-700 mb-1">State</label>
+                                <select id="editState" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 bg-white text-gray-800 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 ease-in-out">
+                                    <option ${roomToEdit.state === 'Design Requested' ? 'selected' : ''}>Design Requested</option>
+                                    <option ${roomToEdit.state === 'Completed' ? 'selected' : ''}>Completed</option>
+                                    <option ${roomToEdit.state === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="editSize" class="block text-sm font-medium text-gray-700 mb-1">Size in m² <span class="text-red-500">*</span></label>
+                                <input type="number" id="editSize" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 ease-in-out" value="${roomToEdit.size}" required>
+                            </div>
+                            <div>
+                                <label for="editPeople" class="block text-sm font-medium text-gray-700 mb-1">Number Of People <span class="text-red-500">*</span></label>
+                                <input type="number" id="editPeople" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 ease-in-out" value="${roomToEdit.people}" required>
+                            </div>
+                            <div>
+                                <label for="editFloor" class="block text-sm font-medium text-gray-700 mb-1">Floor Or Section</label>
+                                <input type="text" id="editFloor" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 ease-in-out" value="${roomToEdit.floor}">
+                            </div>
+                            <div>
+                                <label for="editManagedBy" class="block text-sm font-medium text-gray-700 mb-1">Managed By</label>
+                                <input type="text" id="editManagedBy" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 ease-in-out" value="${roomToEdit.managedBy}">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="editDescription" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                <textarea id="editDescription" rows="3" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 ease-in-out">${roomToEdit.description}</textarea>
+                            </div>
+                            <div class="md:col-span-2 flex justify-end gap-3 mt-6">
+                                <button type="button" id="edit-room-cancel-btn"
+                                    class="px-5 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-300 ease-in-out">
+                                    Cancel
+                                </button>
+                                <button type="submit" id="edit-room-save-btn"
+                                    class="px-5 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-300 ease-in-out">
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+
+            // Add event listeners for modal buttons
+            document.getElementById('edit-room-close-btn').addEventListener('click', () => {
+                showEditRoomModal = false;
+                renderEditRoomModal(roomToEdit); // Re-render to close
+            });
+            document.getElementById('edit-room-cancel-btn').addEventListener('click', () => {
+                showEditRoomModal = false;
+                renderEditRoomModal(roomToEdit); // Re-render to close
+            });
+
+            // Handle form submission for editing
+            document.getElementById('edit-room-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                const updatedRoom = {
+                    ...roomToEdit, // Keep existing properties
+                    name: document.getElementById('editRoomName').value,
+                    location: document.getElementById('editLocation').value,
+                    state: document.getElementById('editState').value,
+                    size: parseInt(document.getElementById('editSize').value),
+                    people: parseInt(document.getElementById('editPeople').value),
+                    description: document.getElementById('editDescription').value,
+                    floor: document.getElementById('editFloor').value,
+                    managedBy: document.getElementById('editManagedBy').value,
+                };
+
+                if (!updatedRoom.name || !updatedRoom.location || isNaN(updatedRoom.size) || isNaN(updatedRoom.people)) {
+                    showCustomModal('Please fill in all required fields (Room Name, Location, Size, Number of People).', 'error');
+                    return;
+                }
+
+                showCustomModal(`Updating room "${updatedRoom.name}"...`, 'info');
+
+                setTimeout(() => {
+                    const roomIndex = rooms.findIndex(r => r.id === updatedRoom.id);
+                    if (roomIndex !== -1) {
+                        rooms[roomIndex] = updatedRoom; // Update the room in the global array
+                    }
+                    selectedRoom = updatedRoom; // Ensure the detailed view is updated
+                    showCustomModal(`Room "${updatedRoom.name}" updated successfully!`, 'success');
+                    showEditRoomModal = false;
+                    renderEditRoomModal(roomToEdit); // Close modal
+                    renderApp(); // Re-render the app to update the detail view or overview
+                }, 1500);
+            });
+        };
+
+        // --- Overview Content Functions (with D3.js for charts) ---
+        /**
+         * Renders the main overview content, including room statistics and D3.js charts.
+         */
+        const renderOverviewContent = () => {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="min-h-[calc(100vh-160px)]">
+                    <header class="mb-8">
+                        <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Overview</h1>
+                        <p class="text-gray-600 text-lg">A quick glance at your meeting room statistics.</p>
+                    </header>
+
+                    <div class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Room Status Summary</h2>
+                        <div id="room-summary-cards" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            </div>
+
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Room Status Visuals</h2>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div class="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-4">Room Status Distribution</h3>
+                                <div id="pie-chart-container" class="w-full h-[300px]"></div>
+                            </div>
+
+                            <div class="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-4">Room Status Comparison</h3>
+                                <div id="bar-chart-container" class="w-full h-[300px]"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Calculate room counts by state
+            const roomCounts = {
+                'Design Requested': 0,
+                'Completed': 0,
+                'In Progress': 0,
+            };
+            rooms.forEach(room => {
+                if (roomCounts.hasOwnProperty(room.state)) {
+                    roomCounts[room.state]++;
+                }
+            });
+
+            // Render summary cards
+            const summaryCardsDiv = document.getElementById('room-summary-cards');
+            summaryCardsDiv.innerHTML = `
+                <div class="bg-blue-50 p-4 rounded-lg flex items-center justify-between border border-blue-200">
+                    <div>
+                        <p class="text-sm font-medium text-blue-600">Design Requested</p>
+                        <p class="text-2xl font-bold text-blue-800">${roomCounts['Design Requested']}</p>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-blue-400"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg flex items-center justify-between border border-green-200">
+                    <div>
+                        <p class="text-sm font-medium text-green-600">Completed Rooms</p>
+                        <p class="text-2xl font-bold text-green-800">${roomCounts['Completed']}</p>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-green-400"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+                </div>
+                <div class="bg-yellow-50 p-4 rounded-lg flex items-center justify-between border border-yellow-200">
+                    <div>
+                        <p class="text-sm font-medium text-yellow-600">Rooms In Progress</p>
+                        <p class="text-2xl font-bold text-yellow-800">${roomCounts['In Progress']}</p>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-yellow-400"><rect width="8" height="8" x="2" y="2" rx="2"/><path d="M14 2c1.1 0 2 .9 2 2v4c0 1.1-.9 2-2 2"/><path d="M22 14c0 1.1-.9 2-2 2h-4c-1.1 0-2-.9-2-2"/><path d="M10 22c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2"/><path d="M2 10c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2"/></svg>
+                </div>
+            `;
+
+            // Data for D3.js Charts
+            const pieChartData = [
+                { name: 'Design Requested', value: roomCounts['Design Requested'] },
+                { name: 'Completed', value: roomCounts['Completed'] },
+                { name: 'In Progress', value: roomCounts['In Progress'] },
+            ];
+            const barChartData = [
+                { state: 'Design Requested', count: roomCounts['Design Requested'] },
+                { state: 'Completed', count: roomCounts['Completed'] },
+                { state: 'In Progress', count: roomCounts['In Progress'] },
+            ];
+            const COLORS = ['#F59E0B', '#10B981', '#3B82F6']; // Yellow for Design Requested, Green for Completed, Blue for In Progress
+
+            // Pie Chart rendering with D3.js
+            const pieContainer = d3.select("#pie-chart-container");
+            const pieWidth = pieContainer.node().getBoundingClientRect().width;
+            const pieHeight = 300;
+            const pieRadius = Math.min(pieWidth, pieHeight) / 2 - 20;
+
+            pieContainer.html(''); // Clear previous chart
+            const pieSvg = pieContainer.append("svg")
+                .attr("width", pieWidth)
+                .attr("height", pieHeight)
+                .append("g")
+                .attr("transform", `translate(${pieWidth / 2}, ${pieHeight / 2})`);
+
+            const pie = d3.pie().value(d => d.value);
+            const arc = d3.arc().innerRadius(0).outerRadius(pieRadius);
+
+            const arcs = pieSvg.selectAll("arc")
+                .data(pie(pieChartData))
+                .enter()
+                .append("g")
+                .attr("class", "arc");
+
+            arcs.append("path")
+                .attr("d", arc)
+                .attr("fill", (d, i) => COLORS[i % COLORS.length])
+                .attr("stroke", "white")
+                .style("stroke-width", "2px");
+
+            // Add text labels to pie slices
+            arcs.append("text")
+                .attr("transform", d => `translate(${arc.centroid(d)})`)
+                .attr("text-anchor", "middle")
+                .attr("fill", "white")
+                .style("font-size", "12px")
+                .text(d => d.data.value > 0 ? d.data.value : ''); // Only show label if value > 0
+
+            // Add legend for pie chart
+            const pieLegend = pieSvg.append("g")
+                .attr("transform", `translate(${pieRadius + 20}, ${-pieRadius + 10})`); // Position legend to the right
+
+            pieLegend.selectAll("rect")
+                .data(pieChartData)
+                .enter()
+                .append("rect")
+                .attr("x", 0)
+                .attr("y", (d, i) => i * 20)
+                .attr("width", 10)
+                .attr("height", 10)
+                .attr("fill", (d, i) => COLORS[i % COLORS.length]);
+
+            pieLegend.selectAll("text")
+                .data(pieChartData)
+                .enter()
+                .append("text")
+                .attr("x", 15)
+                .attr("y", (d, i) => i * 20 + 9)
+                .text(d => d.name)
+                .style("font-size", "12px")
+                .attr("fill", "#374151"); // Tailwind gray-700
+
+            // Bar Chart rendering with D3.js
+            const barContainer = d3.select("#bar-chart-container");
+            const barWidth = barContainer.node().getBoundingClientRect().width;
+            const barHeight = 300;
+            const margin = { top: 20, right: 30, bottom: 40, left: 40 };
+            const innerWidth = barWidth - margin.left - margin.right;
+            const innerHeight = barHeight - margin.top - margin.bottom;
+
+            barContainer.html(''); // Clear previous chart
+            const barSvg = barContainer.append("svg")
+                .attr("width", barWidth)
+                .attr("height", barHeight)
+                .append("g")
+                .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+            const xScale = d3.scaleBand()
+                .domain(barChartData.map(d => d.state))
+                .range([0, innerWidth])
+                .padding(0.4);
+
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(barChartData, d => d.count) + 1]) // +1 for a little padding
+                .range([innerHeight, 0]);
+
+            // X-axis
+            barSvg.append("g")
+                .attr("transform", `translate(0, ${innerHeight})`)
+                .call(d3.axisBottom(xScale).tickSizeOuter(0))
+                .selectAll("text")
+                .style("text-anchor", "middle")
+                .attr("fill", "#6B7280"); // Tailwind gray-500
+
+            // Y-axis
+            barSvg.append("g")
+                .call(d3.axisLeft(yScale).ticks(d3.max(barChartData, d => d.count) + 1).tickFormat(d3.format("d")).tickSizeOuter(0))
+                .selectAll("text")
+                .attr("fill", "#6B7280"); // Tailwind gray-500
+
+            // Bars
+            barSvg.selectAll(".bar")
+                .data(barChartData)
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", d => xScale(d.state))
+                .attr("y", d => yScale(d.count))
+                .attr("width", xScale.bandwidth())
+                .attr("height", d => innerHeight - yScale(d.count))
+                .attr("fill", (d, i) => COLORS[i % COLORS.length])
+                .attr("rx", 10) // Rounded top corners
+                .attr("ry", 10);
+
+            // Add labels on top of bars
+            barSvg.selectAll(".bar-label")
+                .data(barChartData)
+                .enter()
+                .append("text")
+                .attr("class", "bar-label")
+                .attr("x", d => xScale(d.state) + xScale.bandwidth() / 2)
+                .attr("y", d => yScale(d.count) - 5) // Position above the bar
+                .attr("text-anchor", "middle")
+                .text(d => d.count)
+                .style("font-size", "12px")
+                .attr("fill", "#374151"); // Tailwind gray-700
+        };
+
+        // --- Organizations Panel Functions ---
+        let organizations = [...dummyOrganizations];
+        let itemsPerPage = 10;
+        let currentPage = 1;
+
+        /**
+         * Renders the Organizations management panel.
+         */
+        const renderOrganizationsPanel = () => {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <header class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Organizations</h1>
+                        <p class="text-gray-600 text-lg">Manage your business entities and their associated rooms.</p>
+                    </div>
+                    <button id="create-organization-btn"
+                        class="mt-4 sm:mt-0 flex items-center px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition duration-300 ease-in-out">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+                        Create a new Organization
+                    </button>
+                </header>
+
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-700 text-sm">Items per page:</span>
+                            <select id="items-per-page-select"
+                                class="px-3 py-1.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition duration-200 ease-in-out">
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-lg border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Organization Name
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="organizations-table-body" class="bg-white divide-y divide-gray-200">
+                                </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 flex justify-between items-center text-sm text-gray-600">
+                        <span id="pagination-summary"></span>
+                        <div class="flex gap-2">
+                            <button id="prev-page-btn"
+                                class="px-3 py-1 rounded-md border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                                Previous
+                            </button>
+                            <span id="page-info" class="px-3 py-1 bg-gray-100 rounded-md"></span>
+                            <button id="next-page-btn"
+                                class="px-3 py-1 rounded-md border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('create-organization-btn').addEventListener('click', (e) => {
+                triggerExplosion(e);
+                showCustomModal('Initiating new organization creation...', 'info');
+            });
+
+            const itemsPerPageSelect = document.getElementById('items-per-page-select');
+            itemsPerPageSelect.value = itemsPerPage; // Set initial value
+            itemsPerPageSelect.addEventListener('change', (e) => {
+                itemsPerPage = parseInt(e.target.value);
+                currentPage = 1; // Reset to first page
+                updateOrganizationsTable();
+            });
+
+            document.getElementById('prev-page-btn').addEventListener('click', () => {
+                currentPage = Math.max(currentPage - 1, 1);
+                updateOrganizationsTable();
+            });
+            document.getElementById('next-page-btn').addEventListener('click', () => {
+                const totalPages = Math.ceil(organizations.length / itemsPerPage);
+                currentPage = Math.min(currentPage + 1, totalPages);
+                updateOrganizationsTable();
+            });
+
+            updateOrganizationsTable(); // Initial render of the table
+        };
+
+        /**
+         * Updates the organizations table with current data and pagination.
+         */
+        const updateOrganizationsTable = () => {
+            const tableBody = document.getElementById('organizations-table-body');
+            const totalPages = Math.ceil(organizations.length / itemsPerPage);
+            const currentOrganizations = organizations.slice(
+                (currentPage - 1) * itemsPerPage,
+                currentPage * itemsPerPage
+            );
+
+            if (currentOrganizations.length > 0) {
+                tableBody.innerHTML = currentOrganizations.map((org, index) => `
+                    <tr class="${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            ${org.name}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onclick="handleEditOrganization('${org.name}')"
+                                class="text-gray-600 hover:text-gray-900 mr-3 px-3 py-1.5 rounded-md bg-gray-200 hover:bg-gray-300 transition duration-200 ease-in-out shadow-sm">
+                                Edit
+                            </button>
+                            <button onclick="handleDeleteOrganization('${org.name}')"
+                                class="text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-md transition duration-200 ease-in-out shadow-sm">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="2" class="px-6 py-4 text-center text-gray-500">
+                            No organizations found.
+                        </td>
+                    </tr>
+                `;
+            }
+
+            // Update pagination info
+            document.getElementById('pagination-summary').textContent = `Showing ${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(currentPage * itemsPerPage, organizations.length)} of ${organizations.length} items.`;
+            document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById('prev-page-btn').disabled = currentPage === 1;
+            document.getElementById('next-page-btn').disabled = currentPage === totalPages;
+        };
+
+        /**
+         * Handles editing an organization.
+         * @param {string} orgName - The name of the organization to edit.
+         */
+        const handleEditOrganization = (orgName) => {
+            showCustomModal(`Editing "${orgName}"...`, 'info');
+        };
+
+        /**
+         * Handles deleting an organization.
+         * @param {string} orgName - The name of the organization to delete.
+         */
+        const handleDeleteOrganization = (orgName) => {
+            showCustomModal(`Deleting "${orgName}"...`, 'info');
+            organizations = organizations.filter(org => org.name !== orgName);
+            updateOrganizationsTable(); // Re-render table after deletion
+        };
+
+        // --- Processes Panel Functions ---
+        let processes = [...dummyProcesses];
+
+        /**
+         * Renders the Processes management panel.
+         */
+        const renderProcessesPanel = () => {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <header class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Processes</h1>
+                        <p class="text-gray-600 text-lg">Define and manage workflows for room design and setup.</p>
+                    </div>
+                    <button id="create-process-btn"
+                        class="mt-4 sm:mt-0 flex items-center px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition duration-300 ease-in-out">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+                        Create Process
+                    </button>
+                </header>
+
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Process List</h2>
+                    <div id="processes-list" class="grid grid-cols-1 gap-4">
+                        </div>
+                </div>
+            `;
+
+            document.getElementById('create-process-btn').addEventListener('click', (e) => {
+                triggerExplosion(e);
+                showCustomModal('Initiating new process creation...', 'info');
+            });
+
+            updateProcessesList(); // Initial render of the process list
+        };
+
+        /**
+         * Updates the display of processes.
+         */
+        const updateProcessesList = () => {
+            const processesListDiv = document.getElementById('processes-list');
+            if (processes.length > 0) {
+                processesListDiv.innerHTML = processes.map(process => `
+                    <div class="p-4 bg-gray-50 rounded-md shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center border border-gray-200">
+                        <p class="text-lg font-medium text-gray-800 mb-2 sm:mb-0">${process.name}</p>
+                        <div class="flex items-center gap-2">
+                            <button onclick="handleEditProcess('${process.name}')"
+                                class="text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-md bg-gray-200 hover:bg-gray-300 transition duration-200 ease-in-out shadow-sm">
+                                Edit
+                            </button>
+                            <button onclick="handleDeleteProcess('${process.name}')"
+                                class="text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-md transition duration-200 ease-in-out shadow-sm">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                processesListDiv.innerHTML = `
+                    <p class="text-gray-600 text-center py-4">No processes available yet.</p>
+                `;
+            }
+        };
+
+        /**
+         * Handles editing a process.
+         * @param {string} processName - The name of the process to edit.
+         */
+        const handleEditProcess = (processName) => {
+            showCustomModal(`Editing "${processName}"...`, 'info');
+        };
+
+        /**
+         * Handles deleting a process.
+         * @param {string} processName - The name of the process to delete.
+         */
+        const handleDeleteProcess = (processName) => {
+            showCustomModal(`Deleting "${processName}"...`, 'info');
+            processes = processes.filter(proc => proc.name !== processName);
+            updateProcessesList(); // Re-render list after deletion
+        };
+
+        // --- Settings Content Functions ---
+        let notificationEnabled = true;
+        let theme = 'light';
+        let dataRefreshInterval = '5min';
+
+        /**
+         * Renders the Settings page content.
+         */
+        const renderSettingsContent = () => {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <header class="mb-8">
+                    <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Settings</h1>
+                    <p class="text-gray-600 text-lg">Configure your application preferences.</p>
+                </header>
+
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">General Settings</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0">
+                            <label for="notifications" class="text-gray-700 font-medium text-lg">Enable Notifications</label>
+                            <input type="checkbox" id="notifications"
+                                class="h-6 w-6 text-emerald-600 rounded focus:ring-emerald-500 transition duration-200 ease-in-out"
+                                ${notificationEnabled ? 'checked' : ''}>
+                        </div>
+                        <div class="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0">
+                            <label for="theme" class="text-gray-700 font-medium text-lg">Application Theme</label>
+                            <select id="theme-select"
+                                class="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 transition duration-200 ease-in-out">
+                                <option value="light" ${theme === 'light' ? 'selected' : ''}>Light</option>
+                                <option value="dark" ${theme === 'dark' ? 'selected' : ''}>Dark (Coming Soon)</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0">
+                            <label for="dataRefresh" class="text-gray-700 font-medium text-lg">Data Refresh Interval</label>
+                            <select id="data-refresh-select"
+                                class="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 transition duration-200 ease-in-out">
+                                <option value="1min" ${dataRefreshInterval === '1min' ? 'selected' : ''}>1 Minute</option>
+                                <option value="5min" ${dataRefreshInterval === '5min' ? 'selected' : ''}>5 Minutes</option>
+                                <option value="15min" ${dataRefreshInterval === '15min' ? 'selected' : ''}>15 Minutes</option>
+                                <option value="manual" ${dataRefreshInterval === 'manual' ? 'selected' : ''}>Manual</option>
+                            </select>
+                        </div>
+                        <div class="py-3">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-2">Advanced Settings</h3>
+                            <p class="text-gray-600 text-base">More advanced configuration options will be available here soon.</p>
+                            <ul class="list-disc list-inside text-gray-600 text-sm mt-2 ml-4">
+                                <li>Integration settings</li>
+                                <li>User management permissions</li>
+                                <li>Audit logs retention</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button id="save-settings-btn"
+                            class="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition duration-300 ease-in-out">
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Add event listeners for settings controls
+            document.getElementById('notifications').addEventListener('change', (e) => {
+                notificationEnabled = e.target.checked;
+            });
+            document.getElementById('theme-select').addEventListener('change', (e) => {
+                theme = e.target.value;
+            });
+            document.getElementById('data-refresh-select').addEventListener('change', (e) => {
+                dataRefreshInterval = e.target.value;
+            });
+            document.getElementById('save-settings-btn').addEventListener('click', () => {
+                showCustomModal('Settings saved successfully!', 'success');
+            });
+        };
+
+        // --- Administration View Functions ---
+        /**
+         * Renders the Administration view with tabs for Organizations and Processes.
+         */
+        const renderAdministrationView = () => {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <header class="mb-8">
+                    <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Administration</h1>
+                    <p class="text-gray-600 text-lg">Manage organizations and processes.</p>
+                </header>
+
+                <div class="bg-white rounded-xl shadow-lg p-2 mb-6 flex flex-wrap justify-center gap-2 md:gap-4">
+                    <button id="admin-tab-organizations" class="px-6 py-3 rounded-lg text-base font-medium transition duration-300 ease-in-out">
+                        Organizations
+                    </button>
+                    <button id="admin-tab-processes" class="px-6 py-3 rounded-lg text-base font-medium transition duration-300 ease-in-out">
+                        Processes
+                    </button>
+                </div>
+
+                <div id="admin-content"></div>
+            `;
+
+            // Add event listeners for admin tabs
+            document.getElementById('admin-tab-organizations').addEventListener('click', () => {
+                activeAdminTab = 'organizations';
+                updateAdminTabContent();
+            });
+            document.getElementById('admin-tab-processes').addEventListener('click', () => {
+                activeAdminTab = 'processes';
+                updateAdminTabContent();
+            });
+
+            updateAdminTabContent(); // Initial content load for the active admin tab
+        };
+
+        /**
+         * Updates the content within the Administration view based on the active tab.
+         */
+        const updateAdminTabContent = () => {
+            const adminContentDiv = document.getElementById('admin-content');
+
+            // Update tab button styles
+            ['organizations', 'processes'].forEach(tab => {
+                const btn = document.getElementById(`admin-tab-${tab}`);
+                if (btn) {
+                    if (activeAdminTab === tab) {
+                        btn.classList.add('bg-emerald-600', 'text-white', 'shadow-md');
+                        btn.classList.remove('text-gray-700', 'hover:bg-gray-100', 'hover:text-emerald-700');
+                    } else {
+                        btn.classList.remove('bg-emerald-600', 'text-white', 'shadow-md');
+                        btn.classList.add('text-gray-700', 'hover:bg-gray-100', 'hover:text-emerald-700');
+                    }
+                }
+            });
+
+            if (activeAdminTab === 'organizations') {
+                renderOrganizationsPanel();
+            } else if (activeAdminTab === 'processes') {
+                renderProcessesPanel();
+            }
+        };
+
+        // --- Main Application Rendering Logic ---
+        /**
+         * The main function to render the entire application based on the current view.
+         * This function is called whenever the view state changes.
+         */
+        const renderApp = () => {
+            // Update sidebar active class
+            ['overview', 'roomsOverview', 'administration', 'settings'].forEach(view => {
+                const navLink = document.getElementById(`nav-${view}`);
+                if (navLink) {
+                    if (view === 'roomsOverview' && (currentView === 'roomsOverview' || currentView === 'roomDetail')) {
+                        navLink.classList.add('bg-emerald-800', 'text-white', 'shadow-md');
+                        navLink.classList.remove('hover:bg-emerald-800', 'hover:text-white');
+                    } else if (currentView === view) {
+                        navLink.classList.add('bg-emerald-800', 'text-white', 'shadow-md');
+                        navLink.classList.remove('hover:bg-emerald-800', 'hover:text-white');
+                    } else {
+                        navLink.classList.remove('bg-emerald-800', 'text-white', 'shadow-md');
+                        navLink.classList.add('hover:bg-emerald-800', 'hover:text-white');
+                    }
+                }
+            });
+
+            // Render main content based on currentView
+            const mainContent = document.getElementById('main-content');
+            switch (currentView) {
+                case 'overview':
+                    renderOverviewContent();
+                    break;
+                case 'roomsOverview':
+                    renderRoomsOverview();
+                    break;
+                case 'roomDetail':
+                    renderRoomDetailView(selectedRoom);
+                    break;
+                case 'administration':
+                    renderAdministrationView();
+                    break;
+                case 'settings':
+                    renderSettingsContent();
+                    break;
+                default:
+                    renderOverviewContent(); // Default to overview
+            }
+
+            // Ensure modals are rendered/hidden based on their state
+            renderCustomModal();
+            renderCreateRoomModal();
+            renderEditRoomModal(selectedRoom); // Pass selectedRoom for edit modal
+        };
+
+        // Event Listeners for Sidebar Navigation (attached once DOM is loaded)
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('nav-overview').addEventListener('click', (e) => {
+                e.preventDefault();
+                currentView = 'overview';
+                renderApp();
+            });
+            document.getElementById('nav-roomsOverview').addEventListener('click', (e) => {
+                e.preventDefault();
+                currentView = 'roomsOverview';
+                renderApp();
+            });
+            document.getElementById('nav-administration').addEventListener('click', (e) => {
+                e.preventDefault();
+                currentView = 'administration';
+                renderApp();
+            });
+            document.getElementById('nav-settings').addEventListener('click', (e) => {
+                e.preventDefault();
+                currentView = 'settings';
+                renderApp();
+            });
+            document.getElementById('sign-out').addEventListener('click', (e) => {
+                e.preventDefault();
+                showCustomModal('Signing out...', 'info');
+            });
+
+            // Initial render of the application when the DOM is ready
+            renderApp();
+        });
+
+        // Handle window resize for D3 charts (re-render charts to adapt to new size)
+        window.addEventListener('resize', () => {
+            if (currentView === 'overview') {
+                renderOverviewContent(); // Re-render charts on resize
+            }
+        });
+    </script>
+</body>
+</html>
