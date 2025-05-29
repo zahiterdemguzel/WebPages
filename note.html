@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Multi-line Text Area with macOS Window</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: "Inter", sans-serif;
+            background-color: #1a202c;
+            /* Default background color */
+            color: #e2e8f0;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            color: white;
+            max-width: 300px;
+            z-index: 10;
+            /* Ensure it's above other elements */
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.6);
+            /* Slightly more opaque for controls */
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            /* Ensure it's above other elements */
+        }
+
+        #controls label {
+            color: white;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        #controls input[type="color"] {
+            width: 60px;
+            height: 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            -webkit-appearance: none;
+            /* Remove default styling for Chrome/Safari */
+            -moz-appearance: none;
+            /* Remove default styling for Firefox */
+            appearance: none;
+            background: none;
+            /* Make background transparent to show custom border */
+        }
+
+        #controls input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        #controls input[type="color"]::-webkit-color-swatch {
+            border: 2px solid #fff;
+            /* Custom border */
+            border-radius: 4px;
+        }
+
+        #controls input[type="color"]::-moz-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        #controls input[type="color"]::-moz-color-swatch {
+            border: 2px solid #fff;
+            /* Custom border */
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="info">Click panel to activate. Use arrow keys, Enter, Backspace, and Paste (Ctrl+V/Cmd+V).</div>
+
+    <div id="controls">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <label for="backgroundColorPicker">Background</label>
+            <input type="color" id="backgroundColorPicker" value="#1a202c">
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <label for="textColorPicker">Text Color</label>
+            <input type="color" id="textColorPicker" value="#e2e8f0">
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <label for="windowColorPicker">Panel Color</label>
+            <input type="color" id="windowColorPicker" value="#2d3748">
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FontLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/TextGeometry.js"></script>
+
+    <script type="module">
+        // --- Global Variables ---
+        let scene, camera, renderer, controls;
+        let font;
+        let windowContainer; // The main group for the entire window (panel + title bar + buttons)
+        let textAreaPanel, cursorMesh;
+        let textLinesContainer;
+        let titleBarMesh;
+        let closeButtonMesh, minimizeButtonMesh, maximizeButtonMesh;
+
+        let isActive = false;
+        let currentText = "";
+        let cursorIndex = 0; // Logical cursor position within currentText
+        let preferredCursorXOffset = 0; // For up/down arrow navigation to try and maintain horizontal position
+        let cursorBlinkInterval;
+
+        let isMinimized = false;
+        let isMaximized = false;
+        let originalWindowScale = new THREE.Vector3();
+        let originalWindowPosition = new THREE.Vector3();
+        let isDraggingWindow = false;
+        let dragStartMouseX, dragStartMouseY;
+        let dragStartWindowX, dragStartWindowY;
+
+
+        // Default colors (matching initial HTML values)
+        let currentBackgroundColor = 0x1a202c;
+        let currentTextColor = 0xe2e8f0;
+        let currentPanelColor = 0x2d3748;
+        let currentPlaceholderColor = 0xaaaaaa;
+
+        const TEXT_AREA_WIDTH = 4;
+        const TEXT_AREA_HEIGHT = 2;
+        const TEXT_AREA_DEPTH = 0.1;
+        const TEXT_INPUT_SIZE = 0.1;
+        const LINE_HEIGHT_FACTOR = 1.3;
+        const PLACEHOLDER_TEXT = "Type here...";
+        let mouse = new THREE.Vector2();
+
+        // --- Initialization ---
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(currentBackgroundColor); // Set initial background
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1, 3.5); // Slightly further back for better view
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.target.set(0, 0.5, 0);
+
+            // --- 3-Point Lighting Setup ---
+            // Key Light: Strongest, illuminates the main subject
+            const keyLight = new THREE.PointLight(0xffffff, 1.5, 100);
+            keyLight.position.set(3, 3, 5); // Position top-right-front
+            scene.add(keyLight);
+
+            // Fill Light: Softer, reduces shadows from key light
+            const fillLight = new THREE.PointLight(0xffffff, 0.7, 100);
+            fillLight.position.set(-3, 2, 4); // Position top-left-front
+            scene.add(fillLight);
+
+            // Back Light (Rim Light): Creates a subtle outline
+            const backLight = new THREE.PointLight(0xffffff, 0.5, 100);
+            backLight.position.set(0, 5, -3); // Position directly above/behind
+            scene.add(backLight);
+
+            const fontLoader = new THREE.FontLoader();
+            fontLoader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_regular.typeface.json', (loadedFont) => {
+                font = loadedFont;
+                createTextArea();
+                createCursor();
+                updateDisplayedText();
+            },
+                undefined,
+                (error) => {
+                    console.error('An error occurred loading the font:', error);
+                    document.getElementById('info').textContent = "Error loading font. Text area may not work.";
+                });
+
+            window.addEventListener('resize', onWindowResize);
+            renderer.domElement.addEventListener('click', onCanvasClick);
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('paste', onPaste);
+
+            // Event listeners for dragging
+            renderer.domElement.addEventListener('mousedown', onMouseDown);
+            renderer.domElement.addEventListener('mousemove', onMouseMove);
+            renderer.domElement.addEventListener('mouseup', onMouseUp);
+
+            // Get color pickers
+            const backgroundColorPicker = document.getElementById('backgroundColorPicker');
+            const textColorPicker = document.getElementById('textColorPicker');
+            const windowColorPicker = document.getElementById('windowColorPicker');
+
+            // Set initial values for pickers (from global variables)
+            backgroundColorPicker.value = '#' + new THREE.Color(currentBackgroundColor).getHexString();
+            textColorPicker.value = '#' + new THREE.Color(currentTextColor).getHexString();
+            windowColorPicker.value = '#' + new THREE.Color(currentPanelColor).getHexString();
+
+            // Event listeners for color pickers
+            backgroundColorPicker.addEventListener('input', (event) => {
+                currentBackgroundColor = parseInt(event.target.value.substring(1), 16);
+                scene.background.set(currentBackgroundColor);
+            });
+
+            textColorPicker.addEventListener('input', (event) => {
+                currentTextColor = parseInt(event.target.value.substring(1), 16);
+                updateDisplayedText(); // Re-render text with new color
+            });
+
+            windowColorPicker.addEventListener('input', (event) => {
+                currentPanelColor = parseInt(event.target.value.substring(1), 16);
+                if (textAreaPanel && textAreaPanel.material) {
+                    textAreaPanel.material.color.set(currentPanelColor);
+                }
+            });
+        }
+
+        // --- 3D Object Creation ---
+        function createTextArea() {
+            // Create the main window container
+            windowContainer = new THREE.Group();
+            scene.add(windowContainer);
+
+            // Existing textAreaPanel creation
+            // Frosted glass effect: lower opacity, higher roughness
+            const panelGeometry = new THREE.BoxGeometry(TEXT_AREA_WIDTH, TEXT_AREA_HEIGHT, TEXT_AREA_DEPTH);
+            const panelMaterial = new THREE.MeshStandardMaterial({
+                color: currentPanelColor,
+                roughness: 0.8, // Increased roughness for frosted effect
+                metalness: 0.1, // Keep metalness low
+                transparent: true,
+                opacity: 0.4 // Reduced opacity for frosted effect
+            });
+            textAreaPanel = new THREE.Mesh(panelGeometry, panelMaterial);
+            textAreaPanel.position.set(0, 0, 0); // Panel is now centered within its own group
+            textAreaPanel.userData.isTextArea = true;
+            windowContainer.add(textAreaPanel);
+
+            // Store original scale and position
+            originalWindowScale.copy(windowContainer.scale);
+            originalWindowPosition.copy(windowContainer.position);
+
+            // Title Bar
+            const titleBarHeight = 0.2;
+            const titleBarGeometry = new THREE.BoxGeometry(TEXT_AREA_WIDTH, titleBarHeight, TEXT_AREA_DEPTH);
+            const titleBarMaterial = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.7, metalness: 0.2 });
+            titleBarMesh = new THREE.Mesh(titleBarGeometry, titleBarMaterial);
+            // Position title bar relative to the top of the text area panel
+            titleBarMesh.position.set(0, TEXT_AREA_HEIGHT / 2 + titleBarHeight / 2, 0);
+            titleBarMesh.userData.isTitleBar = true;
+            windowContainer.add(titleBarMesh);
+
+            // Adjust windowContainer's overall Y position to place the whole window correctly
+            // This centers the entire window (panel + title bar) in the scene initially
+            windowContainer.position.set(0, TEXT_AREA_HEIGHT / 2 + titleBarHeight / 2, 0);
+
+
+            // Text Lines Container (adjust its Y position relative to the new textAreaPanel origin)
+            textLinesContainer = new THREE.Group();
+            textLinesContainer.position.set(
+                -TEXT_AREA_WIDTH / 2 + 0.05,
+                TEXT_AREA_HEIGHT / 2 - (TEXT_INPUT_SIZE * LINE_HEIGHT_FACTOR * 0.5) - (titleBarHeight / 2), // Adjusted Y to account for title bar
+                TEXT_AREA_DEPTH / 2 + 0.01
+            );
+            textAreaPanel.add(textLinesContainer); // Add to textAreaPanel, not windowContainer directly
+
+            // Control Buttons
+            const buttonRadius = 0.07;
+            const buttonDepth = 0.02;
+            const buttonGeometry = new THREE.CylinderGeometry(buttonRadius, buttonRadius, buttonDepth, 16); // Flat cylinder
+
+            // Define consistent spacing and initial offset
+            const initialButtonOffset = 0.15; // Distance from the left edge of the title bar
+            const buttonSpacing = 0.05; // Gap between buttons
+            const buttonDiameter = buttonRadius * 2;
+
+            // Red (Close)
+            closeButtonMesh = new THREE.Mesh(buttonGeometry, new THREE.MeshBasicMaterial({ color: 0xff605c }));
+            closeButtonMesh.rotation.x = Math.PI / 2; // Orient flat side forward
+            closeButtonMesh.position.set(-TEXT_AREA_WIDTH / 2 + initialButtonOffset, 0, TEXT_AREA_DEPTH / 2 + buttonDepth / 2 + 0.01); // Relative to titleBarMesh
+            closeButtonMesh.userData.buttonType = 'close';
+            titleBarMesh.add(closeButtonMesh);
+
+            // Yellow (Minimize)
+            minimizeButtonMesh = new THREE.Mesh(buttonGeometry, new THREE.MeshBasicMaterial({ color: 0xffbd44 }));
+            minimizeButtonMesh.rotation.x = Math.PI / 2;
+            minimizeButtonMesh.position.set(-TEXT_AREA_WIDTH / 2 + initialButtonOffset + buttonDiameter + buttonSpacing, 0, TEXT_AREA_DEPTH / 2 + buttonDepth / 2 + 0.01);
+            minimizeButtonMesh.userData.buttonType = 'minimize';
+            titleBarMesh.add(minimizeButtonMesh);
+
+            // Green (Maximize)
+            maximizeButtonMesh = new THREE.Mesh(buttonGeometry, new THREE.MeshBasicMaterial({ color: 0x00ca4e }));
+            maximizeButtonMesh.rotation.x = Math.PI / 2;
+            maximizeButtonMesh.position.set(-TEXT_AREA_WIDTH / 2 + initialButtonOffset + (buttonDiameter + buttonSpacing) * 2, 0, TEXT_AREA_DEPTH / 2 + buttonDepth / 2 + 0.01);
+            maximizeButtonMesh.userData.buttonType = 'maximize';
+            titleBarMesh.add(maximizeButtonMesh);
+        }
+
+        /**
+         * Creates a new 3D text mesh.
+         * @param {string} text - The text content.
+         * @param {boolean} isPlaceholder - True if this is placeholder text.
+         * @returns {THREE.Mesh} The 3D text mesh.
+         */
+        function createNew3DTextObject(text, isPlaceholder = false) {
+            // Use currentTextColor for active text, and a predefined placeholder color for placeholder
+            const color = isPlaceholder ? currentPlaceholderColor : currentTextColor;
+            const geometry = new THREE.TextGeometry(text, {
+                font: font, size: TEXT_INPUT_SIZE, height: TEXT_INPUT_SIZE * 0.1, curveSegments: 4
+            });
+            geometry.computeBoundingBox();
+            const material = new THREE.MeshBasicMaterial({ color: color });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.userData.isPlaceholder = isPlaceholder;
+            return mesh;
+        }
+
+        function createCursor() {
+            if (!textLinesContainer) {
+                console.error("textLinesContainer not initialized before createCursor");
+                return;
+            }
+            const cursorHeight = TEXT_INPUT_SIZE * LINE_HEIGHT_FACTOR;
+            const cursorGeometry = new THREE.BoxGeometry(0.015, cursorHeight, 0.01);
+            const cursorMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff }); // Cursor is always white
+            cursorMesh = new THREE.Mesh(cursorGeometry, cursorMaterial);
+            cursorMesh.visible = false;
+            textLinesContainer.add(cursorMesh);
+
+            cursorBlinkInterval = setInterval(() => {
+                cursorMesh.visible = isActive && !cursorMesh.visible;
+            }, 500);
+        }
+
+        // --- Text and Cursor Logic ---
+        function updateDisplayedText() {
+            if (!font || !textLinesContainer) return;
+
+            // Remove all existing text meshes, but keep the cursor
+            const childrenToRemove = textLinesContainer.children.filter(child => child !== cursorMesh);
+            childrenToRemove.forEach(child => {
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) child.material.dispose();
+                textLinesContainer.remove(child);
+            });
+
+            const lines = currentText.split('\n');
+            let isPlaceholderActive = false;
+
+            // If currentText is empty, display the placeholder
+            if (currentText === "") {
+                lines.length = 0; // Clear lines array
+                lines.push(PLACEHOLDER_TEXT);
+                isPlaceholderActive = true;
+            }
+
+            const lineSpacing = TEXT_INPUT_SIZE * LINE_HEIGHT_FACTOR;
+
+            lines.forEach((lineText, index) => {
+                // Calculate maximum visual length to prevent text overflow
+                const MAX_LINE_VISUAL_LENGTH = Math.floor(TEXT_AREA_WIDTH / (TEXT_INPUT_SIZE * 0.55)); // Adjusted for better fit
+                let visualLineText = lineText;
+                if (lineText.length > MAX_LINE_VISUAL_LENGTH) {
+                    visualLineText = lineText.substring(0, MAX_LINE_VISUAL_LENGTH - 3) + "...";
+                }
+
+                // Create text mesh, passing true for isPlaceholder only if it's the actual placeholder text
+                const lineMesh = createNew3DTextObject(visualLineText, isPlaceholderActive && index === 0 && lineText === PLACEHOLDER_TEXT);
+                lineMesh.position.set(
+                    0, // X position (left-aligned)
+                    -(index * lineSpacing) - (TEXT_INPUT_SIZE * 0.5), // Y position, adjusted for line height and centering
+                    0 // Z position
+                );
+                textLinesContainer.add(lineMesh);
+            });
+            updateCursorPosition();
+        }
+
+        /**
+         * Calculates line number and character offset from a global index.
+         * @param {string} text - The full text.
+         * @param {number} globalIndex - The cursor's global index in the text.
+         * @returns {object} { lineIndex, charOffsetInLine, linesArray }
+         */
+        function getLineCharInfoFromIndex(text, globalIndex) {
+            const linesArray = text.split('\n');
+            let currentLineIndex = 0;
+            let accumulatedLength = 0;
+            for (let i = 0; i < linesArray.length; i++) {
+                const lineLength = linesArray[i].length;
+                // Check if the globalIndex falls within the current line (including the newline character)
+                if (globalIndex <= accumulatedLength + lineLength) {
+                    currentLineIndex = i;
+                    break;
+                }
+                accumulatedLength += lineLength + 1; // +1 for the '\n' character
+            }
+            // Calculate character offset within the determined line
+            const lineStartGlobalIndex = text.lastIndexOf('\n', globalIndex - 1) + 1;
+            const charOffsetInLine = globalIndex - lineStartGlobalIndex;
+            return { lineIndex: currentLineIndex, charOffsetInLine: charOffsetInLine, linesArray: linesArray };
+        }
+
+        /**
+         * Calculates the global index from a line number and character offset.
+         * @param {string[]} linesArray - Array of text lines.
+         * @param {number} targetLineIndex - The target line number.
+         * @param {number} targetCharOffset - The target character offset in that line.
+         * @returns {number} The calculated global index.
+         */
+        function getIndexFromLineCharInfo(linesArray, targetLineIndex, targetCharOffset) {
+            let newGlobalIndex = 0;
+            for (let i = 0; i < targetLineIndex; i++) {
+                newGlobalIndex += linesArray[i].length + 1; // +1 for '\n'
+            }
+            // Ensure targetCharOffset doesn't exceed the line length
+            newGlobalIndex += Math.min(targetCharOffset, linesArray[targetLineIndex] ? linesArray[targetLineIndex].length : 0);
+            return newGlobalIndex;
+        }
+
+        /**
+         * Updates the 3D cursor's position based on the current cursorIndex.
+         */
+        function updateCursorPosition() {
+            if (!isActive || !font || !textLinesContainer || !cursorMesh) {
+                if (cursorMesh) cursorMesh.visible = false;
+                return;
+            }
+
+            const { lineIndex, charOffsetInLine } = getLineCharInfoFromIndex(currentText, cursorIndex);
+            const lines = currentText.split('\n');
+            const currentLineString = lines[lineIndex] || "";
+
+            let currentLineWidth = 0;
+            // Calculate the visual width of the text before the cursor on the current line
+            if (charOffsetInLine > 0 && currentLineString.length > 0) {
+                const textBeforeCursorOnLine = currentLineString.substring(0, charOffsetInLine);
+                const tempGeometry = new THREE.TextGeometry(textBeforeCursorOnLine, {
+                    font: font, size: TEXT_INPUT_SIZE, height: TEXT_INPUT_SIZE * 0.1
+                });
+                tempGeometry.computeBoundingBox();
+                currentLineWidth = tempGeometry.boundingBox.max.x - tempGeometry.boundingBox.min.x;
+                tempGeometry.dispose(); // Dispose temporary geometry to free up memory
+            }
+
+            cursorMesh.position.x = currentLineWidth + 0.01; // X position, slightly offset from text end
+
+            const lineSpacing = TEXT_INPUT_SIZE * LINE_HEIGHT_FACTOR;
+            // Calculate the Y position for the current line's baseline (relative to textLinesContainer's origin)
+            const lineBaselineY = -(lineIndex * lineSpacing) - (TEXT_INPUT_SIZE * 0.5);
+
+            // Position the cursor: align its bottom with the text's baseline
+            // The cursor's origin is at its center, so we add half its height to its Y position
+            // to shift it up from its center to its bottom edge being at the baseline.
+            cursorMesh.position.y = lineBaselineY + (cursorMesh.geometry.parameters.height / 2);
+            cursorMesh.position.z = 0.005; // Keep it slightly in front of the text
+
+            cursorMesh.visible = true; // Make cursor visible when active
+        }
+
+
+        // --- Event Handlers ---
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function onCanvasClick(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+
+            // Collect all interactable objects: buttons, title bar, and text area panel
+            // Use windowContainer.children to get direct children, then filter/map for deeper objects if needed
+            const interactableObjects = [];
+            if (closeButtonMesh) interactableObjects.push(closeButtonMesh);
+            if (minimizeButtonMesh) interactableObjects.push(minimizeButtonMesh);
+            if (maximizeButtonMesh) interactableObjects.push(maximizeButtonMesh);
+            if (titleBarMesh) interactableObjects.push(titleBarMesh);
+            if (textAreaPanel) interactableObjects.push(textAreaPanel);
+
+            const intersects = raycaster.intersectObjects(interactableObjects, true); // true for recursive check
+
+            if (intersects.length > 0) {
+                const intersectedObject = intersects[0].object;
+
+                if (intersectedObject.userData.buttonType) {
+                    handleButtonClick(intersectedObject.userData.buttonType);
+                    return; // Stop further processing if a button was clicked
+                } else if (intersectedObject.userData.isTitleBar) {
+                    // Title bar click initiates drag (handled by onMouseDown), but doesn't activate text area
+                    isActive = false; // Deactivate text area if title bar is clicked
+                    cursorMesh.visible = false;
+                    document.getElementById('info').textContent = "Click panel to activate. Use arrow keys, Enter, Backspace, and Paste (Ctrl+V/Cmd+V).";
+                    return;
+                } else if (intersectedObject.userData.isTextArea) {
+                    isActive = true;
+                    if (currentText === "" && textLinesContainer.children.some(c => c.userData.isPlaceholder)) {
+                        currentText = "";
+                    }
+                    cursorIndex = currentText.length;
+                    preferredCursorXOffset = -1;
+                    updateDisplayedText();
+                    document.getElementById('info').textContent = "Text area active. Press Esc to deactivate.";
+                    return;
+                }
+            } else if (isActive) {
+                // If clicked outside and text area was active, deactivate it
+                isActive = false;
+                if (currentText === "") { // If text is empty, show placeholder again
+                    updateDisplayedText();
+                }
+                cursorMesh.visible = false;
+                document.getElementById('info').textContent = "Click panel to activate. Use arrow keys, Enter, Backspace, and Paste (Ctrl+V/Cmd+V).";
+            }
+        }
+
+        function onKeyDown(event) {
+            if (!isActive) return;
+
+            const key = event.key;
+            // Regex to allow letters, numbers, punctuation, symbols, and spaces
+            const allowedCharsRegex = /^[ \p{L}\p{N}\p{P}\p{S}]$/u;
+            let textChanged = false;
+            let cursorMovedByKey = false;
+
+            // Prevent default paste behavior as we handle it with 'paste' event listener
+            if ((event.ctrlKey || event.metaKey) && key.toLowerCase() === 'v') {
+                return;
+            }
+
+            if (key === 'Enter') {
+                currentText = currentText.slice(0, cursorIndex) + '\n' + currentText.slice(cursorIndex);
+                cursorIndex++;
+                textChanged = true;
+                preferredCursorXOffset = 0; // Reset preferred X when Enter is pressed
+            } else if (key === 'Backspace') {
+                if (cursorIndex > 0) {
+                    currentText = currentText.slice(0, cursorIndex - 1) + currentText.slice(cursorIndex);
+                    cursorIndex--;
+                    textChanged = true;
+                }
+                preferredCursorXOffset = -1; // Reset preferred X on backspace
+            } else if (key === 'Delete') { // Handle Delete key
+                if (cursorIndex < currentText.length) {
+                    currentText = currentText.slice(0, cursorIndex) + currentText.slice(cursorIndex + 1);
+                    textChanged = true;
+                }
+                preferredCursorXOffset = -1;
+            } else if (key === 'Escape') {
+                isActive = false;
+                if (currentText === "") updateDisplayedText(); // Show placeholder if empty
+                cursorMesh.visible = false;
+                document.getElementById('info').textContent = "Click panel to activate. Use arrow keys, Enter, Backspace, and Paste (Ctrl+V/Cmd+V).";
+                return; // Do not prevent default for Escape
+            } else if (key.length === 1 && allowedCharsRegex.test(key)) { // Regular character input
+                currentText = currentText.slice(0, cursorIndex) + key + currentText.slice(cursorIndex);
+                cursorIndex++;
+                textChanged = true;
+                preferredCursorXOffset = -1;
+            } else if (key === 'Tab') {
+                event.preventDefault(); // Prevent default tab behavior (focus change)
+                const tabString = "    "; // 4 spaces for a tab
+                currentText = currentText.slice(0, cursorIndex) + tabString + currentText.slice(cursorIndex);
+                cursorIndex += tabString.length;
+                textChanged = true;
+                preferredCursorXOffset = -1;
+            } else if (key === 'ArrowLeft') {
+                cursorIndex = Math.max(0, cursorIndex - 1);
+                cursorMovedByKey = true;
+                preferredCursorXOffset = -1; // Reset preferred X on horizontal movement
+            } else if (key === 'ArrowRight') {
+                cursorIndex = Math.min(currentText.length, cursorIndex + 1);
+                cursorMovedByKey = true;
+                preferredCursorXOffset = -1; // Reset preferred X on horizontal movement
+            } else if (key === 'ArrowUp' || key === 'ArrowDown') {
+                const { lineIndex, charOffsetInLine, linesArray } = getLineCharInfoFromIndex(currentText, cursorIndex);
+
+                if (preferredCursorXOffset === -1) { // If preferred X not set, calculate from current charOffset
+                    preferredCursorXOffset = charOffsetInLine;
+                }
+
+                let targetLineIndex = lineIndex;
+                if (key === 'ArrowUp') {
+                    targetLineIndex = Math.max(0, lineIndex - 1);
+                } else { // ArrowDown
+                    targetLineIndex = Math.min(linesArray.length - 1, lineIndex + 1);
+                }
+
+                if (targetLineIndex !== lineIndex) { // Only move if target line is different
+                    const targetLineLength = linesArray[targetLineIndex] ? linesArray[targetLineIndex].length : 0;
+                    const targetCharOffset = Math.min(preferredCursorXOffset, targetLineLength);
+                    cursorIndex = getIndexFromLineCharInfo(linesArray, targetLineIndex, targetCharOffset);
+                }
+                cursorMovedByKey = true;
+            }
+            else {
+                return; // Ignore other keys
+            }
+
+            if (textChanged || cursorMovedByKey) {
+                updateDisplayedText();
+            }
+            // Prevent default browser actions for handled keys (except Escape)
+            if (key !== 'Escape') {
+                event.preventDefault();
+            }
+        }
+
+        function onPaste(event) {
+            if (!isActive) return;
+
+            event.preventDefault(); // Prevent default paste behavior
+            const pastedText = (event.clipboardData || window.clipboardData).getData('text/plain');
+            if (pastedText) {
+                currentText = currentText.slice(0, cursorIndex) + pastedText + currentText.slice(cursorIndex);
+                cursorIndex += pastedText.length;
+                preferredCursorXOffset = -1; // Reset preferred X after paste
+                updateDisplayedText();
+            }
+        }
+
+        /**
+         * Handles clicks on the macOS-style control buttons.
+         * @param {string} buttonType - The type of button clicked ('close', 'minimize', 'maximize').
+         */
+        function handleButtonClick(buttonType) {
+            switch (buttonType) {
+                case 'close':
+                    windowContainer.visible = false;
+                    isActive = false;
+                    cursorMesh.visible = false;
+                    currentText = ""; // Clear text on close
+                    updateDisplayedText(); // Re-render to show placeholder
+                    document.getElementById('info').textContent = "Window closed. Refresh to re-open.";
+                    controls.enabled = false; // Disable controls when window is closed
+                    break;
+                case 'minimize':
+                    isMinimized = !isMinimized;
+                    if (isMinimized) {
+                        originalWindowScale.copy(windowContainer.scale);
+                        originalWindowPosition.copy(windowContainer.position);
+                        windowContainer.scale.set(0.1, 0.1, 0.1); // Scale down
+                        // Move to a corner (relative to camera's view, might need fine-tuning)
+                        windowContainer.position.set(-2, -1.5, 0); // Example fixed position for minimized state
+                        isActive = false;
+                        cursorMesh.visible = false;
+                        document.getElementById('info').textContent = "Window minimized. Click green button to restore.";
+                    } else {
+                        windowContainer.scale.copy(originalWindowScale);
+                        windowContainer.position.copy(originalWindowPosition);
+                        document.getElementById('info').textContent = "Window restored. Click panel to activate.";
+                    }
+                    break;
+                case 'maximize':
+                    isMaximized = !isMaximized;
+                    if (isMaximized) {
+                        originalWindowScale.copy(windowContainer.scale);
+                        originalWindowPosition.copy(windowContainer.position);
+                        windowContainer.scale.set(1.5, 1.5, 1.5); // Scale up
+                        windowContainer.position.set(0, 0.5, 0); // Center in view
+                        isActive = false;
+                        cursorMesh.visible = false;
+                        document.getElementById('info').textContent = "Window maximized. Click green button to restore.";
+                    } else {
+                        windowContainer.scale.copy(originalWindowScale);
+                        windowContainer.position.copy(originalWindowPosition);
+                        document.getElementById('info').textContent = "Window restored. Click panel to activate.";
+                    }
+                    break;
+            }
+        }
+
+        /**
+         * Handles mouse down event for dragging the window.
+         * @param {MouseEvent} event - The mouse event.
+         */
+        function onMouseDown(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+
+            // Check if the title bar is intersected
+            const intersects = raycaster.intersectObject(titleBarMesh);
+
+            if (intersects.length > 0) {
+                isDraggingWindow = true;
+                dragStartMouseX = event.clientX;
+                dragStartMouseY = event.clientY;
+                dragStartWindowX = windowContainer.position.x;
+                dragStartWindowY = windowContainer.position.y;
+                controls.enabled = false; // Disable orbit controls during drag
+            }
+        }
+
+        /**
+         * Handles mouse move event for dragging the window.
+         * @param {MouseEvent} event - The mouse event.
+         */
+        function onMouseMove(event) {
+            if (!isDraggingWindow) return;
+
+            // Calculate movement based on mouse delta and camera perspective
+            // This is a simplified approach; for precise 3D dragging,
+            // you'd typically project mouse coordinates onto a plane in 3D space.
+            const deltaX = (event.clientX - dragStartMouseX) * 0.005; // Adjust sensitivity
+            const deltaY = (event.clientY - dragStartMouseY) * 0.005;
+
+            // Apply delta to windowContainer's position
+            windowContainer.position.x = dragStartWindowX + deltaX;
+            windowContainer.position.y = dragStartWindowY - deltaY; // Y-axis is inverted for screen coordinates
+        }
+
+        /**
+         * Handles mouse up event, ending the window drag.
+         * @param {MouseEvent} event - The mouse event.
+         */
+        function onMouseUp(event) {
+            isDraggingWindow = false;
+            controls.enabled = true; // Re-enable orbit controls
+        }
+
+        // --- Animation Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); // Only required if controls.enableDamping is set to true
+            renderer.render(scene, camera);
+        }
+
+        // --- Start ---
+        init();
+        animate();
+    </script>
+</body>
+
+</html>
