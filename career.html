@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Careers - Better Meeting Rooms</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        /* Custom styles for the frosted glass effect and base font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f1e3;
+            /* Beige background */
+            color: #333;
+            /* Black text */
+            margin: 0;
+            overflow-x: hidden;
+            /* Prevent horizontal scroll from parallax */
+        }
+
+        .backdrop-blur-8 {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            /* Safari support */
+        }
+
+        /* Ensure the canvas covers the full viewport */
+        #three-canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            /* Behind content */
+            pointer-events: none;
+            /* Allow clicks to pass through */
+        }
+
+        /* Ensure content layers are above the canvas */
+        .content-layer {
+            position: relative;
+            z-index: 10;
+            /* Above canvas */
+        }
+
+        /* Smooth transitions for interactive elements */
+        .transition-all {
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 300ms;
+        }
+
+        .transform {
+            transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+        }
+
+        .hover\:scale-105:hover {
+            --tw-scale-x: 1.05;
+            --tw-scale-y: 1.05;
+        }
+
+        .hover\:bg-opacity-10:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .group:hover .group-hover\:scale-110 {
+            --tw-scale-x: 1.1;
+            --tw-scale-y: 1.1;
+        }
+
+        .hover\:-translate-y-2:hover {
+            --tw-translate-y: -8px;
+        }
+
+        .hover\:shadow-xl:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        .cursor-grab {
+            cursor: grab;
+        }
+
+        .active\:cursor-grabbing:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <div id="three-canvas-container"></div>
+
+    <div class="content-layer">
+        <nav class="relative z-50 py-4 md:py-6 backdrop-blur-8" style="background-color: rgba(32, 107, 49, 0.7);">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                <a href="#" class="flex-shrink-0">
+                    <img src="https://cdn.prod.website-files.com/670fcf1021f8b3655bb0ac84/670fd235affdf8ce5f4cc2e8_bmr-logo1.svg"
+                        alt="BMR Logo" class="h-8 md:h-10">
+                </a>
+
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#"
+                        class="text-lg font-semibold rounded-md px-3 py-2 transition-colors duration-200 hover:bg-opacity-10"
+                        style="color: #f1f1e3;">Home</a>
+                    <a href="#"
+                        class="text-lg font-semibold rounded-md px-3 py-2 transition-colors duration-200 hover:bg-opacity-10"
+                        style="color: #f1f1e3;">Career</a>
+                    <a href="mailto:office@bettermeetingrooms.com?subject=Request%20information"
+                        class="px-6 py-2 rounded-lg font-bold transition-colors duration-300"
+                        style="background-color: #4a9062; color: #f1f1e3; box-shadow: 0px 4px 10px rgba(0,0,0,0.2);">Contact
+                        Us</a>
+                </div>
+
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-white focus:outline-none">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="mobile-menu-overlay"
+                class="md:hidden absolute top-full left-0 w-full py-4 text-center hidden backdrop-blur-8"
+                style="background-color: rgba(32, 107, 49, 0.8);">
+                <a href="#" class="block text-lg font-semibold py-2 transition-colors duration-200 hover:bg-opacity-10"
+                    style="color: #f1f1e3;">Home</a>
+                <a href="#" class="block text-lg font-semibold py-2 transition-colors duration-200 hover:bg-opacity-10"
+                    style="color: #f1f1e3;">Career</a>
+                <a href="mailto:office@bettermeetingrooms.com?subject=Request%20information"
+                    class="mt-4 inline-block px-6 py-2 rounded-lg font-bold transition-colors duration-300"
+                    style="background-color: #4a9062; color: #f1f1e3; box-shadow: 0px 4px 10px rgba(0,0,0,0.2);">Contact
+                    Us</a>
+            </div>
+        </nav>
+
+        <section class="relative h-[450px] md:h-[600px] flex items-center justify-center overflow-hidden"
+            style="background-color: transparent;">
+            <div class="relative z-10 text-center px-4">
+                <h1 class="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight drop-shadow-lg"
+                    style="color: white;">
+                    Innovate. Collaborate. Thrive.
+                </h1>
+                <p class="mt-4 text-xl md:text-2xl font-medium" style="color: #f1f1e3;">
+                    Join a team that's redefining the future of meeting spaces.
+                </p>
+                <a href="#careers-at-bmr"
+                    class="mt-8 inline-block px-8 py-3 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105"
+                    style="background-color: #4a9062; color: #f1f1e3; box-shadow: 0px 6px 15px rgba(0,0,0,0.3);">
+                    Explore Open Positions
+                </a>
+            </div>
+        </section>
+
+        <section class="py-16 md:py-24 backdrop-blur-8" style="background-color: rgba(241, 241, 227, 0.7);">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <div class="flex flex-col items-start">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4" style="color: #333;">Join Our Team</h2>
+                    <p class="text-lg leading-relaxed mb-4" style="color: #333;">
+                        At Better Meeting Rooms, we're on a mission to turn every meeting room into a masterpiece. We
+                        believe that well-designed meeting spaces are essential for fostering collaboration,
+                        productivity, and overall employee satisfaction.
+                    </p>
+                    <p class="text-lg leading-relaxed" style="color: #333;">
+                        At BMR you will be able to:
+                    <ul class="list-disc list-inside mt-2 space-y-1">
+                        <li>Work on innovative projects that push the boundaries of technology.</li>
+                        <li>Join a team of passionate professionals who are committed to creating exceptional solutions.
+                        </li>
+                        <li>Develop your skills and advance your career in a multi-cultural, dynamic and supportive
+                            environment.</li>
+                    </ul>
+                    </p>
+                </div>
+                <div class="flex justify-center md:justify-end">
+                    <img src="https://cdn.prod.website-files.com/670fcf1021f8b3655bb0ac84/673f26b068e9a3a6d2763ff6_BMR-beach-bar-laptop-logo-sm.png"
+                        alt="Team working on laptop"
+                        class="rounded-xl shadow-lg w-full max-w-md transform transition-transform duration-300 hover:scale-105" />
+                </div>
+            </div>
+
+            <div
+                class="container mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-12 items-center mt-16 md:mt-24">
+                <div class="flex justify-center md:justify-start order-2 md:order-1">
+                    <img src="https://placehold.co/500x350/206b31/f1f1e3?text=The+BMR+Life" alt="BMR Life"
+                        class="rounded-xl shadow-lg w-full max-w-md transform transition-transform duration-300 hover:scale-105" />
+                </div>
+                <div class="flex flex-col items-start order-1 md:order-2">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4" style="color: #333;">The BMR Life</h2>
+                    <p class="text-lg leading-relaxed" style="color: #333;">
+                        Welcome to the BMR life. Where innovation, integrity, and a steadfast commitment to our people
+                        come together to transform the way the world works. It's a place where bold ideas flourish,
+                        visuals inspire, and every penny is thoughtfully invested to deliver unparalleled value. Here,
+                        empathy and human-centered design are more than just buzzwords - they're the driving forces
+                        behind everything we do.
+                        <br /><br />
+                        Join us, and become part of a team that's redefining the future of corporate workspaces.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-16 md:py-24 backdrop-blur-8" style="background-color: rgba(32, 107, 49, 0.7);">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-4xl md:text-5xl font-bold mb-12" style="color: #f1f1e3;">Our Values</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="group flex flex-col items-center p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:bg-opacity-20"
+                        style="background-color: rgba(255,255,255,0.1);">
+                        <img src="https://cdn.prod.website-files.com/670fcf1021f8b3655bb0ac84/672b9bc21057c5a46506a86a_Pass-pa%CC%8A-penga%20pic.png"
+                            alt="Money Icon"
+                            class="w-16 h-16 mb-4 transform transition-transform duration-300 group-hover:scale-110" />
+                        <h3 class="text-xl font-semibold mb-2" style="color: #8bc34a;">Pass på penga</h3>
+                        <p class="text-base leading-relaxed" style="color: #f1f1e3;">
+                            We respect the resources entrusted to us, aiming for responsible and efficient use of time
+                            and budget. Every decision reflects our commitment to sustainability and thoughtful
+                            spending.
+                        </p>
+                    </div>
+                    <div class="group flex flex-col items-center p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:bg-opacity-20"
+                        style="background-color: rgba(255,255,255,0.1);">
+                        <img src="https://cdn.prod.website-files.com/670fcf1021f8b3655bb0ac84/672b9bc28d5a5e2bca22f121_Human-centred-pic.png"
+                            alt="Human Icon"
+                            class="w-16 h-16 mb-4 transform transition-transform duration-300 group-hover:scale-110" />
+                        <h3 class="text-xl font-semibold mb-2" style="color: #8bc34a;">Human centred</h3>
+                        <p class="text-base leading-relaxed" style="color: #f1f1e3;">
+                            People are at the core of our work. We strive to understand and prioritize the needs,
+                            values, and experiences of those we serve, ensuring our solutions truly resonate and add
+                            value.
+                        </p>
+                    </div>
+                    <div class="group flex flex-col items-center p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:bg-opacity-20"
+                        style="background-color: rgba(255,255,255,0.1);">
+                        <img src="https://cdn.prod.website-files.com/670fcf1021f8b3655bb0ac84/672b9bc2e1b3334ec1272e52_Power%20of%20Visuals.png"
+                            alt="Visuals Icon"
+                            class="w-16 h-16 mb-4 transform transition-transform duration-300 group-hover:scale-110" />
+                        <h3 class="text-xl font-semibold mb-2" style="color: #8bc34a;">Power of Visuals</h3>
+                        <p class="text-base leading-relaxed" style="color: #f1f1e3;">
+                            We believe in the transformative power of visuals to communicate ideas, evoke emotions, and
+                            drive action. By prioritizing visual clarity, we make complex ideas accessible and inspire
+                            meaningful connections.
+                        </p>
+                    </div>
+                    <div class="group flex flex-col items-center p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:bg-opacity-20"
+                        style="background-color: rgba(255,255,255,0.1);">
+                        <img src="https://cdn.prod.website-files.com/670fcf1021f8b3655bb0ac84/672b9bc2ffb1a67b9e89621f_Empathy.png"
+                            alt="Empathy Icon"
+                            class="w-16 h-16 mb-4 transform transition-transform duration-300 group-hover:scale-110" />
+                        <h3 class="text-xl font-semibold mb-2" style="color: #8bc34a;">Empathy</h3>
+                        <p class="text-base leading-relaxed" style="color: #f1f1e3;">
+                            We listen deeply, seeking to understand others’ perspectives with openness and care. Empathy
+                            drives us to create solutions that reflect genuine human insight and compassion.
+                        </p>
+                    </div>
+                    <div class="group flex flex-col items-center p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:bg-opacity-20"
+                        style="background-color: rgba(255,255,255,0.1);">
+                        <img src="https://cdn.prod.website-files.com/670fcf1021f8b3655bb0ac84/672b9bc2c5c61e8fc08b58c2_Magokoro.png"
+                            alt="Magokoro Icon"
+                            class="w-16 h-16 mb-4 transform transition-transform duration-300 group-hover:scale-110" />
+                        <h3 class="text-xl font-semibold mb-2" style="color: #8bc34a;">Magokoro</h3>
+                        <p class="text-base leading-relaxed" style="color: #f1f1e3;">
+                            Rooted in sincerity and authenticity, Magokoro means putting heart and true intention into
+                            all we do. We commit to this spirit in every interaction, making trust and respect our
+                            guiding principles.
+                        </p>
+                    </div>
+                    <div class="group flex flex-col items-center p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:bg-opacity-20"
+                        style="background-color: rgba(255,255,255,0.1);">
+                        <img src="https://cdn.prod.website-files.com/670fcf1021f8b3655bb0ac84/672b9bc244e2f0df013419df_Be%20bold.png"
+                            alt="Bold Icon"
+                            class="w-16 h-16 mb-4 transform transition-transform duration-300 group-hover:scale-110" />
+                        <h3 class="text-xl font-semibold mb-2" style="color: #8bc34a;">Be bold</h3>
+                        <p class="text-base leading-relaxed" style="color: #f1f1e3;">
+                            Courage and innovation are at the heart of what we do. We embrace challenges, push
+                            boundaries, and take calculated risks to make a lasting impact.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-16 md:py-24 backdrop-blur-8" style="background-color: rgba(241, 241, 227, 0.7);">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-4xl md:text-5xl font-bold mb-12" style="color: #333;">Perks & Benefits</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="flex flex-col items-center p-6 rounded-lg shadow-md transition-all duration-300 transform hover:-translate-y-2 hover:shadow-xl"
+                        style="background-color: white; border: 1px solid #206b31;">
+                        <svg class="w-12 h-12" fill="#8bc34a" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93h2c0 3.31 2.69 6 6 6 .98 0 1.9-.23 2.72-.63l-1.44-1.44c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.02 0 1.41l2.83 2.83c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41L12 12.05V6h-2v6h2v-4h2v4.05c1.71 1.55 2.76 3.86 2.76 6.45 0 4.42-3.58 8-8 8z" />
+                        </svg>
+                        <h3 class="text-xl font-semibold mt-4 mb-2" style="color: #206b31;">Flexible Work Hours</h3>
+                        <p class="text-base leading-relaxed" style="color: #333;">Achieve work-life balance with
+                            schedules that adapt to your needs.</p>
+                    </div>
+                    <div class="flex flex-col items-center p-6 rounded-lg shadow-md transition-all duration-300 transform hover:-translate-y-2 hover:shadow-xl"
+                        style="background-color: white; border: 1px solid #206b31;">
+                        <svg class="w-12 h-12" fill="#8bc34a" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" />
+                        </svg>
+                        <h3 class="text-xl font-semibold mt-4 mb-2" style="color: #206b31;">Health & Wellness</h3>
+                        <p class="text-base leading-relaxed" style="color: #333;">Comprehensive health benefits and
+                            wellness programs for all employees.</p>
+                    </div>
+                    <div class="flex flex-col items-center p-6 rounded-lg shadow-md transition-all duration-300 transform hover:-translate-y-2 hover:shadow-xl"
+                        style="background-color: white; border: 1px solid #206b31;">
+                        <svg class="w-12 h-12" fill="#8bc34a" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.7-7 8.94V12H5V6.3l7-3.11v8.8z" />
+                        </svg>
+                        <h3 class="text-xl font-semibold mt-4 mb-2" style="color: #206b31;">Professional Development
+                        </h3>
+                        <p class="text-base leading-relaxed" style="color: #333;">Opportunities for continuous learning,
+                            workshops, and certifications.</p>
+                    </div>
+                    <div class="flex flex-col items-center p-6 rounded-lg shadow-md transition-all duration-300 transform hover:-translate-y-2 hover:shadow-xl"
+                        style="background-color: white; border: 1px solid #206b31;">
+                        <svg class="w-12 h-12" fill="#8bc34a" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                        </svg>
+                        <h3 class="text-xl font-semibold mt-4 mb-2" style="color: #206b31;">Team Building Events</h3>
+                        <p class="text-base leading-relaxed" style="color: #333;">Regular social gatherings and team
+                            activities to foster connection.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-16 md:py-24 backdrop-blur-8" style="background-color: rgba(32, 107, 49, 0.7);">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-4xl md:text-5xl font-bold mb-12" style="color: #f1f1e3;">What Our Team Says</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="flex flex-col items-center p-6 rounded-lg shadow-lg"
+                        style="background-color: rgba(255,255,255,0.1);">
+                        <img src="https://placehold.co/100x100/206b31/f1f1e3?text=JD" alt="Jane Doe"
+                            class="w-24 h-24 rounded-full object-cover mb-4 border-4" style="border-color: #8bc34a;" />
+                        <p class="text-lg italic mb-4" style="color: #f1f1e3;">"Working at BMR has been an incredible
+                            journey. The collaborative spirit and the focus on human-centered design truly make a
+                            difference. Every day is an opportunity to innovate!"</p>
+                        <p class="font-semibold" style="color: #8bc34a;">Jane Doe</p>
+                        <p class="text-sm" style="color: rgba(241,241,227,0.8);">Senior Designer</p>
+                    </div>
+                    <div class="flex flex-col items-center p-6 rounded-lg shadow-lg"
+                        style="background-color: rgba(255,255,255,0.1);">
+                        <img src="https://placehold.co/100x100/206b31/f1f1e3?text=JS" alt="John Smith"
+                            class="w-24 h-24 rounded-full object-cover mb-4 border-4" style="border-color: #8bc34a;" />
+                        <p class="text-lg italic mb-4" style="color: #f1f1e3;">"The projects here are challenging and
+                            rewarding. I've grown so much professionally, and the team is always supportive. Plus, the
+                            meeting rooms are actually inspiring!"</p>
+                        <p class="font-semibold" style="color: #8bc34a;">John Smith</p>
+                        <p class="text-sm" style="color: rgba(241,241,227,0.8);">Software Engineer</p>
+                    </div>
+                    <div class="flex flex-col items-center p-6 rounded-lg shadow-lg"
+                        style="background-color: rgba(255,255,255,0.1);">
+                        <img src="https://placehold.co/100x100/206b31/f1f1e3?text=EW" alt="Emily White"
+                            class="w-24 h-24 rounded-full object-cover mb-4 border-4" style="border-color: #8bc34a;" />
+                        <p class="text-lg italic mb-4" style="color: #f1f1e3;">"BMR truly values its employees and
+                            encourages bold ideas. It's refreshing to be part of a company that is constantly pushing
+                            boundaries and making a real impact."</p>
+                        <p class="font-semibold" style="color: #8bc34a;">Emily White</p>
+                        <p class="text-sm" style="color: rgba(241,241,227,0.8);">Product Manager</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="careers-at-bmr" class="py-16 md:py-24 backdrop-blur-8"
+            style="background-color: rgba(241, 241, 227, 0.7);">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-4xl md:text-5xl font-bold mb-12 text-center" style="color: #333;">Current Openings</h2>
+                <div class="space-y-6" id="job-listings-container">
+                </div>
+            </div>
+        </section>
+
+        <section class="py-16 md:py-24 text-center backdrop-blur-8" style="background-color: rgba(74, 144, 98, 0.7);">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6" style="color: #f1f1e3;">Ready to Make an Impact?</h2>
+                <p class="text-xl md:text-2xl mb-10" style="color: #f1f1e3;">
+                    We're always looking for passionate individuals to join our growing team.
+                </p>
+                <a href="mailto:office@bettermeetingrooms.com?subject=Job%20Application"
+                    class="inline-block px-10 py-4 rounded-full font-bold text-xl transition-all duration-300 transform hover:scale-105"
+                    style="background-color: #f1f1e3; color: #206b31; box-shadow: 0px 8px 20px rgba(0,0,0,0.4);">
+                    Apply Now!
+                </a>
+            </div>
+        </section>
+
+        <footer class="py-10 backdrop-blur-8" style="background-color: rgba(32, 107, 49, 0.7);">
+            <div
+                class="container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center md:items-start space-y-8 md:space-y-0">
+                <div class="flex flex-col items-center md:items-start text-center md:text-left">
+                    <a href="#" class="mb-4">
+                        <img src="https://cdn.prod.website-files.com/670fcf1021f8b3655bb0ac84/670fd235affdf8ce5f4cc2e8_bmr-logo1.svg"
+                            alt="BMR Logo" class="h-10" />
+                    </a>
+                    <p class="text-sm leading-relaxed" style="color: rgba(241,241,227,0.8);">
+                        Bucklreuthstrasse 9/2, A – 5020 Salzburg
+                        <br />
+                        <a href="tel:+436643337571" class="underline" style="color: #f1f1e3;">+43 664 3337571</a>
+                        <br />
+                        <a href="mailto:office@bettermeetingrooms.com" class="underline"
+                            style="color: #f1f1e3;">office@bettermeetingrooms.com</a>
+                    </p>
+                </div>
+
+                <div class="flex flex-col items-center md:items-end space-y-4">
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-sm hover:underline" style="color: #f1f1e3;">Impressum</a>
+                        <a href="#" class="text-sm hover:underline" style="color: #f1f1e3;">Privacy Policy</a>
+                    </div>
+                    <p class="text-sm" style="color: rgba(241,241,227,0.8);">© 2025 All Rights Reserved.</p>
+                    <div class="flex flex-col items-center md:items-end mt-4">
+                        <p class="text-sm mb-2" style="color: #f1f1e3;">Follow Us!</p>
+                        <div class="flex space-x-4">
+                            <a href="#" class="w-6 h-6 transform transition-transform duration-300 hover:scale-110">
+                                <img src="https://cdn.prod.website-files.com/670fe5bea34b446d80c22bdb_fb-logo.svg"
+                                    alt="Facebook" />
+                            </a>
+                            <a href="#" class="w-6 h-6 transform transition-transform duration-300 hover:scale-110">
+                                <img src="https://cdn.prod.website-files.com/671fa84f6e0dfa0aa82546d1_icon-linkedin.svg"
+                                    alt="LinkedIn" />
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Color palette (replicated from React for consistency)
+        const colors = {
+            beige: '#f1f1e3',
+            green1: '#206b31',
+            green2: '#4a9062',
+            black: '#333',
+            green3: '#8bc34a',
+        };
+
+        // Job data (replicated from React)
+        const jobListings = [
+            {
+                id: 'frontend',
+                title: 'Front-End Web Developer',
+                shortDescription: 'We are an innovative startup focused on delivering exceptional user experiences through our web and mobile applications. Our team is passionate about technology and creativity, and we’re looking to expand our development team with a skilled Front-End Web Developer.',
+                description: 'As a Front-End Web Developer, you will play a crucial role in designing and developing visually appealing and user-friendly web interfaces, incorporating 3D elements to enhance the user experience. You\'ll collaborate with our design and development teams to create web applications that meet the needs of our users and drive our business forward.',
+                responsibilities: [
+                    'Collaborate with the product manager and the design team to implement engaging and responsive user interfaces.',
+                    'Work closely with back-end developers to integrate APIs and improve application performance.',
+                    'Maintain and optimize existing web applications to ensure high performance and responsiveness.',
+                    'Participate in code reviews, testing, and debugging processes.',
+                    'Stay up-to-date with emerging technologies and industry trends to continuously enhance our product, including 3D libraries and technologies.',
+                ],
+                requirements: [
+                    'Proven experience as a Front-End Developer, with a strong portfolio showcasing web applications.',
+                    'Proficiency in HTML, CSS, and JavaScript (experience with frameworks such as React, Angular, or Vue.js is a plus).',
+                    'Understanding of responsive design principles and cross-browser compatibility.',
+                    'Familiarity with version control systems (e.g., Git).',
+                    'Strong problem-solving skills and attention to detail.',
+                    'Excellent communication skills and the ability to work collaboratively in a team.',
+                    'Experience working with 3D graphics libraries and frameworks (e.g., Three.js, Babylon.js).',
+                ],
+                preferredQualifications: [
+                    'Experience with UI/UX design principles.',
+                    'Knowledge of back-end technologies (Node.js, Express, etc.) is a plus.',
+                ],
+                benefits: [
+                    'Competitive salary and benefits package.',
+                    'Opportunity to work on cutting-edge projects.',
+                    'Collaborative and supportive work environment.',
+                    'Chance to contribute to the growth of a dynamic startup.',
+                ],
+                contact: 'office@bettermeetingrooms.com',
+            },
+            {
+                id: 'swift',
+                title: 'SWIFT Developer',
+                shortDescription: 'BMR is an innovative startup revolutionizing the lifecycle management of meeting rooms. We\'re seeking a talented Swift programmer to join our team and help us build cutting-edge mobile applications.',
+                description: 'As a Swift Programmer, you will play a crucial role in developing high-quality iOS applications. You\'ll collaborate with our design team to implement their designs and create intuitive and visually appealing mobile experiences.',
+                responsibilities: [
+                    'Collaborate with the product manager and development team to design, develop, and maintain our iOS application.',
+                    'Write clean, maintainable, and efficient code in Swift.',
+                    'Implement new features based on user feedback and product roadmap.',
+                    'Debug and troubleshoot issues in the application to ensure a seamless user experience.',
+                    'Participate in code reviews and contribute to team knowledge sharing.',
+                ],
+                requirements: [
+                    'Self-driven and independent.',
+                    'Strong proficiency in Swift programming language.',
+                    'Experience in developing iOS applications.',
+                    'Knowledge of iOS design patterns and best practices.',
+                    'Excellent problem-solving and debugging skills.',
+                    'A passion for creating innovative and user-friendly mobile apps.',
+                    'Experience working in an Agile/Scrum development process',
+                ],
+                preferredQualifications: [
+                    'In-depth knowledge of at least one programming language like Java',
+                    'Knowledge of design principles and user experience best practices.',
+                    'Familiarity with backend services (Firebase, AWS, etc.) is a plus.',
+                    'Experience working in a startup environment.',
+                ],
+                benefits: [
+                    'Competitive salary and benefits package.',
+                    'Opportunity to work on cutting-edge projects.',
+                    'Collaborative and supportive work environment.',
+                    'Chance to contribute to the growth of a dynamic startup.',
+                ],
+                contact: 'office@bettermeetingrooms.com?subject=Swift%20Developer',
+            },
+        ];
+
+        // Mobile menu functionality
+        document.getElementById('mobile-menu-button').addEventListener('click', function () {
+            const overlay = document.getElementById('mobile-menu-overlay');
+            overlay.classList.toggle('hidden');
+            const icon = this.querySelector('svg path');
+            if (overlay.classList.contains('hidden')) {
+                icon.setAttribute('d', 'M4 6h16M4 12h16M4 18h16'); // Hamburger icon
+            } else {
+                icon.setAttribute('d', 'M6 18L18 6M6 6l12 12'); // Close icon
+            }
+        });
+
+        // Job listings accordion functionality
+        const jobListingsContainer = document.getElementById('job-listings-container');
+        jobListings.forEach(job => {
+            const jobItem = document.createElement('div');
+            jobItem.className = 'border rounded-lg shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md';
+            jobItem.style.borderColor = colors.green1;
+
+            const button = document.createElement('button');
+            button.className = 'w-full flex justify-between items-center p-6 text-left focus:outline-none';
+            button.style.backgroundColor = colors.beige;
+            button.style.color = colors.green1;
+            button.innerHTML = `
+                <div>
+                    <h3 class="text-2xl font-semibold">${job.title}</h3>
+                    <p class="text-base mt-2" style="color: ${colors.black};">${job.shortDescription}</p>
+                </div>
+                <svg class="w-6 h-6 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            `;
+
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'p-6 border-t hidden'; // Hidden by default
+            detailsDiv.style.borderColor = colors.green1;
+            detailsDiv.style.backgroundColor = `rgba(32,107,49,0.05)`;
+            detailsDiv.innerHTML = `
+                <div class="mb-4">
+                    <h4 class="text-lg font-semibold mb-2" style="color: ${colors.green1};">Job Description</h4>
+                    <p class="text-base leading-relaxed" style="color: ${colors.black};">${job.description}</p>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-lg font-semibold mb-2" style="color: ${colors.green1};">Responsibilities</h4>
+                    <ul class="list-disc list-inside text-base leading-relaxed" style="color: ${colors.black};">
+                        ${job.responsibilities.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-lg font-semibold mb-2" style="color: ${colors.green1};">Requirements</h4>
+                    <ul class="list-disc list-inside text-base leading-relaxed" style="color: ${colors.black};">
+                        ${job.requirements.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-lg font-semibold mb-2" style="color: ${colors.green1};">Preferred Qualifications</h4>
+                    <ul class="list-disc list-inside text-base leading-relaxed" style="color: ${colors.black};">
+                        ${job.preferredQualifications.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-lg font-semibold mb-2" style="color: ${colors.green1};">Benefits</h4>
+                    <ul class="list-disc list-inside text-base leading-relaxed" style="color: ${colors.black};">
+                        ${job.benefits.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                </div>
+                <p class="text-base leading-relaxed" style="color: ${colors.black};">
+                    If you are a talented ${job.title} with a passion for creating exceptional web experiences, we encourage you to apply.
+                    Please submit your resume and portfolio to <a href="mailto:${job.contact}" class="underline font-semibold" style="color: ${colors.green1};">${job.contact}</a>
+                </p>
+            `;
+
+            button.addEventListener('click', function () {
+                const isOpen = !detailsDiv.classList.contains('hidden');
+                if (isOpen) {
+                    detailsDiv.classList.add('hidden');
+                    button.querySelector('svg').classList.remove('rotate-180');
+                } else {
+                    detailsDiv.classList.remove('hidden');
+                    button.querySelector('svg').classList.add('rotate-180');
+                }
+            });
+
+            jobItem.appendChild(button);
+            jobItem.appendChild(detailsDiv);
+            jobListingsContainer.appendChild(jobItem);
+        });
+
+        // Three.js setup
+        const threeCanvasRef = document.getElementById('three-canvas-container');
+        const mouse = new THREE.Vector2();
+        const mouse3DTarget = new THREE.Vector3();
+        const cubes = [];
+        let scrollOffset = 0;
+
+        function updateMouse3D(clientX, clientY) {
+            const rect = threeCanvasRef.getBoundingClientRect();
+            mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+        }
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        threeCanvasRef.appendChild(renderer.domElement);
+
+        const numCubes = 20; // Fewer cubes
+        const cubeSize = 2.0; // Cubes are 2x bigger
+        const spreadX = 40; // Adjusted spread for X axis
+        const spreadY = 100; // Increased spread for Y axis to cover more vertical space
+        const spreadZ = 40; // Adjusted spread for Z axis
+
+        // Create multiple cubes with random positions, biased towards negative Y
+        for (let i = 0; i < numCubes; i++) {
+            const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+            const material = new THREE.MeshPhongMaterial({
+                color: new THREE.Color(colors.green3).offsetHSL(Math.random() * 0.2 - 0.1, Math.random() * 0.2 - 0.1, 0),
+                shininess: 50,
+            });
+            const cube = new THREE.Mesh(geometry, material);
+
+            cube.position.x = (Math.random() - 0.5) * spreadX;
+            cube.position.y = (Math.random() * spreadY) - (spreadY * 0.8); // Range from -0.8*spreadY to 0.2*spreadY
+            cube.position.z = (Math.random() - 0.5) * spreadZ;
+
+            scene.add(cube);
+            cubes.push(cube);
+        }
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+        const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.6);
+        directionalLight1.position.set(5, 5, 5).normalize();
+        scene.add(directionalLight1);
+        const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+        directionalLight2.position.set(-5, -5, -5).normalize();
+        scene.add(directionalLight2);
+
+        camera.position.z = 35; // Adjusted camera distance for closer view of larger cubes
+
+        const raycaster = new THREE.Raycaster();
+        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+
+        // Animation loop
+        const animate = () => {
+            requestAnimationFrame(animate);
+
+            camera.position.y = -scrollOffset * 0.01;
+
+            raycaster.setFromCamera(mouse, camera);
+
+            if (raycaster.ray.intersectPlane(plane, mouse3DTarget)) {
+                cubes.forEach(cube => {
+                    cube.lookAt(mouse3DTarget);
+                });
+            } else {
+                cubes.forEach(cube => {
+                    cube.rotation.x += 0.001;
+                    cube.rotation.y += 0.001;
+                });
+            }
+
+            renderer.render(scene, camera);
+        };
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Mouse and Touch event listeners
+        window.addEventListener('mousemove', (event) => {
+            updateMouse3D(event.clientX, event.clientY);
+        });
+
+        window.addEventListener('touchmove', (event) => {
+            if (event.touches.length > 0) {
+                updateMouse3D(event.touches[0].clientX, event.touches[0].clientY);
+            }
+        });
+
+        window.addEventListener('scroll', () => {
+            scrollOffset = window.scrollY;
+        });
+
+        // Cleanup (not strictly necessary for a single HTML file, but good practice)
+        window.addEventListener('beforeunload', () => {
+            scene.traverse((object) => {
+                if (object.isMesh) {
+                    object.geometry.dispose();
+                    if (object.material.isMaterial) {
+                        object.material.dispose();
+                    } else {
+                        for (const material of object.material) {
+                            material.dispose();
+                        }
+                    }
+                }
+            });
+            renderer.dispose();
+        });
+    </script>
+</body>
+
+</html>
