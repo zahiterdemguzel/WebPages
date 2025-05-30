@@ -189,9 +189,14 @@
         }
 
         .apply-3d-hover {
-            transition: transform 0.2s ease-out;
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
             transform-style: preserve-3d;
             /* Ensures child elements are also transformed in 3D space */
+        }
+
+        /* Speed up transition on mouse enter for a snappier feel */
+        .apply-3d-hover.hovered {
+            transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
         }
 
         .apply-3d-hover img,
@@ -910,41 +915,48 @@
             getQuoteButton.addEventListener('click', smoothScrollToTarget);
         }
 
-        // 3D Hover Effect Logic
-        const hover3dCards = document.querySelectorAll('.apply-3d-hover');
+        // 3D Hover Effect Logic using a single document-based listener
+        let currentHoveredCard = null; // To keep track of the currently hovered card
 
-        hover3dCards.forEach(card => {
-            card.addEventListener('mousemove', handleMouseMove);
-            card.addEventListener('mouseenter', handleMouseEnter);
-            card.addEventListener('mouseleave', handleMouseLeave);
+        document.addEventListener('mousemove', (e) => {
+            // Find the closest parent with 'apply-3d-hover' class
+            const newHoveredCard = e.target.closest('.apply-3d-hover');
+
+            if (newHoveredCard && newHoveredCard !== currentHoveredCard) {
+                // Mouse entered a new card
+                if (currentHoveredCard) {
+                    // Reset the previously hovered card
+                    currentHoveredCard.style.transition = 'transform 0.3s ease-out, box-shadow 0.3s ease-out';
+                    currentHoveredCard.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+                    currentHoveredCard.classList.remove('hovered');
+                }
+                currentHoveredCard = newHoveredCard;
+                currentHoveredCard.style.transition = 'transform 0.1s ease-out, box-shadow 0.1s ease-out'; // Faster transition on entry
+                currentHoveredCard.classList.add('hovered'); // Add a class for faster transition
+            } else if (!newHoveredCard && currentHoveredCard) {
+                // Mouse left all cards
+                currentHoveredCard.style.transition = 'transform 0.3s ease-out, box-shadow 0.3s ease-out'; // Slower transition on exit
+                currentHoveredCard.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+                currentHoveredCard.classList.remove('hovered');
+                currentHoveredCard = null;
+            }
+
+            if (currentHoveredCard) {
+                const card = currentHoveredCard;
+                const rect = card.getBoundingClientRect();
+
+                // Calculate mouse position relative to the card
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                // Calculate rotation based on relative mouse position
+                const rotateX = ((rect.height / 2 - mouseY) / rect.height) * 20; // Max 20 degrees rotation
+                const rotateY = ((mouseX - rect.width / 2) / rect.width) * 20; // Max 20 degrees rotation
+                const translateZ = 30; // Move forward by 30px
+
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${translateZ}px)`;
+            }
         });
-
-        function handleMouseMove(e) {
-            const card = e.currentTarget;
-            const rect = card.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-
-            const mouseX = e.clientX;
-            const mouseY = e.clientY;
-
-            const rotateX = ((centerY - mouseY) / rect.height) * 20; // Max 20 degrees rotation
-            const rotateY = ((mouseX - centerX) / rect.width) * 20; // Max 20 degrees rotation
-            const translateZ = 30; // Move forward by 30px
-
-            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${translateZ}px)`;
-        }
-
-        function handleMouseEnter(e) {
-            const card = e.currentTarget;
-            card.style.transition = 'transform 0.1s ease-out'; // Faster transition on entry
-        }
-
-        function handleMouseLeave(e) {
-            const card = e.currentTarget;
-            card.style.transition = 'transform 0.3s ease-out'; // Slower transition on exit
-            card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)'; // Reset transform
-        }
     </script>
 </body>
 
