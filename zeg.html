@@ -201,6 +201,29 @@
             transition: transform 0.2s ease-out;
             /* Smooth transition for inner elements */
         }
+
+        /* Styles for the pull hint */
+        #pull-hint {
+            /* Position relative to the nav container */
+            bottom: -40px;
+            /* Adjust based on desired distance below the flags */
+            transform: translateX(-50%);
+            /* Center horizontally */
+            animation: bounceUpDown 1.5s infinite ease-in-out;
+            /* Add a subtle bounce */
+        }
+
+        @keyframes bounceUpDown {
+
+            0%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+            }
+
+            50% {
+                transform: translateX(-50%) translateY(-10px);
+            }
+        }
     </style>
 </head>
 
@@ -234,6 +257,13 @@
                 class="md:hidden absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-teal-400 focus:outline-none">
                 <i class="fas fa-bars text-xl"></i>
             </button>
+
+            <div id="pull-hint"
+                class="absolute z-50 flex flex-col items-center opacity-0 transition-opacity duration-500 pointer-events-none">
+                <p class="bg-teal-500 text-white text-sm px-3 py-1 rounded-md mb-2 shadow-lg">Pull this down!
+                </p>
+                <div class="w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-teal-500"></div>
+            </div>
         </div>
         <div id="mobile-menu"
             class="md:hidden fixed inset-0 bg-gray-900 bg-opacity-95 z-40 flex flex-col items-center justify-center space-y-8 text-2xl">
@@ -722,6 +752,39 @@
     </footer>
 
     <script>
+        // --- Cookie Functions ---
+        /**
+         * Sets a cookie with the given name, value, and expiration days.
+         * @param {string} name - The name of the cookie.
+         * @param {string} value - The value to store in the cookie.
+         * @param {number} days - The number of days until the cookie expires.
+         */
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
+        }
+
+        /**
+         * Retrieves the value of a cookie by its name.
+         * @param {string} name - The name of the cookie to retrieve.
+         * @returns {string|null} The cookie's value, or null if not found.
+         */
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
         // Get current year for footer
         document.getElementById('current-year').textContent = new Date().getFullYear();
 
@@ -757,6 +820,24 @@
         const PULL_THRESHOLD = 30; // pixels to pull down to trigger navigation
         const navBar = document.getElementById('main-nav'); // Get the navigation bar element
         let navHeight = 0; // Initialize navHeight
+        let wasDragged = false; // Flag to indicate if a drag successfully occurred
+
+        // Get hint element
+        const pullHint = document.getElementById('pull-hint');
+
+        /**
+         * Hides the pull hint and removes it from the DOM after a short delay.
+         */
+        function hidePullHint() {
+            if (pullHint.classList.contains('opacity-100')) {
+                pullHint.classList.remove('opacity-100');
+                pullHint.classList.add('opacity-0');
+                pullHint.style.pointerEvents = 'none'; // Ensure it doesn't block clicks
+                setTimeout(() => {
+                    pullHint.style.display = 'none'; // Fully remove after transition
+                }, 500); // Match transition duration
+            }
+        }
 
         // Get nav height once the DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
@@ -764,6 +845,22 @@
                 navHeight = navBar.offsetHeight;
             }
             updateActiveLink(); // Initial call to set active link on load
+
+            // Initialize hint visibility for first-time visitors
+            if (!getCookie('userVisitedWebsite')) {
+                // Target the "Services" flag specifically
+                const servicesFlag = document.querySelector('.flag-item[data-target="services"]');
+                if (servicesFlag) {
+                    // Position the hint relative to the Services flag
+                    // The hint is absolutely positioned within the nav's container
+                    const flagCenterRelative = servicesFlag.offsetLeft + servicesFlag.offsetWidth / 2;
+                    pullHint.style.left = `${flagCenterRelative}px`;
+                    // Adjusted 'top' value to move the hint further down
+                    pullHint.style.top = `calc(100% + 20px)`;
+                    pullHint.classList.remove('opacity-0');
+                    pullHint.classList.add('opacity-100');
+                }
+            }
         });
 
         // Update navHeight on window resize
@@ -772,12 +869,47 @@
                 navHeight = navBar.offsetHeight;
             }
             updateActiveLink(); // Recalculate active link on resize
+            // Re-position hint on resize if it's visible
+            if (pullHint.classList.contains('opacity-100')) {
+                const servicesFlag = document.querySelector('.flag-item[data-target="services"]');
+                if (servicesFlag) {
+                    const flagCenterRelative = servicesFlag.offsetLeft + servicesFlag.offsetWidth / 2;
+                    pullHint.style.left = `${flagCenterRelative}px`;
+                    // Adjusted 'top' value on resize as well
+                    pullHint.style.top = `calc(100% + 20px)`;
+                }
+            }
         });
 
 
         flagItems.forEach(flag => {
             flag.addEventListener('mousedown', startDrag);
             flag.addEventListener('touchstart', startDrag, { passive: true });
+
+            // Add a click listener to handle immediate hint dismissal and navigation on pure clicks
+            flag.addEventListener('click', (e) => {
+                // If a drag just completed successfully, the 'click' event might still fire.
+                // We only want to handle pure clicks, not drag-initiated clicks.
+                if (wasDragged) {
+                    wasDragged = false; // Reset the flag immediately
+                    return; // Do nothing, endDrag already handled it
+                }
+
+                // This is a pure click or a very short drag that didn't meet the threshold
+                hidePullHint();
+                setCookie('userVisitedWebsite', 'true', 365);
+
+                const targetId = flag.dataset.target;
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    // Smooth scroll to the target element, offset by the nav bar height
+                    const targetPosition = targetElement.offsetTop - navHeight;
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
         });
 
         function startDrag(e) {
@@ -827,7 +959,9 @@
             const currentHeight = currentFlag.offsetHeight;
             const pulledDistance = currentHeight - initialHeight;
 
+            wasDragged = false; // Reset for this interaction
             if (pulledDistance >= PULL_THRESHOLD) {
+                wasDragged = true; // Mark as successfully dragged
                 const targetId = currentFlag.dataset.target;
                 const targetElement = document.getElementById(targetId);
                 if (targetElement) {
@@ -838,6 +972,8 @@
                         behavior: 'smooth'
                     });
                 }
+                hidePullHint(); // Hide hint if a pull occurred
+                setCookie('userVisitedWebsite', 'true', 365); // Set cookie on successful pull
             }
 
             // Animate flag back to original height
@@ -994,11 +1130,10 @@
                 const rect = card.getBoundingClientRect();
 
                 // Calculate mouse position relative to the center of the card
+                // The rotation values are inverted to make the card "follow" the mouse
                 const mouseX = e.clientX - rect.left;
                 const mouseY = e.clientY - rect.top;
 
-                // Calculate desired rotation and Z-offset based on mouse position
-                // The rotation values are inverted to make the card "follow" the mouse
                 const desiredRotateX = ((rect.height / 2 - mouseY) / rect.height) * 20; // Max 20 degrees rotation
                 const desiredRotateY = ((mouseX - rect.width / 2) / rect.width) * 20; // Max 20 degrees rotation
                 const desiredZOffset = 30; // Desired translateZ (move forward by 30px)
