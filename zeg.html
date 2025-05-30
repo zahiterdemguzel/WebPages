@@ -7,6 +7,7 @@
     <title>Zahit Erdem Güzel - Technical Artist</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <style>
         /* Custom styles for animations if needed, otherwise Tailwind handles most */
         @keyframes fadeIn {
@@ -46,29 +47,189 @@
         .font-inter {
             font-family: 'Inter', sans-serif;
         }
+
+        /* Adjust the nav bar itself to be the visible area for the flags */
+        nav {
+            height: 96px;
+            /* Increased height for the visible nav area (Tailwind's h-24) */
+            overflow: visible;
+            /* Crucial to allow the top part of the flags to extend "out of page" */
+            padding-top: 0;
+            /* Remove default padding as flags are positioned with 'top' property */
+            padding-bottom: 0;
+        }
+
+        /* Ensure the inner container of the nav also aligns items to the top */
+        nav .container {
+            height: 100%;
+            /* Make sure inner container takes full height of nav */
+            align-items: flex-start;
+            /* Align the flags to the top of the nav container */
+        }
+
+        /* Styles for the "flag" navigation items */
+        .flag-item {
+            /* Define CSS variables for easier management of flag properties */
+            --flag-height: 96px;
+            /* Flag height matches nav height for seamlessness (initial height) */
+            --flag-bg-color: #374151;
+            /* gray-700 */
+            --flag-text-color: #D1D5DB;
+            /* gray-300 */
+            --flag-hover-bg-color: #4B5563;
+            /* gray-600 */
+            --flag-hover-text-color: #2DD4BF;
+            /* teal-400 */
+            --flag-active-bg-color: #1F2937;
+            /* gray-800 */
+            --flag-active-text-color: #2DD4BF;
+            /* teal-400 */
+            --triangle-height: 10px;
+            /* Height of the triangle at the bottom */
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            /* Align content (icon/text) to the bottom of the flag */
+            padding-bottom: 0.5rem;
+            /* Padding at the bottom for content */
+            padding-left: 1rem;
+            padding-right: 1rem;
+            height: var(--flag-height);
+            /* Set initial flag height */
+            background-color: var(--flag-bg-color);
+            color: var(--flag-text-color);
+            cursor: grab;
+            transition: background-color 0.2s ease-out, color 0.2s ease-out, box-shadow 0.2s ease-out;
+            /* Removed transform from transition */
+            user-select: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
+            /* Keep relative for ::after positioning */
+
+            /* Properties to make all flags the same width */
+            flex-grow: 1;
+            flex-basis: 0;
+
+            border-radius: 0;
+            /* No rounded corners as requested */
+        }
+
+        .flag-item:hover {
+            background-color: var(--flag-hover-bg-color);
+            color: var(--flag-hover-text-color);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .flag-item i {
+            font-size: 1.5rem;
+            /* Icon size */
+            margin-bottom: 0.25rem;
+        }
+
+        .flag-item span {
+            font-size: 0.875rem;
+            /* Text size */
+            font-weight: 600;
+        }
+
+        /* Active flag style */
+        .flag-item.active {
+            background-color: var(--flag-active-bg-color);
+            color: var(--flag-active-text-color);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Triangle at the bottom of the flag using clip-path */
+        .flag-item::after {
+            content: '';
+            position: absolute;
+            bottom: calc(-1 * var(--triangle-height));
+            /* Position the triangle exactly at the bottom */
+            left: 0;
+            width: 100%;
+            /* Make triangle width match flag width */
+            height: var(--triangle-height);
+            /* Set triangle height */
+            background-color: var(--flag-bg-color);
+            /* Color matches flag background */
+            clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
+            /* Creates a downward pointing triangle */
+            z-index: 1;
+            /* Ensure it's on top of the flag's main body */
+            transition: background-color 0.2s ease-out;
+            /* Smooth transition for triangle color */
+        }
+
+        .flag-item:hover::after {
+            background-color: var(--flag-hover-bg-color);
+            /* Match hover background color */
+        }
+
+        .flag-item.active::after {
+            background-color: var(--flag-active-bg-color);
+            /* Match active background color */
+        }
+
+        /* Mobile menu specific styles */
+        #mobile-menu {
+            transition: transform 0.3s ease-out;
+            transform: translateY(-100%);
+        }
+
+        #mobile-menu.open {
+            transform: translateY(0);
+        }
     </style>
 </head>
 
 <body class="min-h-screen bg-gray-950 text-gray-100 font-inter">
 
-    <nav class="sticky top-0 z-50 bg-gray-900 bg-opacity-90 backdrop-blur-md shadow-lg py-4">
-        <div class="container mx-auto px-4 flex justify-between items-center">
-            <div class="text-2xl font-bold text-teal-400">Zahit Erdem Güzel</div>
-            <div class="space-x-6 hidden md:flex">
-                <a href="#home"
-                    class="nav-link hover:text-teal-400 transition-colors duration-300 text-teal-400 font-semibold"
-                    data-section="home">Home</a>
-                <a href="#projects" class="nav-link hover:text-teal-400 transition-colors duration-300 text-gray-300"
-                    data-section="projects">Projects</a>
-                <a href="#videos" class="nav-link hover:text-teal-400 transition-colors duration-300 text-gray-300"
-                    data-section="videos">Videos</a>
-                <a href="#services" class="nav-link hover:text-teal-400 transition-colors duration-300 text-gray-300"
-                    data-section="services">Services</a>
-                <a href="#contact" class="nav-link hover:text-teal-400 transition-colors duration-300 text-gray-300"
-                    data-section="contact">Contact</a>
+    <nav id="main-nav" class="sticky top-0 z-50 bg-gray-900 bg-opacity-90 backdrop-blur-md shadow-lg h-24">
+        <div class="container mx-auto px-4 flex justify-center items-start relative">
+            <div class="space-x-4 hidden md:flex w-full">
+                <div class="flag-item active" data-target="home">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </div>
+                <div class="flag-item" data-target="projects">
+                    <i class="fas fa-folder-open"></i>
+                    <span>Projects</span>
+                </div>
+                <div class="flag-item" data-target="videos">
+                    <i class="fas fa-video"></i>
+                    <span>Videos</span>
+                </div>
+                <div class="flag-item" data-target="services">
+                    <i class="fas fa-handshake"></i>
+                    <span>Services</span>
+                </div>
+                <div class="flag-item" data-target="contact">
+                    <i class="fas fa-envelope"></i>
+                    <span>Contact</span>
+                </div>
             </div>
-            <button class="md:hidden text-gray-300 hover:text-teal-400 focus:outline-none">
+            <button id="mobile-menu-button"
+                class="md:hidden absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-teal-400 focus:outline-none">
                 <i class="fas fa-bars text-xl"></i>
+            </button>
+        </div>
+        <div id="mobile-menu"
+            class="md:hidden fixed inset-0 bg-gray-900 bg-opacity-95 z-40 flex flex-col items-center justify-center space-y-8 text-2xl">
+            <a href="#home" class="mobile-nav-link text-white hover:text-teal-400 transition-colors duration-300"
+                data-section="home">Home</a>
+            <a href="#projects" class="mobile-nav-link text-white hover:text-teal-400 transition-colors duration-300"
+                data-section="projects">Projects</a>
+            <a href="#videos" class="mobile-nav-link text-white hover:text-teal-400 transition-colors duration-300"
+                data-section="videos">Videos</a>
+            <a href="#services" class="mobile-nav-link text-white hover:text-teal-400 transition-colors duration-300"
+                data-section="services">Services</a>
+            <a href="#contact" class="mobile-nav-link text-white hover:text-teal-400 transition-colors duration-300"
+                data-section="contact">Contact</a>
+            <button id="close-mobile-menu"
+                class="absolute top-4 right-4 text-gray-300 hover:text-teal-400 focus:outline-none">
+                <i class="fas fa-times text-3xl"></i>
             </button>
         </div>
     </nav>
@@ -87,12 +248,12 @@
                 Technical Artist & Software Developer
             </p>
             <div class="flex justify-center space-x-6 animate-fade-in-up delay-200">
-                <a href="#projects"
-                    class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
+                <a id="view-projects-button" data-target="projects"
+                    class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer">
                     View Projects
                 </a>
-                <a href="#contact"
-                    class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
+                <a id="get-quote-button" data-target="contact"
+                    class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer">
                     Get a Quote
                 </a>
             </div>
@@ -116,9 +277,8 @@
                     class="bg-gray-800 p-8 rounded-xl shadow-lg transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
                     <p class="text-lg italic text-gray-300 mb-6">
                         "Zahit is the most skilled 3D Artist I’ve ever met. Zahit goes out of his way to learn new
-                        skills and is also so amazing at teaching them. Zahit was always able to teach me in the most
-                        quick and easy understanding way. There is nothing this man can’t do. Amazing to work with and
-                        very lovely to chat with :)"
+                        skills and is also so amazing at teaching them. There is nothing this man can’t do. Amazing to
+                        work with and very lovely to chat with :)"
                     </p>
                     <p class="text-right font-semibold text-teal-400">- Sunnie Leslie, 2D Artist</p>
                 </div>
@@ -363,6 +523,7 @@
                         Providing Technical Art and Software Development services for many customers all around the
                         globe.
                     </p>
+                    <p class="font-semibold text-gray-400">Personal Project</p>
                 </div>
                 <div class="md:w-1/2 p-4">
                     <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/fiverr.png" alt="Fiverr Projects"
@@ -535,7 +696,7 @@
 
     <footer class="bg-gray-900 py-8 text-center text-gray-400 text-sm">
         <div class="container mx-auto px-4">
-            <p>&copy; <span id="current-year"></span> Zahit Erdem Güzel. All rights reserved.</p>
+            <p>© <span id="current-year"></span> Zahit Erdem Güzel. All rights reserved.</p>
             <p class="mt-2">Designed and Developed by Zahit Erdem Güzel.</p>
         </div>
     </footer>
@@ -544,8 +705,131 @@
         // Get current year for footer
         document.getElementById('current-year').textContent = new Date().getFullYear();
 
-        // Smooth scrolling and active link highlighting
-        const navLinks = document.querySelectorAll('.nav-link');
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const closeMobileMenuButton = document.getElementById('close-mobile-menu');
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+            mobileMenu.classList.toggle('open');
+        });
+
+        closeMobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden');
+            mobileMenu.classList.remove('open');
+        });
+
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+                mobileMenu.classList.remove('open');
+            });
+        });
+
+
+        // Flag pull-down interaction
+        const flagItems = document.querySelectorAll('.flag-item');
+        let isDragging = false;
+        let startY = 0;
+        let currentFlag = null;
+        const PULL_THRESHOLD = 30; // pixels to pull down to trigger navigation
+        const navBar = document.getElementById('main-nav'); // Get the navigation bar element
+        let navHeight = 0; // Initialize navHeight
+
+        // Get nav height once the DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            if (navBar) {
+                navHeight = navBar.offsetHeight;
+            }
+            updateActiveLink(); // Initial call to set active link on load
+        });
+
+        // Update navHeight on window resize
+        window.addEventListener('resize', () => {
+            if (navBar) {
+                navHeight = navBar.offsetHeight;
+            }
+            updateActiveLink(); // Recalculate active link on resize
+        });
+
+
+        flagItems.forEach(flag => {
+            flag.addEventListener('mousedown', startDrag);
+            flag.addEventListener('touchstart', startDrag, { passive: true });
+        });
+
+        function startDrag(e) {
+            isDragging = true;
+            currentFlag = this;
+            startY = e.clientY || e.touches[0].clientY;
+            currentFlag.style.transition = 'none'; // Disable transition during drag
+            currentFlag.dataset.initialHeight = currentFlag.offsetHeight; // Store initial height
+
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag, { passive: true });
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('touchend', endDrag);
+
+            // Add active class on drag start
+            flagItems.forEach(item => item.classList.remove('active'));
+            currentFlag.classList.add('active');
+        }
+
+        function drag(e) {
+            if (!isDragging || !currentFlag) return;
+
+            const clientY = e.clientY || e.touches[0].clientY;
+            let deltaY = clientY - startY;
+
+            // Only allow expansion downwards
+            deltaY = Math.max(0, deltaY);
+
+            // Calculate new height
+            const initialHeight = parseFloat(currentFlag.dataset.initialHeight);
+            const newHeight = initialHeight + deltaY;
+
+            // Apply new height
+            currentFlag.style.height = `${newHeight}px`;
+        }
+
+        function endDrag(e) {
+            if (!isDragging || !currentFlag) return;
+
+            isDragging = false;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('touchmove', drag);
+            document.removeEventListener('mouseup', endDrag);
+            document.removeEventListener('touchend', endDrag);
+
+            const initialHeight = parseFloat(currentFlag.dataset.initialHeight);
+            const currentHeight = currentFlag.offsetHeight;
+            const pulledDistance = currentHeight - initialHeight;
+
+            if (pulledDistance >= PULL_THRESHOLD) {
+                const targetId = currentFlag.dataset.target;
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    // Scroll to the target element, offset by the nav bar height
+                    const targetPosition = targetElement.offsetTop - navHeight;
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+
+            // Animate flag back to original height
+            currentFlag.style.transition = 'height 0.2s ease-out';
+            currentFlag.style.height = `var(--flag-height)`;
+
+            // Re-evaluate active link after drag ends and potential scroll
+            setTimeout(updateActiveLink, 250); // Small delay to allow scroll to finish
+            currentFlag = null;
+        }
+
+        // Smooth scrolling and active link highlighting (modified for flags)
         const sections = document.querySelectorAll('section[id]');
 
         function updateActiveLink() {
@@ -553,36 +837,60 @@
             const scrollY = window.scrollY;
 
             sections.forEach(section => {
-                const sectionTop = section.offsetTop - 100; // Adjust for sticky header
+                // Adjust sectionTop by navHeight to correctly determine active section
+                const sectionTop = section.offsetTop - navHeight - 1; // -1 for a small buffer
                 const sectionHeight = section.offsetHeight;
                 if (scrollY >= sectionTop && scrollY < sectionTop + sectionHeight) {
                     currentActive = section.id;
                 }
             });
 
-            navLinks.forEach(link => {
+            flagItems.forEach(flag => {
+                flag.classList.remove('active');
+                if (flag.dataset.target === currentActive) {
+                    flag.classList.add('active');
+                }
+            });
+
+            // Also update mobile nav links
+            mobileNavLinks.forEach(link => {
                 link.classList.remove('text-teal-400', 'font-semibold');
-                link.classList.add('text-gray-300');
+                link.classList.add('text-white'); // Ensure default is white for mobile
                 if (link.dataset.section === currentActive) {
                     link.classList.add('text-teal-400', 'font-semibold');
-                    link.classList.remove('text-gray-300');
+                    link.classList.remove('text-white');
                 }
             });
         }
 
-        navLinks.forEach(link => {
-            link.addEventListener('click', function (e) {
-                e.preventDefault();
-                const targetId = this.getAttribute('href').substring(1);
-                const targetElement = document.getElementById(targetId);
-                if (targetElement) {
-                    targetElement.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        });
-
+        // Initial call and event listeners for active link
         window.addEventListener('scroll', updateActiveLink);
-        document.addEventListener('DOMContentLoaded', updateActiveLink); // Set active link on load
+        // DOMContentLoaded listener is already setting navHeight and calling updateActiveLink
+
+        // Smooth scrolling for "View Projects" and "Get a Quote" buttons
+        const viewProjectsButton = document.getElementById('view-projects-button');
+        const getQuoteButton = document.getElementById('get-quote-button');
+
+        function smoothScrollToTarget(event) {
+            event.preventDefault(); // Prevent default anchor link behavior
+            const targetId = event.currentTarget.dataset.target;
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+                // Scroll to the target element, offset by the nav bar height
+                const targetPosition = targetElement.offsetTop - navHeight;
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        if (viewProjectsButton) {
+            viewProjectsButton.addEventListener('click', smoothScrollToTarget);
+        }
+        if (getQuoteButton) {
+            getQuoteButton.addEventListener('click', smoothScrollToTarget);
+        }
     </script>
 </body>
 
