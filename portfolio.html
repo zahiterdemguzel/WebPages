@@ -4,863 +4,474 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zahit Erdem Güzel - Technical Artist</title>
+    <title>My 3D Portfolio</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <style>
-        /* Custom styles for animations if needed, otherwise Tailwind handles most */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-fade-in-up {
-            animation: fadeInUp 0.5s ease-out forwards;
-        }
-
-        .delay-100 {
-            animation-delay: 0.1s;
-        }
-
-        .delay-200 {
-            animation-delay: 0.2s;
-        }
-
-        .font-inter {
+        /* Apply Inter font and dark background to the body */
+        body {
             font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            /* Prevent horizontal scroll caused by off-screen elements */
+            color: #e2e8f0;
+            /* Light gray text */
         }
 
-        /* Adjust the nav bar itself to be the visible area for the flags */
-        nav {
-            height: 96px;
-            /* Increased height for the visible nav area (Tailwind's h-24) */
-            overflow: visible;
-            /* Crucial to allow the top part of the flags to extend "out of page" */
-            padding-top: 0;
-            /* Remove default padding as flags are positioned with 'top' property */
-            padding-bottom: 0;
+        /* Styling for each section containing a 3D cube */
+        .cube-section {
+            height: 60vh;
+            /* Further reduced height to decrease vertical space between projects */
+            display: flex;
+            align-items: center;
+            /* Vertically center content */
+            justify-content: center;
+            /* Horizontally center content */
+            position: relative;
+            /* Allows absolute positioning of children */
+            overflow: hidden;
+            /* Hides parts of the cube when it's off-screen */
+            padding: 2rem;
+            /* Add some padding around the sections */
+            box-sizing: border-box;
+            /* Include padding in the element's total width and height */
         }
 
-        /* Ensure the inner container of the nav also aligns items to the top */
-        nav .container {
+        /* Container for the Three.js canvas */
+        .cube-canvas-container {
+            width: 50vw;
+            /* Occupies half the viewport width */
+            height: 70vh;
+            /* Occupies 70% of the viewport height */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            /* Positioned absolutely within its parent .cube-section */
+            top: 50%;
+            /* Start at the vertical center */
+            transform: translateY(-50%);
+            /* Adjust to truly center vertically */
+            z-index: 10;
+            /* Ensure canvas is above other content if needed */
+        }
+
+        /* Specific positioning for left-aligned cube containers */
+        .cube-canvas-container.left {
+            left: 0;
+        }
+
+        /* Specific positioning for right-aligned cube containers */
+        .cube-canvas-container.right {
+            right: 0;
+        }
+
+        /* Ensure canvas fills its container */
+        canvas {
+            display: block;
+            width: 100% !important;
+            /* Override Three.js inline width */
+            height: 100% !important;
+            /* Override Three.js inline height */
+        }
+
+        /* Styling for the text description next to the cube */
+        .project-description {
+            width: 50vw;
+            /* Occupies the other half of the viewport width */
             height: 100%;
-            /* Make sure inner container takes full height of nav */
-            align-items: flex-start;
-            /* Align the flags to the top of the nav container */
-        }
-
-        /* Styles for the "flag" navigation items */
-        .flag-item {
-            /* Define CSS variables for easier management of flag properties */
-            --flag-height: 96px;
-            /* Flag height matches nav height for seamlessness (initial height) */
-            --flag-bg-color: #374151;
-            /* gray-700 */
-            --flag-text-color: #D1D5DB;
-            /* gray-300 */
-            --flag-hover-bg-color: #4B5563;
-            /* gray-600 */
-            --flag-hover-text-color: #2DD4BF;
-            /* teal-400 */
-            --flag-active-bg-color: #1F2937;
-            /* gray-800 */
-            --flag-active-text-color: #2DD4BF;
-            /* teal-400 */
-            --triangle-height: 10px;
-            /* Height of the triangle at the bottom */
-
+            /* Fill the height of the section */
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-end;
-            /* Align content (icon/text) to the bottom of the flag */
-            padding-bottom: 0.5rem;
-            /* Padding at the bottom for content */
-            padding-left: 1rem;
-            padding-right: 1rem;
-            height: var(--flag-height);
-            /* Set initial flag height */
-            background-color: var(--flag-bg-color);
-            color: var(--flag-text-color);
-            cursor: grab;
-            transition: background-color 0.2s ease-out, color 0.2s ease-out, box-shadow 0.2s ease-out;
-            /* Removed transform from transition */
-            user-select: none;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            position: relative;
-            /* Keep relative for ::after positioning */
-
-            /* Properties to make all flags the same width */
-            flex-grow: 1;
-            flex-basis: 0;
-
-            border-radius: 0;
-            /* No rounded corners as requested */
-        }
-
-        .flag-item:hover {
-            background-color: var(--flag-hover-bg-color);
-            color: var(--flag-hover-text-color);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .flag-item i {
-            font-size: 1.5rem;
-            /* Icon size */
-            margin-bottom: 0.25rem;
-        }
-
-        .flag-item span {
-            font-size: 0.875rem;
-            /* Text size */
-            font-weight: 600;
-        }
-
-        /* Active flag style */
-        .flag-item.active {
-            background-color: var(--flag-active-bg-color);
-            color: var(--flag-active-text-color);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-        }
-
-        /* Triangle at the bottom of the flag using clip-path */
-        .flag-item::after {
-            content: '';
+            justify-content: center;
+            padding: 4rem;
+            /* Ample padding for readability */
+            box-sizing: border-box;
             position: absolute;
-            bottom: calc(-1 * var(--triangle-height));
-            /* Position the triangle exactly at the bottom */
+            /* Positioned absolutely within its parent .cube-section */
+            top: 0;
+            z-index: 5;
+            /* Ensure text is below canvas if they overlap */
+        }
+
+        /* Specific positioning for left-aligned text descriptions */
+        .project-description.left-text {
             left: 0;
-            width: 100%;
-            /* Make triangle width match flag width */
-            height: var(--triangle-height);
-            /* Set triangle height */
-            background-color: var(--flag-bg-color);
-            /* Color matches flag background */
-            clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
-            /* Creates a downward pointing triangle */
-            z-index: 1;
-            /* Ensure it's on top of the flag's main body */
-            transition: background-color 0.2s ease-out;
-            /* Smooth transition for triangle color */
+            text-align: left;
         }
 
-        .flag-item:hover::after {
-            background-color: var(--flag-hover-bg-color);
-            /* Match hover background color */
+        /* Specific positioning for right-aligned text descriptions */
+        .project-description.right-text {
+            right: 0;
+            text-align: right;
         }
 
-        .flag-item.active::after {
-            background-color: var(--flag-active-bg-color);
-            /* Match active background color */
-        }
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 768px) {
+            .cube-section {
+                flex-direction: column;
+                /* Stack elements vertically */
+                height: auto;
+                /* Adjust height dynamically */
+                min-height: 150vh;
+                /* Ensure enough scroll space */
+            }
 
-        /* Mobile menu specific styles */
-        #mobile-menu {
-            transition: transform 0.3s ease-out;
-            transform: translateY(-100%);
-        }
+            .cube-canvas-container,
+            .project-description {
+                position: relative;
+                /* Revert to relative positioning */
+                width: 100vw;
+                /* Full width */
+                height: 50vh;
+                /* Half viewport height for each */
+                top: auto;
+                transform: none;
+                padding: 1rem;
+            }
 
-        #mobile-menu.open {
-            transform: translateY(0);
+            .cube-canvas-container.left,
+            .cube-canvas-container.right,
+            .project-description.left-text,
+            .project-description.right-text {
+                left: auto;
+                right: auto;
+            }
+
+            .project-description {
+                text-align: center;
+                /* Center text on small screens */
+            }
         }
     </style>
 </head>
 
-<body class="min-h-screen bg-gray-950 text-gray-100 font-inter">
+<body class="bg-gray-900 text-gray-100">
+    <header
+        class="h-screen flex items-center justify-center bg-gradient-to-br from-blue-700 to-purple-800 text-white shadow-lg rounded-b-3xl">
+        <h1 class="text-6xl md:text-7xl lg:text-8xl font-extrabold text-center drop-shadow-lg p-4">My 3D Portfolio</h1>
+    </header>
 
-    <nav class="sticky top-0 z-50 bg-gray-900 bg-opacity-90 backdrop-blur-md shadow-lg h-24">
-        <div class="container mx-auto px-4 flex justify-center items-start relative">
-            <div class="space-x-4 hidden md:flex w-full">
-                <div class="flag-item active" data-target="home">
-                    <i class="fas fa-home"></i>
-                    <span>Home</span>
-                </div>
-                <div class="flag-item" data-target="projects">
-                    <i class="fas fa-folder-open"></i>
-                    <span>Projects</span>
-                </div>
-                <div class="flag-item" data-target="videos">
-                    <i class="fas fa-video"></i>
-                    <span>Videos</span>
-                </div>
-                <div class="flag-item" data-target="services">
-                    <i class="fas fa-handshake"></i>
-                    <span>Services</span>
-                </div>
-                <div class="flag-item" data-target="contact">
-                    <i class="fas fa-envelope"></i>
-                    <span>Contact</span>
-                </div>
+    <main>
+        <section id="section-1" class="cube-section">
+            <div id="cube-container-1" class="cube-canvas-container left"></div>
+            <div class="project-description right-text">
+                <h2 class="text-4xl font-bold mb-4 text-blue-300">Project Alpha</h2>
+                <p class="text-lg leading-relaxed">
+                    A brief description of Project Alpha, highlighting its key features and technologies used.
+                    This project focused on developing a robust and scalable solution for data visualization.
+                    We leveraged modern frameworks and efficient algorithms to deliver a seamless user experience.
+                </p>
             </div>
-            <button id="mobile-menu-button"
-                class="md:hidden absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-teal-400 focus:outline-none">
-                <i class="fas fa-bars text-xl"></i>
-            </button>
-        </div>
-        <div id="mobile-menu"
-            class="md:hidden fixed inset-0 bg-gray-900 bg-opacity-95 z-40 flex flex-col items-center justify-center space-y-8 text-2xl">
-            <a href="#home" class="mobile-nav-link text-white hover:text-teal-400 transition-colors duration-300"
-                data-section="home">Home</a>
-            <a href="#projects" class="mobile-nav-link text-white hover:text-teal-400 transition-colors duration-300"
-                data-section="projects">Projects</a>
-            <a href="#videos" class="mobile-nav-link text-white hover:text-teal-400 transition-colors duration-300"
-                data-section="videos">Videos</a>
-            <a href="#services" class="mobile-nav-link text-white hover:text-teal-400 transition-colors duration-300"
-                data-section="services">Services</a>
-            <a href="#contact" class="mobile-nav-link text-white hover:text-teal-400 transition-colors duration-300"
-                data-section="contact">Contact</a>
-            <button id="close-mobile-menu"
-                class="absolute top-4 right-4 text-gray-300 hover:text-teal-400 focus:outline-none">
-                <i class="fas fa-times text-3xl"></i>
-            </button>
-        </div>
-    </nav>
+        </section>
 
-    <section id="home" class="relative h-screen flex items-center justify-center text-center overflow-hidden">
-        <video autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover opacity-30"
-            src="https://zahiterdemguzel.com/wp-content/uploads/2023/06/wwebsite_video0001-0420.mp4"
-            onerror="this.src='https://placehold.co/1920x1080/1a202c/e2e8f0?text=Video+Unavailable';">
-            Your browser does not support the video tag.
-        </video>
-        <div class="relative z-10 p-8 bg-black bg-opacity-50 rounded-lg shadow-2xl max-w-3xl mx-auto">
-            <h1 class="text-5xl md:text-7xl font-extrabold text-white leading-tight mb-4 animate-fade-in-up">
-                Zahit Erdem Güzel
-            </h1>
-            <p class="text-2xl md:text-3xl text-teal-300 font-light mb-8 animate-fade-in-up delay-100">
-                Technical Artist & Software Developer
-            </p>
-            <div class="flex justify-center space-x-6 animate-fade-in-up delay-200">
-                <a id="view-projects-button" data-target="projects"
-                    class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer">
-                    View Projects
-                </a>
-                <a id="get-quote-button" data-target="contact"
-                    class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer">
-                    Get a Quote
-                </a>
+        <section id="section-2" class="cube-section">
+            <div id="cube-container-2" class="cube-canvas-container right"></div>
+            <div class="project-description left-text">
+                <h2 class="text-4xl font-bold mb-4 text-purple-300">Project Beta</h2>
+                <p class="text-lg leading-relaxed">
+                    Details about Project Beta, showcasing its innovative solutions and impact.
+                    This initiative involved creating an interactive web application that revolutionized
+                    how users interact with complex information, making it accessible and engaging.
+                </p>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="about" class="py-20 bg-gray-900">
-        <div class="container mx-auto px-4">
-            <h2 class="text-4xl font-bold text-center text-white mb-12">What People Say About Me</h2>
-            <div class="grid md:grid-cols-2 gap-10">
-                <div
-                    class="bg-gray-800 p-8 rounded-xl shadow-lg transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-                    <p class="text-lg italic text-gray-300 mb-6">
-                        "Zahit is a truly talented hard working 3D artist. He is a man of good character and honesty. If
-                        he doesn’t know how to do something he goes out of his way to learn. Zahit is a huge blessing to
-                        our team and we love having him."
-                    </p>
-                    <p class="text-right font-semibold text-teal-400">- Mack Lawrence, Founder of MLF</p>
-                </div>
-                <div
-                    class="bg-gray-800 p-8 rounded-xl shadow-lg transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-                    <p class="text-lg italic text-gray-300 mb-6">
-                        "Zahit is the most skilled 3D Artist I’ve ever met. Zahit goes out of his way to learn new
-                        skills and is also so amazing at teaching them. There is nothing this man can’t do. Amazing to
-                        work with and very lovely to chat with :)"
-                    </p>
-                    <p class="text-right font-semibold text-teal-400">- Sunnie Leslie, 2D Artist</p>
-                </div>
+        <section id="section-3" class="cube-section">
+            <div id="cube-container-3" class="cube-canvas-container left"></div>
+            <div class="project-description right-text">
+                <h2 class="text-4xl font-bold mb-4 text-green-300">Project Gamma</h2>
+                <p class="text-lg leading-relaxed">
+                    An overview of Project Gamma, focusing on its design principles and user experience.
+                    We prioritized intuitive interfaces and responsive design to ensure a delightful experience
+                    across all devices, reflecting our commitment to user-centric development.
+                </p>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="projects" class="py-20 bg-gray-950">
-        <div class="container mx-auto px-4">
-            <h2 class="text-4xl font-bold text-center text-white mb-12">My Projects</h2>
-
-            <div
-                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
-                <div class="md:w-1/2 p-4">
-                    <p class="text-teal-400 text-sm mb-2">Python – Blender</p>
-                    <h3 class="text-3xl font-bold text-white mb-4">VHS Synthetic Data Generator</h3>
-                    <p class="text-gray-300 text-lg mb-4">
-                        Synthetic visual recognition data generation for various movie box models.
-                    </p>
-                    <p class="font-semibold text-gray-400">Collect Bounty – Hollywood</p>
-                </div>
-                <div class="md:w-1/2 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/resim_2024-03-03_152738453.png"
-                        alt="VHS Project 1"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/resim_2024-03-03_152830044.png"
-                        alt="VHS Project 2"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/resim_2024-03-03_152907517.png"
-                        alt="VHS Project 3"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/resim_2024-03-03_153025011.png"
-                        alt="VHS Project 4"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                </div>
+        <section id="section-4" class="cube-section">
+            <div id="cube-container-4" class="cube-canvas-container right"></div>
+            <div class="project-description left-text">
+                <h2 class="text-4xl font-bold mb-4 text-yellow-300">Project Delta</h2>
+                <p class="text-lg leading-relaxed">
+                    Exploring Project Delta, its technical challenges and how they were overcome.
+                    This project pushed the boundaries of performance optimization, tackling complex
+                    algorithms to achieve lightning-fast processing times and real-time feedback.
+                </p>
             </div>
+        </section>
 
-            <div
-                class="flex flex-col md:flex-row-reverse items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
-                <div class="md:w-1/2 p-4">
-                    <p class="text-teal-400 text-sm mb-2">Python – Blender</p>
-                    <h3 class="text-3xl font-bold text-white mb-4">Lego Synthetic Data Generation</h3>
-                    <p class="text-gray-300 text-lg mb-4">
-                        Synthetic data generation for Lego production line visual recognition algorithms.
-                    </p>
-                    <p class="font-semibold text-gray-400">Unknown Customer – Sweden</p>
-                </div>
-                <div class="md:w-1/2 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/resim_2024-03-03_153508524.png"
-                        alt="Lego Project 1"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/resim_2024-03-03_153541354.png"
-                        alt="Lego Project 2"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/resim_2024-03-03_153631266.png"
-                        alt="Lego Project 3"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/resim_2024-03-03_153645045.png"
-                        alt="Lego Project 4"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                </div>
+        <section id="section-5" class="cube-section">
+            <div id="cube-container-5" class="cube-canvas-container left"></div>
+            <div class="project-description right-text">
+                <h2 class="text-4xl font-bold mb-4 text-red-300">Project Epsilon</h2>
+                <p class="text-lg leading-relaxed">
+                    A deep dive into Project Epsilon, its unique features and future potential.
+                    This venture explored the integration of cutting-edge AI models to provide predictive
+                    analytics, opening new avenues for informed decision-making and strategic planning.
+                </p>
             </div>
+        </section>
 
-            <div
-                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
-                <div class="md:w-1/2 p-4">
-                    <p class="text-teal-400 text-sm mb-2">Python – Blender</p>
-                    <h3 class="text-3xl font-bold text-white mb-4">Catwalk Animation Generator</h3>
-                    <p class="text-gray-300 text-lg mb-4">
-                        Generating a 3D catwalk animation via combining character and cloth models.
-                    </p>
-                    <p class="font-semibold text-gray-400">Gabriel Wainmann – Australia</p>
-                </div>
-                <div class="md:w-1/2 p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="col-span-1 md:col-span-1 flex items-center justify-center">
-                        <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/resim_2024-03-05_113535306.png"
-                            alt="Catwalk Project Image"
-                            class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                    </div>
-                    <div class="col-span-1 md:col-span-1 flex flex-col space-y-4">
-                        <div class="aspect-video">
-                            <iframe title="preview catwalk 1" class="w-full h-full rounded-lg shadow-md"
-                                src="https://www.youtube.com/embed/N5PzqSh9Dk8" frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                allowfullscreen></iframe>
-                        </div>
-                        <div class="aspect-video">
-                            <iframe title="preview catwalk 2" class="w-full h-full rounded-lg shadow-md"
-                                src="https://www.youtube.com/embed/Wk1zXaxkTgc" frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                allowfullscreen></iframe>
-                        </div>
-                    </div>
-                </div>
+        <section id="section-6" class="cube-section">
+            <div id="cube-container-6" class="cube-canvas-container right"></div>
+            <div class="project-description left-text">
+                <h2 class="text-4xl font-bold mb-4 text-teal-300">Project Zeta</h2>
+                <p class="text-lg leading-relaxed">
+                    Concluding with Project Zeta, summarizing its achievements and impact.
+                    This final project consolidated our learning, delivering a comprehensive platform
+                    that demonstrated mastery across various domains, from frontend design to backend architecture.
+                </p>
             </div>
+        </section>
+    </main>
 
-            <div
-                class="flex flex-col md:flex-row-reverse items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
-                <div class="md:w-1/2 p-4">
-                    <p class="text-teal-400 text-sm mb-2">Python – PyQt5 – Blender</p>
-                    <h3 class="text-3xl font-bold text-white mb-4">3D Mockup Generator</h3>
-                    <p class="text-gray-300 text-lg mb-4">
-                        Program that lets creators to visualize their 2D designs in 3D animation universe.
-                    </p>
-                    <p class="font-semibold text-gray-400">Personal Project</p>
-                </div>
-                <div class="md:w-1/2 p-4 grid grid-cols-1 gap-4">
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/image-1.png" alt="Mockup Project 1"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/resim_2024-03-03_161753220.png"
-                        alt="Mockup Project 2"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                </div>
-            </div>
-
-            <div
-                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
-                <div class="md:w-1/2 p-4">
-                    <p class="text-teal-400 text-sm mb-2">Python – PyQt5 – Blender</p>
-                    <h3 class="text-3xl font-bold text-white mb-4">Marble Animation Generator</h3>
-                    <p class="text-gray-300 text-lg mb-4">
-                        Automation that produces 3D animated music videos from sound files.
-                    </p>
-                    <p class="font-semibold text-gray-400">Personal Project</p>
-                </div>
-                <div class="md:w-1/2 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/resim_2024-03-03_162212547.png"
-                        alt="Marble Project 1"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/resim_2024-03-03_162321012.png"
-                        alt="Marble Project 2"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                </div>
-            </div>
-
-            <div
-                class="flex flex-col md:flex-row-reverse items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
-                <div class="md:w-1/2 p-4">
-                    <p class="text-teal-400 text-sm mb-2">Instagram – Tiktok</p>
-                    <h3 class="text-3xl font-bold text-white mb-4">Social Media Accounts</h3>
-                    <p class="text-gray-300 text-lg mb-4">
-                        Creating a community for the marble music videos. Profile: @bilye.muzisyeni
-                    </p>
-                    <p class="font-semibold text-gray-400">Personal Project</p>
-                </div>
-                <div class="md:w-1/2 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/img_9200.png" alt="Social Media 1"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/img_9199.png" alt="Social Media 2"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                </div>
-            </div>
-
-            <div
-                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
-                <div class="md:w-1/2 p-4">
-                    <p class="text-teal-400 text-sm mb-2">Python – Blender</p>
-                    <h3 class="text-3xl font-bold text-white mb-4">Gas-Receptor Simulation</h3>
-                    <p class="text-gray-300 text-lg mb-4">
-                        Simulation software to understand gas behavior in a non-gravity environment.
-                    </p>
-                    <p class="font-semibold text-gray-400">Rifa Gowani – Texas</p>
-                </div>
-                <div class="md:w-1/2 p-4 grid grid-cols-1 gap-4">
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/particle-1-1.png"
-                        alt="Gas Simulation 1"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/resim_2024-03-10_175028125.png"
-                        alt="Gas Simulation 3"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                </div>
-            </div>
-
-            <div
-                class="flex flex-col md:flex-row-reverse items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
-                <div class="md:w-1/2 p-4">
-                    <p class="text-teal-400 text-sm mb-2">Python – Blender</p>
-                    <h3 class="text-3xl font-bold text-white mb-4">Furniture Render Generator</h3>
-                    <p class="text-gray-300 text-lg mb-4">
-                        Program to generate 360° images to present in the shop website using the existing model base.
-                    </p>
-                    <p class="font-semibold text-gray-400">Finest Furnishings – England</p>
-                </div>
-                <div class="md:w-1/2 p-4">
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/furniture-1-3.png"
-                        alt="Furniture Render"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                </div>
-            </div>
-
-            <div
-                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
-                <div class="md:w-1/2 p-4">
-                    <p class="text-teal-400 text-sm mb-2">Python – Blender – Blender4Dental</p>
-                    <h3 class="text-3xl font-bold text-white mb-4">Dental 3D Printing Automation</h3>
-                    <p class="text-gray-300 text-lg mb-4">
-                        Blender script to automate creation of printable 3D models from tooth scans.
-                    </p>
-                    <p class="font-semibold text-gray-400">Jason Gurchiani – Swan Dental Laboratory</p>
-                </div>
-                <div class="md:w-1/2 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/b4d.png" alt="Dental Project 1"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/before-1.png"
-                        alt="Dental Project 2"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/before-2.png"
-                        alt="Dental Project 3"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                </div>
-            </div>
-
-            <div
-                class="flex flex-col md:flex-row-reverse items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
-                <div class="md:w-1/2 p-4">
-                    <p class="text-teal-400 text-sm mb-2">Python – Blender</p>
-                    <h3 class="text-3xl font-bold text-white mb-4">Helmet Creator Addon</h3>
-                    <p class="text-gray-300 text-lg mb-4">
-                        Blender script to automate creation of printable 3D models from tooth scans.
-                    </p>
-                    <p class="font-semibold text-gray-400">Unknown Customer – U.S.A.</p>
-                </div>
-                <div class="md:w-1/2 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/helmet-4.png"
-                        alt="Helmet Project 1"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/helmet-3.png"
-                        alt="Helmet Project 2"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/helmet-ui-1.png"
-                        alt="Helmet Project UI"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                </div>
-            </div>
-
-            <div
-                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
-                <div class="md:w-1/2 p-4">
-                    <p class="text-teal-400 text-sm mb-2">Fiverr</p>
-                    <h3 class="text-3xl font-bold text-white mb-4">Many Other Works From Fiverr.com</h3>
-                    <p class="text-gray-300 text-lg mb-4">
-                        Providing Technical Art and Software Development services for many customers all around the
-                        globe.
-                    </p>
-                    <p class="font-semibold text-gray-400">Personal Project</p>
-                </div>
-                <div class="md:w-1/2 p-4">
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2024/03/fiverr.png" alt="Fiverr Projects"
-                        class="rounded-lg shadow-md w-full h-auto object-cover transition-transform duration-300 hover:scale-105" />
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="videos" class="py-20 bg-gray-900">
-        <div class="container mx-auto px-4">
-            <h2 class="text-4xl font-bold text-center text-white mb-12">Featured Videos</h2>
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div
-                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-                    <div class="aspect-video">
-                        <img src="https://zahiterdemguzel.com/wp-content/uploads/2023/06/resim_2023-06-25_112720923.png"
-                            alt="Kanye West – The Game Music Video" class="w-full h-full object-cover" />
-                    </div>
-                    <div class="p-6">
-                        <p class="text-lg font-semibold text-white">Kanye West – The Game Music Video (with Mack
-                            Lawrence Films)</p>
-                    </div>
-                </div>
-
-                <div
-                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-                    <div class="aspect-video">
-                        <iframe title="Roobo | Mystery Boxes" class="w-full h-full"
-                            src="https://www.youtube.com/embed/Kymr48G7yXI" frameborder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            allowfullscreen></iframe>
-                    </div>
-                    <div class="p-6">
-                        <p class="text-lg font-semibold text-white">Roobo | Mystery Boxes</p>
-                    </div>
-                </div>
-
-                <div
-                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-                    <div class="aspect-video">
-                        <iframe title="Jackson Wang Welcomes You to Beats Wonderland I Beats Fit Pro"
-                            class="w-full h-full" src="https://www.youtube.com/embed/9oz_EdxD3s8" frameborder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            allowfullscreen></iframe>
-                    </div>
-                    <div class="p-6">
-                        <p class="text-lg font-semibold text-white">Jackson Wang Welcomes You to Beats Wonderland I
-                            Beats Fit Pro</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="portfolio" class="py-20 bg-gray-950">
-        <div class="container mx-auto px-4">
-            <h2 class="text-4xl font-bold text-center text-white mb-12">More Portfolio Items</h2>
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div
-                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-                    <div class="relative w-full overflow-hidden" style="padding-top: 75%;">
-                        <img src="https://zahiterdemguzel.com/wp-content/uploads/2023/06/zahit-erdem-guzel-asset.jpg"
-                            alt="Product Brochures" class="absolute inset-0 w-full h-full object-cover" />
-                    </div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold text-white mb-2">Product Brochures</h3>
-                        <p class="text-gray-300">Visuals for product brochures and marketing materials.</p>
-                    </div>
-                </div>
-                <div
-                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2023/06/anim0390.png"
-                        alt="Presentation Contents" class="w-full h-auto object-cover" />
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold text-white mb-2">Presentation Contents</h3>
-                        <p class="text-gray-300">Engaging visuals for professional presentations.</p>
-                    </div>
-                </div>
-                <div
-                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-                    <img src="https://zahiterdemguzel.com/wp-content/uploads/2023/06/resim_2023-06-26_213946264.png"
-                        alt="Concept Design" class="w-full h-auto object-cover" />
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold text-white mb-2">Concept Design</h3>
-                        <p class="text-gray-300">Early-stage concept art and design explorations.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="services" class="py-20 bg-gray-900">
-        <div class="container mx-auto px-4">
-            <h2 class="text-4xl font-bold text-center text-white mb-12">My Services</h2>
-            <div class="grid md:grid-cols-3 gap-8">
-                <div
-                    class="bg-gray-800 p-8 rounded-xl shadow-lg text-center transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-                    <i class="fas fa-robot text-5xl text-teal-400 mb-4"></i>
-                    <h3 class="text-2xl font-bold text-white mb-2">3D Automations</h3>
-                    <p class="text-gray-300">Automating complex 3D tasks and workflows for efficiency.</p>
-                </div>
-                <div
-                    class="bg-gray-800 p-8 rounded-xl shadow-lg text-center transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-                    <i class="fas fa-code text-5xl text-teal-400 mb-4"></i>
-                    <h3 class="text-2xl font-bold text-white mb-2">Software Development</h3>
-                    <p class="text-gray-300">Custom software solutions tailored to your technical art needs.</p>
-                </div>
-                <div
-                    class="bg-gray-800 p-8 rounded-xl shadow-lg text-center transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-                    <i class="fas fa-film text-5xl text-teal-400 mb-4"></i>
-                    <h3 class="text-2xl font-bold text-white mb-2">3D Animation</h3>
-                    <p class="text-gray-300">Bringing your ideas to life with high-quality 3D animations.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="contact" class="py-20 bg-gray-950">
-        <div class="container mx-auto px-4">
-            <h2 class="text-4xl font-bold text-center text-white mb-12">Get a Quote</h2>
-            <div class="max-w-xl mx-auto bg-gray-800 p-8 rounded-xl shadow-lg">
-                <form class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="name" class="block text-gray-300 text-sm font-bold mb-2">
-                                Name
-                            </label>
-                            <input type="text" id="name" name="name"
-                                class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-teal-500 bg-gray-700 border-gray-600 text-white"
-                                placeholder="Your Name" />
-                        </div>
-                        <div>
-                            <label for="surname" class="block text-gray-300 text-sm font-bold mb-2">
-                                Surname
-                            </label>
-                            <input type="text" id="surname" name="surname"
-                                class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-teal-500 bg-gray-700 border-gray-600 text-white"
-                                placeholder="Your Surname" />
-                        </div>
-                    </div>
-                    <div>
-                        <label for="email" class="block text-gray-300 text-sm font-bold mb-2">
-                            E-Mail <span class="text-red-500">*</span>
-                        </label>
-                        <input type="email" id="email" name="email"
-                            class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-teal-500 bg-gray-700 border-gray-600 text-white"
-                            placeholder="your.email@example.com" required />
-                    </div>
-                    <div>
-                        <label for="message" class="block text-gray-300 text-sm font-bold mb-2">
-                            Message <span class="text-red-500">*</span>
-                        </label>
-                        <textarea id="message" name="message" rows="6"
-                            class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-teal-500 bg-gray-700 border-gray-600 text-white resize-y"
-                            placeholder="Tell me about your project..." required></textarea>
-                    </div>
-                    <button type="submit"
-                        class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-colors duration-300 transform hover:scale-105 shadow-lg">
-                        Send Message
-                    </button>
-                </form>
-            </div>
-            <div class="text-center mt-12">
-                <h3 class="text-3xl font-bold text-white mb-4">Contact Me Directly</h3>
-                <p class="text-xl text-teal-300">zahit14724@gmail.com</p>
-            </div>
-        </div>
-    </section>
-
-    <footer class="bg-gray-900 py-8 text-center text-gray-400 text-sm">
-        <div class="container mx-auto px-4">
-            <p>© <span id="current-year"></span> Zahit Erdem Güzel. All rights reserved.</p>
-            <p class="mt-2">Designed and Developed by Zahit Erdem Güzel.</p>
-        </div>
+    <footer class="h-80 flex items-center justify-center bg-gray-800 text-gray-400 rounded-t-3xl">
+        <p class="text-xl font-semibold">&copy; 2023 My Portfolio. All rights reserved.</p>
     </footer>
 
     <script>
-        // Get current year for footer
-        document.getElementById('current-year').textContent = new Date().getFullYear();
+        // Global arrays to hold Three.js scene components for each cube/model
+        const scenes = [];
+        const cameras = [];
+        const renderers = [];
+        const models = []; // Changed from 'cubes' to 'models' to reflect GLB
+        const cubeContainers = []; // Stores references to the HTML container elements
 
-        // Mobile menu toggle
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-        const closeMobileMenuButton = document.getElementById('close-mobile-menu');
-        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+        // Array of GLB model paths - now all pointing to the RobotExpressive model
+        const glbModels = [
+            'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
+            'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
+            'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
+            'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
+            'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
+            'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb'
+        ];
 
-        mobileMenuButton.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-            mobileMenu.classList.toggle('open');
-        });
-
-        closeMobileMenuButton.addEventListener('click', () => {
-            mobileMenu.classList.add('hidden');
-            mobileMenu.classList.remove('open');
-        });
-
-        mobileNavLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                mobileMenu.classList.add('hidden');
-                mobileMenu.classList.remove('open');
-            });
-        });
-
-
-        // Flag pull-down interaction
-        const flagItems = document.querySelectorAll('.flag-item');
-        let isDragging = false;
-        let startY = 0;
-        let currentFlag = null;
-        const PULL_THRESHOLD = 30; // pixels to pull down to trigger navigation
-
-        flagItems.forEach(flag => {
-            flag.addEventListener('mousedown', startDrag);
-            flag.addEventListener('touchstart', startDrag, { passive: true });
-        });
-
-        function startDrag(e) {
-            isDragging = true;
-            currentFlag = this;
-            startY = e.clientY || e.touches[0].clientY;
-            currentFlag.style.transition = 'none'; // Disable transition during drag
-            currentFlag.dataset.initialHeight = currentFlag.offsetHeight; // Store initial height
-
-            document.addEventListener('mousemove', drag);
-            document.addEventListener('touchmove', drag, { passive: true });
-            document.addEventListener('mouseup', endDrag);
-            document.addEventListener('touchend', endDrag);
-
-            // Add active class on drag start
-            flagItems.forEach(item => item.classList.remove('active'));
-            currentFlag.classList.add('active');
-        }
-
-        function drag(e) {
-            if (!isDragging || !currentFlag) return;
-
-            const clientY = e.clientY || e.touches[0].clientY;
-            let deltaY = clientY - startY;
-
-            // Only allow expansion downwards
-            deltaY = Math.max(0, deltaY);
-
-            // Calculate new height
-            const initialHeight = parseFloat(currentFlag.dataset.initialHeight);
-            const newHeight = initialHeight + deltaY;
-
-            // Apply new height
-            currentFlag.style.height = `${newHeight}px`;
-        }
-
-        function endDrag(e) {
-            if (!isDragging || !currentFlag) return;
-
-            isDragging = false;
-            document.removeEventListener('mousemove', drag);
-            document.removeEventListener('touchmove', drag);
-            document.removeEventListener('mouseup', endDrag);
-            document.removeEventListener('touchend', endDrag);
-
-            const initialHeight = parseFloat(currentFlag.dataset.initialHeight);
-            const currentHeight = currentFlag.offsetHeight;
-            const pulledDistance = currentHeight - initialHeight;
-
-            if (pulledDistance >= PULL_THRESHOLD) {
-                const targetId = currentFlag.dataset.target;
-                const targetElement = document.getElementById(targetId);
-                if (targetElement) {
-                    targetElement.scrollIntoView({ behavior: 'smooth' });
-                }
+        /**
+         * Initializes a single Three.js scene for a GLB model.
+         * @param {string} containerId - The ID of the HTML div element that will host the canvas.
+         * @param {boolean} isLeftAligned - True if the model should initially appear from the left, false for right.
+         * @param {string} glbPath - The path to the GLB file.
+         */
+        function initCubeScene(containerId, isLeftAligned) {
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.error(`Container with ID '${containerId}' not found.`);
+                return;
             }
+            cubeContainers.push(container); // Store the container reference
 
-            // Animate flag back to original height
-            currentFlag.style.transition = 'height 0.2s ease-out';
-            currentFlag.style.height = `var(--flag-height)`;
+            // 1. Scene: The container for all 3D objects, lights, and cameras.
+            const scene = new THREE.Scene();
 
-            // Re-evaluate active link after drag ends and potential scroll
-            setTimeout(updateActiveLink, 250); // Small delay to allow scroll to finish
-            currentFlag = null;
+            // 2. Camera: Defines the perspective from which the scene is viewed.
+            const camera = new THREE.PerspectiveCamera(
+                75, // FOV: Vertical field of view in degrees
+                container.clientWidth / container.clientHeight, // Aspect Ratio: Width / Height
+                0.1, // Near: Objects closer than this won't be rendered
+                1000 // Far: Objects farther than this won't be rendered
+            );
+
+            // 3. Renderer: Renders the scene using WebGL.
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight); // Set renderer size to container size
+            container.appendChild(renderer.domElement); // Add the canvas element to the HTML container
+
+            // Add lighting to the scene for better visual appearance of the model
+            // Increased intensity by 30%
+            const ambientLight = new THREE.AmbientLight(0x404040, 1.3); // Soft white light, increased intensity
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8 * 1.3); // White light, increased intensity by 30%
+            directionalLight.position.set(0, 1, 1).normalize(); // Position the light
+            scene.add(directionalLight);
+
+            // Placeholder cube while GLB loads
+            const placeholderGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const placeholderMaterial = new THREE.MeshBasicMaterial({ color: 0x808080, wireframe: true });
+            const placeholderCube = new THREE.Mesh(placeholderGeometry, placeholderMaterial);
+            placeholderCube.position.x = isLeftAligned ? -5 : 5; // Initial off-screen position
+            scene.add(placeholderCube);
+            models.push(placeholderCube); // Initially store the placeholder
+
+            // Load GLB model
+            const loader = new THREE.GLTFLoader();
+            // Use glbModels array to get the path based on the index
+            loader.load(glbModels[cubeContainers.indexOf(container)], function (gltf) {
+                const model = gltf.scene;
+
+                // Remove placeholder once model is loaded
+                scene.remove(placeholderCube);
+
+                // Adjust model scale and position as needed
+                model.scale.set(0.5, 0.5, 0.5); // Example scale adjustment
+                model.position.y = -1; // Example vertical adjustment to center the model
+
+                // Set initial position of the model: off-screen left or right
+                model.position.x = isLeftAligned ? -5 : 5; // Start further off-screen for a wider sweep
+                model.position.z = 0; // Ensure z is 0 initially
+
+                scene.add(model);
+
+                // Replace placeholder with the actual model in the models array
+                const modelIndex = models.indexOf(placeholderCube);
+                if (modelIndex > -1) {
+                    models[modelIndex] = model;
+                }
+
+            }, undefined, function (error) {
+                console.error('An error occurred while loading the GLB model:', error);
+                // Keep placeholder if loading fails
+            });
+
+            camera.position.z = 3; // Position the camera back to see the model clearly
+
+            // Store all components for later access in the animation loop
+            scenes.push(scene);
+            cameras.push(camera);
+            renderers.push(renderer);
+            // The actual model will replace the placeholder in the 'models' array after loading
+            // So, for now, 'models' array holds the placeholder, which will be updated later.
+
+            // Add a resize listener for this specific scene's camera and renderer
+            window.addEventListener('resize', () => onWindowResize(container, camera, renderer));
         }
 
-        // Smooth scrolling and active link highlighting (modified for flags)
-        const sections = document.querySelectorAll('section[id]');
+        /**
+         * Handles window resize events to update camera aspect ratio and renderer size.
+         * This ensures the 3D scene scales correctly with the browser window.
+         * @param {HTMLElement} container - The HTML container of the canvas.
+         * @param {THREE.PerspectiveCamera} camera - The camera to update.
+         * @param {THREE.WebGLRenderer} renderer - The renderer to update.
+         */
+        function onWindowResize(container, camera, renderer) {
+            // Update camera aspect ratio based on new container size
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix(); // Update the camera's projection matrix after changing aspect
 
-        function updateActiveLink() {
-            let currentActive = 'home';
+            // Update renderer size to match the new container size
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        /**
+         * Easing function for smooth acceleration and deceleration.
+         * @param {number} t - The input progress (0 to 1).
+         * @returns {number} The eased output progress.
+         */
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        /**
+         * The main animation loop. This function is called repeatedly via requestAnimationFrame
+         * to update model positions and rotations based on scroll, and render the scenes.
+         */
+        function animate() {
+            requestAnimationFrame(animate); // Request the next animation frame
+
+            // Get current scroll position of the window
             const scrollY = window.scrollY;
+            const windowHeight = window.innerHeight;
 
-            sections.forEach(section => {
-                const sectionTop = section.offsetTop - 100; // Adjust for sticky header
-                const sectionHeight = section.offsetHeight;
-                if (scrollY >= sectionTop && scrollY < sectionTop + sectionHeight) {
-                    currentActive = section.id;
+            // Iterate over each model to update its animation
+            models.forEach((model, index) => {
+                const container = cubeContainers[index];
+                if (!container) return; // Skip if container is not found
+
+                // Get the parent section element
+                const section = container.parentElement;
+                const sectionRect = section.getBoundingClientRect();
+
+                // Define the scroll range for the animation based on the section's visibility
+                const sectionHeight = sectionRect.height;
+                const viewportHeight = window.innerHeight;
+
+                // Animation starts when the section's top is at this position (relative to viewport top)
+                // This means the section is 10% visible from the bottom of the viewport
+                const animationStartTop = viewportHeight - (viewportHeight * 0.1); // 90% down the viewport
+
+                // Animation ends when the section's top is at this position (relative to viewport top)
+                // This means the section is 10% visible from the top of the viewport
+                const animationEndTop = -sectionHeight + (viewportHeight * 0.1); // 10% from the top of the section
+
+                // Calculate the progress of the scroll within this defined range (0 to 1)
+                // When sectionRect.top is at animationStartTop, progress is 0.
+                // When sectionRect.top is at animationEndTop, progress is 1.
+                let progress = (animationStartTop - sectionRect.top) / (animationStartTop - animationEndTop);
+                progress = Math.max(0, Math.min(1, progress)); // Clamp progress between 0 and 1
+
+                // Determine if the model should start from the left or right based on its index
+                const isLeftAligned = index % 2 === 0;
+
+                // Define the key positions for the translation animation
+                // Initial and final X position: off-screen on the same side
+                const initialX = isLeftAligned ? -5 : 5;
+                // Mid X position: 0, which is the center of the model's local Three.js scene (and thus the center of its widget)
+                const midX = 0;
+
+                // Define the key rotations for the rotation animation (in radians)
+                const degreesToRadians = (degrees) => degrees * (Math.PI / 180);
+                let rotationStart, rotationPeak, rotationEnd;
+
+                if (isLeftAligned) {
+                    rotationStart = degreesToRadians(-90);
+                    rotationPeak = degreesToRadians(0);
+                    rotationEnd = degreesToRadians(90);
+                } else {
+                    // Invert rotation for right-aligned models
+                    rotationStart = degreesToRadians(90);
+                    rotationPeak = degreesToRadians(0);
+                    rotationEnd = degreesToRadians(-90);
                 }
-            });
 
-            flagItems.forEach(flag => {
-                flag.classList.remove('active');
-                if (flag.dataset.target === currentActive) {
-                    flag.classList.add('active');
+                let currentX, currentRotationY;
+                let easedSubProgress; // Eased progress for translation
+                let linearSubProgress; // Linear progress for rotation
+
+                // First half of the animation (progress 0 to 0.5): move from initial to mid-point, rotate from start to peak
+                if (progress <= 0.5) {
+                    const subProgress = progress * 2; // Normalize progress from 0-0.5 to 0-1
+                    easedSubProgress = easeInOutCubic(subProgress);
+                    linearSubProgress = subProgress; // Linear for rotation
+
+                    currentX = THREE.MathUtils.lerp(initialX, midX, easedSubProgress);
+                    currentRotationY = THREE.MathUtils.lerp(rotationStart, rotationPeak, linearSubProgress);
                 }
-            });
+                // Second half of the animation (progress 0.5 to 1): move from mid-point back to initial, rotate from peak to end
+                else {
+                    const subProgress = (progress - 0.5) * 2; // Normalize progress from 0.5-1 to 0-1
+                    easedSubProgress = easeInOutCubic(subProgress);
+                    linearSubProgress = subProgress; // Linear for rotation
 
-            // Also update mobile nav links
-            mobileNavLinks.forEach(link => {
-                link.classList.remove('text-teal-400', 'font-semibold');
-                link.classList.add('text-white'); // Ensure default is white for mobile
-                if (link.dataset.section === currentActive) {
-                    link.classList.add('text-teal-400', 'font-semibold');
-                    link.classList.remove('text-white');
+                    currentX = THREE.MathUtils.lerp(midX, initialX, easedSubProgress);
+                    currentRotationY = THREE.MathUtils.lerp(rotationPeak, rotationEnd, linearSubProgress);
                 }
+
+                // Apply the calculated position and rotation to the model
+                model.position.x = currentX;
+                model.rotation.y = currentRotationY;
+
+                // Render the specific scene for this model
+                renderers[index].render(scenes[index], cameras[index]);
             });
         }
 
-        // Initial call and event listeners for active link
-        window.addEventListener('scroll', updateActiveLink);
-        document.addEventListener('DOMContentLoaded', updateActiveLink); // Set active link on load
+        // Initialize all model scenes and start the animation loop once the window is fully loaded
+        window.onload = function () {
+            // Initialize 6 models, all using the same GLB path
+            initCubeScene('cube-container-1', true);
+            initCubeScene('cube-container-2', false);
+            initCubeScene('cube-container-3', true);
+            initCubeScene('cube-container-4', false);
+            initCubeScene('cube-container-5', true);
+            initCubeScene('cube-container-6', false);
 
-        // Smooth scrolling for "View Projects" and "Get a Quote" buttons
-        const viewProjectsButton = document.getElementById('view-projects-button');
-        const getQuoteButton = document.getElementById('get-quote-button');
-
-        function smoothScrollToTarget(event) {
-            event.preventDefault(); // Prevent default anchor link behavior
-            const targetId = event.currentTarget.dataset.target;
-            const targetElement = document.getElementById(targetId);
-            if (targetElement) {
-                targetElement.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
-
-        if (viewProjectsButton) {
-            viewProjectsButton.addEventListener('click', smoothScrollToTarget);
-        }
-        if (getQuoteButton) {
-            getQuoteButton.addEventListener('click', smoothScrollToTarget);
-        }
+            animate(); // Start the animation loop
+        };
     </script>
 </body>
 
