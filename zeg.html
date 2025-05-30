@@ -181,6 +181,24 @@
         #mobile-menu.open {
             transform: translateY(0);
         }
+
+        /* 3D Hover Effect Styles */
+        body {
+            perspective: 1000px;
+            /* Needed for 3D transforms */
+        }
+
+        .apply-3d-hover {
+            transition: transform 0.2s ease-out;
+            transform-style: preserve-3d;
+            /* Ensures child elements are also transformed in 3D space */
+        }
+
+        .apply-3d-hover img,
+        .apply-3d-hover iframe {
+            transition: transform 0.2s ease-out;
+            /* Smooth transition for inner elements */
+        }
     </style>
 </head>
 
@@ -291,7 +309,7 @@
             <h2 class="text-4xl font-bold text-center text-white mb-12">My Projects</h2>
 
             <div
-                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
+                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] apply-3d-hover">
                 <div class="md:w-1/2 p-4">
                     <p class="text-teal-400 text-sm mb-2">Python – Blender</p>
                     <h3 class="text-3xl font-bold text-white mb-4">VHS Synthetic Data Generator</h3>
@@ -317,7 +335,7 @@
             </div>
 
             <div
-                class="flex flex-col md:flex-row-reverse items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
+                class="flex flex-col md:flex-row-reverse items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] apply-3d-hover">
                 <div class="md:w-1/2 p-4">
                     <p class="text-teal-400 text-sm mb-2">Python – Blender</p>
                     <h3 class="text-3xl font-bold text-white mb-4">Lego Synthetic Data Generation</h3>
@@ -343,7 +361,7 @@
             </div>
 
             <div
-                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
+                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] apply-3d-hover">
                 <div class="md:w-1/2 p-4">
                     <p class="text-teal-400 text-sm mb-2">Python – Blender</p>
                     <h3 class="text-3xl font-bold text-white mb-4">Catwalk Animation Generator</h3>
@@ -376,7 +394,7 @@
             </div>
 
             <div
-                class="flex flex-col md:flex-row-reverse items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
+                class="flex flex-col md:flex-row-reverse items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] apply-3d-hover">
                 <div class="md:w-1/2 p-4">
                     <p class="text-teal-400 text-sm mb-2">Python – PyQt5 – Blender</p>
                     <h3 class="text-3xl font-bold text-white mb-4">3D Mockup Generator</h3>
@@ -395,7 +413,7 @@
             </div>
 
             <div
-                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
+                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] apply-3d-hover">
                 <div class="md:w-1/2 p-4">
                     <p class="text-teal-400 text-sm mb-2">Python – PyQt5 – Blender</p>
                     <h3 class="text-3xl font-bold text-white mb-4">Marble Animation Generator</h3>
@@ -415,7 +433,7 @@
             </div>
 
             <div
-                class="flex flex-col md:flex-row-reverse items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
+                class="flex flex-col md:flex-row-reverse items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] apply-3d-hover">
                 <div class="md:w-1/2 p-4">
                     <p class="text-teal-400 text-sm mb-2">Instagram – Tiktok</p>
                     <h3 class="text-3xl font-bold text-white mb-4">Social Media Accounts</h3>
@@ -433,7 +451,7 @@
             </div>
 
             <div
-                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
+                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] apply-3d-hover">
                 <div class="md:w-1/2 p-4">
                     <p class="text-teal-400 text-sm mb-2">Python – Blender</p>
                     <h3 class="text-3xl font-bold text-white mb-4">Gas-Receptor Simulation</h3>
@@ -453,7 +471,7 @@
             </div>
 
             <div
-                class="flex flex-col md:flex-row-reverse items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
+                class="flex flex-col md:flex-row-reverse items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] apply-3d-hover">
                 <div class="md:w-1/2 p-4">
                     <p class="text-teal-400 text-sm mb-2">Python – Blender</p>
                     <h3 class="text-3xl font-bold text-white mb-4">Furniture Render Generator</h3>
@@ -470,7 +488,7 @@
             </div>
 
             <div
-                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
+                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] apply-3d-hover">
                 <div class="md:w-1/2 p-4">
                     <p class="text-teal-400 text-sm mb-2">Python – Blender – Blender4Dental</p>
                     <h3 class="text-3xl font-bold text-white mb-4">Dental 3D Printing Automation</h3>
@@ -492,7 +510,7 @@
             </div>
 
             <div
-                class="flex flex-col md:flex-row-reverse items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
+                class="flex flex-col md:flex-row-reverse items-center bg-gray-800 rounded-xl shadow-lg mb-12 p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] apply-3d-hover">
                 <div class="md:w-1/2 p-4">
                     <p class="text-teal-400 text-sm mb-2">Python – Blender</p>
                     <h3 class="text-3xl font-bold text-white mb-4">Helmet Creator Addon</h3>
@@ -515,7 +533,7 @@
             </div>
 
             <div
-                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
+                class="flex flex-col md:flex-row items-center bg-gray-800 rounded-xl shadow-lg p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] apply-3d-hover">
                 <div class="md:w-1/2 p-4">
                     <p class="text-teal-400 text-sm mb-2">Fiverr</p>
                     <h3 class="text-3xl font-bold text-white mb-4">Many Other Works From Fiverr.com</h3>
@@ -538,7 +556,7 @@
             <h2 class="text-4xl font-bold text-center text-white mb-12">Featured Videos</h2>
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <div
-                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl apply-3d-hover">
                     <div class="aspect-video">
                         <img src="https://zahiterdemguzel.com/wp-content/uploads/2023/06/resim_2023-06-25_112720923.png"
                             alt="Kanye West – The Game Music Video" class="w-full h-full object-cover" />
@@ -550,7 +568,7 @@
                 </div>
 
                 <div
-                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl apply-3d-hover">
                     <div class="aspect-video">
                         <iframe title="Roobo | Mystery Boxes" class="w-full h-full"
                             src="https://www.youtube.com/embed/Kymr48G7yXI" frameborder="0"
@@ -563,7 +581,7 @@
                 </div>
 
                 <div
-                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl apply-3d-hover">
                     <div class="aspect-video">
                         <iframe title="Jackson Wang Welcomes You to Beats Wonderland I Beats Fit Pro"
                             class="w-full h-full" src="https://www.youtube.com/embed/9oz_EdxD3s8" frameborder="0"
@@ -584,7 +602,7 @@
             <h2 class="text-4xl font-bold text-center text-white mb-12">More Portfolio Items</h2>
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <div
-                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl apply-3d-hover">
                     <div class="relative w-full overflow-hidden" style="padding-top: 75%;">
                         <img src="https://zahiterdemguzel.com/wp-content/uploads/2023/06/zahit-erdem-guzel-asset.jpg"
                             alt="Product Brochures" class="absolute inset-0 w-full h-full object-cover" />
@@ -595,7 +613,7 @@
                     </div>
                 </div>
                 <div
-                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl apply-3d-hover">
                     <img src="https://zahiterdemguzel.com/wp-content/uploads/2023/06/anim0390.png"
                         alt="Presentation Contents" class="w-full h-auto object-cover" />
                     <div class="p-6">
@@ -604,7 +622,7 @@
                     </div>
                 </div>
                 <div
-                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+                    class="bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl apply-3d-hover">
                     <img src="https://zahiterdemguzel.com/wp-content/uploads/2023/06/resim_2023-06-26_213946264.png"
                         alt="Concept Design" class="w-full h-auto object-cover" />
                     <div class="p-6">
@@ -890,6 +908,42 @@
         }
         if (getQuoteButton) {
             getQuoteButton.addEventListener('click', smoothScrollToTarget);
+        }
+
+        // 3D Hover Effect Logic
+        const hover3dCards = document.querySelectorAll('.apply-3d-hover');
+
+        hover3dCards.forEach(card => {
+            card.addEventListener('mousemove', handleMouseMove);
+            card.addEventListener('mouseenter', handleMouseEnter);
+            card.addEventListener('mouseleave', handleMouseLeave);
+        });
+
+        function handleMouseMove(e) {
+            const card = e.currentTarget;
+            const rect = card.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+
+            const rotateX = ((centerY - mouseY) / rect.height) * 20; // Max 20 degrees rotation
+            const rotateY = ((mouseX - centerX) / rect.width) * 20; // Max 20 degrees rotation
+            const translateZ = 30; // Move forward by 30px
+
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${translateZ}px)`;
+        }
+
+        function handleMouseEnter(e) {
+            const card = e.currentTarget;
+            card.style.transition = 'transform 0.1s ease-out'; // Faster transition on entry
+        }
+
+        function handleMouseLeave(e) {
+            const card = e.currentTarget;
+            card.style.transition = 'transform 0.3s ease-out'; // Slower transition on exit
+            card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)'; // Reset transform
         }
     </script>
 </body>
