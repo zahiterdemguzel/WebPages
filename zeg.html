@@ -189,16 +189,13 @@
         }
 
         .apply-3d-hover {
-            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+            /* Only keep box-shadow transition, transform is handled by JS animation loop */
+            transition: box-shadow 0.2s ease-out;
             transform-style: preserve-3d;
             /* Ensures child elements are also transformed in 3D space */
         }
 
-        /* Speed up transition on mouse enter for a snappier feel */
-        .apply-3d-hover.hovered {
-            transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
-        }
-
+        /* Inner elements can still have their own transitions if desired */
         .apply-3d-hover img,
         .apply-3d-hover iframe {
             transition: transform 0.2s ease-out;
@@ -915,46 +912,115 @@
             getQuoteButton.addEventListener('click', smoothScrollToTarget);
         }
 
-        // 3D Hover Effect Logic using a single document-based listener
-        let currentHoveredCard = null; // To keep track of the currently hovered card
+        // 3D Hover Effect Logic using requestAnimationFrame and exponential smoothing
+        const projectCards = document.querySelectorAll('.apply-3d-hover');
+        // Map to store the animation state for each card element
+        const cardStates = new Map(); // Map<HTMLElement, { rotateX: number, rotateY: number, zOffset: number, desiredRotateX: number, desiredRotateY: number, desiredZOffset: number }>
 
+        const dt = 1 / 60; // Assume 60 FPS as requested
+        const speed = 5; // Smoothing speed as requested
+
+        /**
+         * Exponential smoothing function for gradually transitioning a current value towards a target value.
+         * @param {number} current - The current value.
+         * @param {number} target - The target value.
+         * @param {number} factor - The smoothing factor (speed). Higher values mean faster smoothing.
+         * @param {number} deltaT - The time step (e.g., 1/60 for 60 FPS).
+         * @returns {number} The new smoothed current value.
+         */
+        const expSmooth = (current, target, factor, deltaT) => {
+            return target + (current - target) * Math.exp(-factor * deltaT);
+        };
+
+        // Initialize state for all project cards
+        projectCards.forEach(card => {
+            cardStates.set(card, {
+                rotateX: 0,
+                rotateY: 0,
+                zOffset: 0,
+                desiredRotateX: 0,
+                desiredRotateY: 0,
+                desiredZOffset: 0,
+            });
+            // Ensure no CSS transform transition interferes with JS animation
+            card.style.transition = 'box-shadow 0.2s ease-out';
+        });
+
+        let currentHoveredCard = null; // To keep track of the currently hovered card element
+
+        /**
+         * The main animation loop that updates the 3D transforms for all cards.
+         */
+        function animateHover() {
+            cardStates.forEach((state, cardElement) => {
+                // Update current values towards desired values using exponential smoothing
+                state.rotateX = expSmooth(state.rotateX, state.desiredRotateX, speed, dt);
+                state.rotateY = expSmooth(state.rotateY, state.desiredRotateY, speed, dt);
+                state.zOffset = expSmooth(state.zOffset, state.desiredZOffset, speed, dt);
+
+                // Apply the smoothed transform to the card element
+                cardElement.style.transform = `perspective(1000px) rotateX(${state.rotateX}deg) rotateY(${state.rotateY}deg) translateZ(${state.zOffset}px)`;
+            });
+
+            // Request the next animation frame to continue the loop
+            requestAnimationFrame(animateHover);
+        }
+
+        // Start the animation loop once the script loads
+        animateHover();
+
+        // Event listener for mouse movement on the entire document
         document.addEventListener('mousemove', (e) => {
-            // Find the closest parent with 'apply-3d-hover' class
+            // Find the closest parent element with the 'apply-3d-hover' class
             const newHoveredCard = e.target.closest('.apply-3d-hover');
 
-            if (newHoveredCard && newHoveredCard !== currentHoveredCard) {
-                // Mouse entered a new card
-                if (currentHoveredCard) {
-                    // Reset the previously hovered card
-                    currentHoveredCard.style.transition = 'transform 0.3s ease-out, box-shadow 0.3s ease-out';
-                    currentHoveredCard.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
-                    currentHoveredCard.classList.remove('hovered');
+            if (newHoveredCard) {
+                // If the mouse is currently over a new card or the same card
+                if (newHoveredCard !== currentHoveredCard) {
+                    // If moving from one card to another, or from no card to a card
+                    if (currentHoveredCard && cardStates.has(currentHoveredCard)) {
+                        // Reset the desired values for the previously hovered card
+                        const prevState = cardStates.get(currentHoveredCard);
+                        prevState.desiredRotateX = 0;
+                        prevState.desiredRotateY = 0;
+                        prevState.desiredZOffset = 0;
+                    }
+                    // Set the new currently hovered card
+                    currentHoveredCard = newHoveredCard;
                 }
-                currentHoveredCard = newHoveredCard;
-                currentHoveredCard.style.transition = 'transform 0.1s ease-out, box-shadow 0.1s ease-out'; // Faster transition on entry
-                currentHoveredCard.classList.add('hovered'); // Add a class for faster transition
-            } else if (!newHoveredCard && currentHoveredCard) {
-                // Mouse left all cards
-                currentHoveredCard.style.transition = 'transform 0.3s ease-out, box-shadow 0.3s ease-out'; // Slower transition on exit
-                currentHoveredCard.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
-                currentHoveredCard.classList.remove('hovered');
-                currentHoveredCard = null;
-            }
 
-            if (currentHoveredCard) {
+                // Get the current card's bounding rectangle to calculate relative mouse position
                 const card = currentHoveredCard;
                 const rect = card.getBoundingClientRect();
 
-                // Calculate mouse position relative to the card
+                // Calculate mouse position relative to the center of the card
                 const mouseX = e.clientX - rect.left;
                 const mouseY = e.clientY - rect.top;
 
-                // Calculate rotation based on relative mouse position
-                const rotateX = ((rect.height / 2 - mouseY) / rect.height) * 20; // Max 20 degrees rotation
-                const rotateY = ((mouseX - rect.width / 2) / rect.width) * 20; // Max 20 degrees rotation
-                const translateZ = 30; // Move forward by 30px
+                // Calculate desired rotation and Z-offset based on mouse position
+                // The rotation values are inverted to make the card "follow" the mouse
+                const desiredRotateX = ((rect.height / 2 - mouseY) / rect.height) * 20; // Max 20 degrees rotation
+                const desiredRotateY = ((mouseX - rect.width / 2) / rect.width) * 20; // Max 20 degrees rotation
+                const desiredZOffset = 30; // Desired translateZ (move forward by 30px)
 
-                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${translateZ}px)`;
+                // Update the desired values in the card's state object
+                const state = cardStates.get(card);
+                if (state) {
+                    state.desiredRotateX = desiredRotateX;
+                    state.desiredRotateY = desiredRotateY;
+                    state.desiredZOffset = desiredZOffset;
+                }
+            } else if (currentHoveredCard) {
+                // If the mouse has left all cards, and there was a previously hovered card
+                // Set the desired values of the last hovered card back to zero
+                const state = cardStates.get(currentHoveredCard);
+                if (state) {
+                    state.desiredRotateX = 0;
+                    state.desiredRotateY = 0;
+                    state.desiredZOffset = 0;
+                }
+                // Clear the currently hovered card reference
+                currentHoveredCard = null;
             }
         });
     </script>
