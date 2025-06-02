@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Registration Form & Notes App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Basic styling for the body and canvas */
+        body {
+            margin: 0;
+            overflow: hidden;
+            /* Prevent scrollbars due to canvas */
+            font-family: "Inter", sans-serif;
+            /* Use Inter font */
+            background-color: #1a202c;
+            /* Dark background color */
+            color: #e2e8f0;
+            /* Light text color */
+        }
+
+        canvas {
+            display: block;
+            /* Remove extra space below canvas */
+            width: 100vw;
+            /* Full viewport width */
+            height: 100vh;
+            /* Full viewport height */
+        }
+
+        /* Styling for the message box (for validation feedback) */
+        #message-box {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            /* Center horizontally */
+            background-color: #2d3748;
+            /* Dark background */
+            color: #e2e8f0;
+            /* Light text */
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            /* Rounded corners for the message box */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: none;
+            /* Hidden by default */
+            z-index: 100;
+            /* Ensure it's on top */
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="message-box"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FontLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/TextGeometry.js"></script>
+
+    <script type="module">
+        // Declare global Three.js variables
+        let scene, camera, renderer, controls;
+        let raycaster = new THREE.Raycaster(); // Used for detecting clicks on 3D objects
+        let mouse = new THREE.Vector2();     // Stores normalized mouse coordinates
+        let activeField = null;              // Reference to the currently active (clicked) 3D field object
+        let font;                            // Stores the loaded 3D font
+        let cursorMesh;                      // 3D mesh for the blinking cursor
+        let cursorBlinkInterval;             // Interval ID for cursor blinking
+
+        // User ID for backend interaction
+        let currentUserId = null; // Will be set after successful login with user's _id
+
+        // Global objects for managing forms and dashboard
+        let allForms = {
+            register: {
+                fields: [],
+                group: null,
+                submitButton: null,
+                switchButton: null,
+                switchButtonHitbox: null,
+                backplate: null
+            },
+            login: {
+                fields: [],
+                group: null,
+                submitButton: null,
+                switchButton: null,
+                switchButtonHitbox: null,
+                backplate: null
+            },
+            dashboard: {
+                group: null,
+                notebooks: [],
+                addNotebookButton: null,
+                addNotebookButtonText: null,
+                logoutButton: null,
+                logoutButtonText: null,
+                backplate: null
+            },
+            noteEditor: {
+                group: null,
+                titleField: null,
+                contentField: null,
+                saveButton: null,
+                cancelButton: null,
+                activeNoteId: null
+            }
+        };
+        let currentActiveScene = 'register';
+
+        // Scale animation state
+        let scaleAnimation = {
+            isAnimating: false,
+            startTime: 0,
+            duration: 500,
+            startScale: new THREE.Vector3(),
+            endScale: new THREE.Vector3(),
+            targetGroup: null,
+            onComplete: null
+        };
+
+        const messageBox = document.getElementById('message-box');
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message - The message to display.
+         * @param {string} type - The type of message ('info', 'success', 'error').
+         */
+        function showMessage(message, type = 'info') {
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            if (type === 'error') {
+                messageBox.style.backgroundColor = '#c53030';
+            } else if (type === 'success') {
+                messageBox.style.backgroundColor = '#38a169';
+            } else {
+                messageBox.style.backgroundColor = '#2d3748';
+            }
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 3000);
+        }
+
+        /**
+         * Initializes the Three.js scene, camera, renderer, and controls.
+         */
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a202c);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1, 5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.screenSpacePanning = false;
+            controls.minDistance = 2;
+            controls.maxDistance = 15;
+            controls.maxPolarAngle = Math.PI / 1.5;
+            controls.target.set(0, 0.5, 0);
+
+            const keyLight = new THREE.PointLight(0xffffff, 1.5, 100);
+            keyLight.position.set(3, 3, 3);
+            scene.add(keyLight);
+            const fillLight = new THREE.PointLight(0xffffff, 0.8, 100);
+            fillLight.position.set(-3, 1, 3);
+            scene.add(fillLight);
+            const backLight = new THREE.PointLight(0xffffff, 0.6, 100);
+            backLight.position.set(0, 4, -3);
+            scene.add(backLight);
+
+            const fontLoader = new THREE.FontLoader();
+            fontLoader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_regular.typeface.json', function (loadedFont) {
+                font = loadedFont;
+                createForms(font);
+                createDashboardElements(font);
+                createNoteEditorElements(font);
+                createCursor();
+            });
+
+            window.addEventListener('resize', onWindowResize);
+            renderer.domElement.addEventListener('click', onCanvasClick);
+            document.addEventListener('keydown', onKeyDown);
+        }
+
+        /**
+         * Creates both the registration and login forms.
+         * @param {THREE.Font} font - The loaded font for TextGeometry.
+         */
+        function createForms(font) {
+            const registerFieldNames = [
+                { id: 'username', label: 'Username', type: 'text', placeholder: 'Enter username' },
+                { id: 'email', label: 'Email', type: 'email', placeholder: 'Enter email' },
+                { id: 'password', label: 'Password', type: 'password', placeholder: 'Enter password' },
+                { id: 'confirmPassword', label: 'Confirm Password', type: 'password', placeholder: 'Confirm password' }
+            ];
+            createFormElements('register', registerFieldNames, font);
+
+            const loginFieldNames = [
+                { id: 'loginEmail', label: 'Email', type: 'email', placeholder: 'Enter email' },
+                { id: 'loginPassword', label: 'Password', type: 'password', placeholder: 'Enter password' }
+            ];
+            createFormElements('login', loginFieldNames, font);
+
+            allForms.login.group.visible = false;
+            allForms.login.group.scale.set(0.001, 0.001, 0.001);
+
+            // Switch to Login Button (for Register form)
+            const switchToLoginText = "Already have an account? Login";
+            const switchToLoginMesh = create3DText(switchToLoginText, font, 0.1, 0x8888ff, false, true); // isPlaceholder=false, isButtonText=true
+            const registerSubmitButtonY = allForms.register.submitButton.position.y;
+            const registerSubmitButtonHeight = allForms.register.submitButton.geometry.parameters.height;
+            switchToLoginMesh.geometry.computeBoundingBox();
+            const switchToLoginTextWidth = switchToLoginMesh.geometry.boundingBox.max.x - switchToLoginMesh.geometry.boundingBox.min.x;
+            const switchButtonYPos = registerSubmitButtonY + registerSubmitButtonHeight / 2 + 0.1 + 0.05; // Adjusted for new field height
+            switchToLoginMesh.position.set(-switchToLoginTextWidth / 2, switchButtonYPos, 0.05);
+            allForms.register.group.add(switchToLoginMesh);
+            allForms.register.switchButton = switchToLoginMesh;
+
+            const hitboxGeometry = new THREE.BoxGeometry(switchToLoginTextWidth + 0.2, 0.25, 0.01);
+            const hitboxMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }); // Invisible
+            const switchToLoginHitbox = new THREE.Mesh(hitboxGeometry, hitboxMaterial);
+            switchToLoginHitbox.position.set(0, switchButtonYPos, 0.04); // Positioned with the text
+            switchToLoginHitbox.userData.action = 'switchToLogin'; // Action on the hitbox
+            allForms.register.group.add(switchToLoginHitbox);
+            allForms.register.switchButtonHitbox = switchToLoginHitbox;
+
+
+            // Switch to Register Button (for Login form)
+            const switchToRegisterText = "Don't have an account? Register";
+            const switchToRegisterMesh = create3DText(switchToRegisterText, font, 0.1, 0x8888ff, false, true); // isPlaceholder=false, isButtonText=true
+            const loginSubmitButtonY = allForms.login.submitButton.position.y;
+            const loginSubmitButtonHeight = allForms.login.submitButton.geometry.parameters.height;
+            switchToRegisterMesh.geometry.computeBoundingBox();
+            const switchToRegisterTextWidth = switchToRegisterMesh.geometry.boundingBox.max.x - switchToRegisterMesh.geometry.boundingBox.min.x;
+            const switchButtonYPosLogin = loginSubmitButtonY + loginSubmitButtonHeight / 2 + 0.1 + 0.05; // Adjusted for new field height
+            switchToRegisterMesh.position.set(-switchToRegisterTextWidth / 2, switchButtonYPosLogin, 0.05);
+            allForms.login.group.add(switchToRegisterMesh);
+            allForms.login.switchButton = switchToRegisterMesh;
+            allForms.login.switchButton.visible = false;
+
+            const hitboxGeometryLogin = new THREE.BoxGeometry(switchToRegisterTextWidth + 0.2, 0.25, 0.01);
+            const switchToRegisterHitbox = new THREE.Mesh(hitboxGeometryLogin, hitboxMaterial); // Reuse invisible material
+            switchToRegisterHitbox.position.set(0, switchButtonYPosLogin, 0.04);
+            switchToRegisterHitbox.userData.action = 'switchToRegister'; // Action on the hitbox
+            allForms.login.group.add(switchToRegisterHitbox);
+            allForms.login.switchButtonHitbox = switchToRegisterHitbox;
+            allForms.login.switchButtonHitbox.visible = false;
+        }
+
+        function createFormElements(formType, fieldNames, font) {
+            const fieldWidth = 2.5;
+            const fieldHeight = 0.6; // Reduced field height for login/register
+            const fieldDepth = 0.05;
+            const fieldSpacing = 0.9; // Adjusted spacing for new height
+            const textInputSize = 0.15;
+            const labelTextSize = 0.18; // Slightly smaller label
+
+            const formGroup = new THREE.Group();
+            scene.add(formGroup);
+            allForms[formType].group = formGroup;
+
+            let lastFieldYPos = 0;
+
+            fieldNames.forEach((field, index) => {
+                const yPos = (fieldNames.length - 1) * fieldSpacing / 2 - index * fieldSpacing;
+                lastFieldYPos = yPos;
+
+                const panelGeometry = new THREE.BoxGeometry(fieldWidth, fieldHeight, fieldDepth);
+                const panelMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x2d3748, roughness: 0.7, metalness: 0.2, transparent: true, opacity: 0.9
+                });
+                const panelMesh = new THREE.Mesh(panelGeometry, panelMaterial);
+                panelMesh.position.set(0, yPos, 0);
+                panelMesh.userData.fieldId = field.id;
+                panelMesh.userData.formType = formType;
+                formGroup.add(panelMesh);
+
+                const labelMesh = create3DText(field.label, font, labelTextSize, 0xe2e8f0);
+                labelMesh.geometry.computeBoundingBox(); // Ensure box is computed for alignment
+                // Position label above the field, aligned left
+                labelMesh.position.set(-fieldWidth / 2 + 0.1, yPos + fieldHeight / 2 + 0.05, fieldDepth / 2 + 0.01);
+                labelMesh.raycast = function () { };
+                formGroup.add(labelMesh);
+
+                const initialText = field.placeholder;
+                const inputTextMesh = create3DText(initialText, font, textInputSize, 0xffffff, true);
+                inputTextMesh.userData.isPlaceholder = true; // Mark as placeholder
+                // Vertically center input text within the field panel
+                inputTextMesh.position.set(-fieldWidth / 2 + 0.1, yPos - textInputSize / 2 + 0.02, fieldDepth / 2 + 0.01);
+                formGroup.add(inputTextMesh);
+
+                allForms[formType].fields.push({
+                    id: field.id, label: field.label, type: field.type, panelMesh: panelMesh,
+                    textMesh: labelMesh, inputTextMesh: inputTextMesh, currentValue: '', placeholder: field.placeholder
+                });
+            });
+
+            const submitButtonHeight = fieldHeight * 0.9; // Relative to new field height
+            const submitButtonGeometry = new THREE.BoxGeometry(fieldWidth, submitButtonHeight, fieldDepth);
+            const submitButtonMaterial = new THREE.MeshStandardMaterial({ color: 0x63b3ed, roughness: 0.7, metalness: 0.2 });
+            const submitButtonMesh = new THREE.Mesh(submitButtonGeometry, submitButtonMaterial);
+
+            let submitButtonYOffset = (formType === 'login') ? -0.15 : 0; // Adjusted offset for login
+            const submitButtonYPos = lastFieldYPos - fieldSpacing + submitButtonYOffset;
+
+            submitButtonMesh.position.set(0, submitButtonYPos, 0);
+            submitButtonMesh.userData.fieldId = 'submit';
+            submitButtonMesh.userData.formType = formType;
+            formGroup.add(submitButtonMesh);
+            allForms[formType].submitButton = submitButtonMesh;
+
+            const submitTextContent = formType === 'register' ? 'Register' : 'Login';
+            const submitTextMesh = create3DText(submitTextContent, font, 0.20, 0xffffff, false, true); // Slightly smaller submit text
+            submitTextMesh.geometry.computeBoundingBox();
+            const submitTextWidth = submitTextMesh.geometry.boundingBox.max.x - submitTextMesh.geometry.boundingBox.min.x;
+            // Center submit text on button
+            submitTextMesh.position.set(-submitTextWidth / 2, submitButtonYPos - (0.20 / 2) + 0.02, fieldDepth / 2 + 0.01);
+            formGroup.add(submitTextMesh);
+
+            const topOfFirstField = (fieldNames.length - 1) * fieldSpacing / 2 + fieldHeight / 2 + labelTextSize + 0.05; // Include label height
+            const bottomOfSubmitButton = submitButtonYPos - submitButtonHeight / 2;
+            const backplateHeight = topOfFirstField - bottomOfSubmitButton + 0.4; // Adjusted padding
+            const backplateYPosition = (topOfFirstField + bottomOfSubmitButton) / 2;
+            const backplateWidth = fieldWidth * 1.2;
+            const backplatePanelDepth = 0.05 * 3;
+            const backplateGeometry = new THREE.BoxGeometry(backplateWidth, backplateHeight, backplatePanelDepth);
+            const backplateMaterial = new THREE.MeshStandardMaterial({ color: 0x242e3a, roughness: 0.8, metalness: 0.1 });
+            const backplateMesh = new THREE.Mesh(backplateGeometry, backplateMaterial);
+            backplateMesh.position.set(0, backplateYPosition, -fieldDepth / 2 - backplatePanelDepth / 2 - 0.02);
+            formGroup.add(backplateMesh);
+            allForms[formType].backplate = backplateMesh;
+        }
+
+        function createDashboardElements(font) {
+            const dashboardGroup = new THREE.Group();
+            scene.add(dashboardGroup);
+            allForms.dashboard.group = dashboardGroup;
+            dashboardGroup.visible = false;
+            dashboardGroup.scale.set(0.001, 0.001, 0.001);
+
+            const DASHBOARD_PLATE_WIDTH = 4.0;
+            const DASHBOARD_PLATE_HEIGHT = DASHBOARD_PLATE_WIDTH * (9 / 16);
+            const DASHBOARD_PLATE_DEPTH = 0.05;
+
+            const dashboardBackplateGeometry = new THREE.BoxGeometry(DASHBOARD_PLATE_WIDTH, DASHBOARD_PLATE_HEIGHT, DASHBOARD_PLATE_DEPTH);
+            const dashboardBackplateMaterial = new THREE.MeshStandardMaterial({
+                color: 0x2d3748, roughness: 0.8, metalness: 0.1, transparent: true, opacity: 0.95
+            });
+            const dashboardBackplateMesh = new THREE.Mesh(dashboardBackplateGeometry, dashboardBackplateMaterial);
+            dashboardBackplateMesh.position.set(0, 0, -DASHBOARD_PLATE_DEPTH / 2);
+            dashboardGroup.add(dashboardBackplateMesh);
+            allForms.dashboard.backplate = dashboardBackplateMesh;
+
+            const addButtonWidth = DASHBOARD_PLATE_WIDTH * 0.6;
+            const addButtonHeight = 0.4;
+            const addButtonDepth = 0.1;
+            const addButtonYPos = DASHBOARD_PLATE_HEIGHT / 2 - addButtonHeight / 2 - 0.15;
+
+            const addNoteGeometry = new THREE.BoxGeometry(addButtonWidth, addButtonHeight, addButtonDepth);
+            const addNoteMaterial = new THREE.MeshStandardMaterial({ color: 0x48bb78, roughness: 0.7, metalness: 0.2 });
+            const addNoteMesh = new THREE.Mesh(addNoteGeometry, addNoteMaterial);
+            addNoteMesh.position.set(0, addButtonYPos, addButtonDepth / 2);
+            addNoteMesh.userData.action = 'addNotebook';
+            dashboardGroup.add(addNoteMesh);
+            allForms.dashboard.addNotebookButton = addNoteMesh;
+
+            const addNoteTextContent = 'Add New Notebook';
+            const addNoteText = create3DText(addNoteTextContent, font, 0.15, 0xffffff, false, true);
+            addNoteText.geometry.computeBoundingBox();
+            const addNoteTextWidth = addNoteText.geometry.boundingBox.max.x - addNoteText.geometry.boundingBox.min.x;
+            addNoteText.position.set(-addNoteTextWidth / 2, addButtonYPos - 0.05, addButtonDepth + 0.01);
+            dashboardGroup.add(addNoteText);
+            allForms.dashboard.addNotebookButtonText = addNoteText;
+
+            const logoutButtonWidth = DASHBOARD_PLATE_WIDTH * 0.4;
+            const logoutButtonHeight = 0.3;
+            const logoutButtonYPos = -DASHBOARD_PLATE_HEIGHT / 2 + logoutButtonHeight / 2 + 0.15;
+
+            const logoutGeometry = new THREE.BoxGeometry(logoutButtonWidth, logoutButtonHeight, addButtonDepth);
+            const logoutMaterial = new THREE.MeshStandardMaterial({ color: 0xe53e3e, roughness: 0.7, metalness: 0.2 });
+            const logoutMesh = new THREE.Mesh(logoutGeometry, logoutMaterial);
+            logoutMesh.position.set(0, logoutButtonYPos, addButtonDepth / 2);
+            logoutMesh.userData.action = 'logout';
+            dashboardGroup.add(logoutMesh);
+            allForms.dashboard.logoutButton = logoutMesh;
+
+            const logoutTextContent = 'Logout';
+            const logoutText = create3DText(logoutTextContent, font, 0.12, 0xffffff, false, true);
+            logoutText.geometry.computeBoundingBox();
+            const logoutTextWidth = logoutText.geometry.boundingBox.max.x - logoutText.geometry.boundingBox.min.x;
+            logoutText.position.set(-logoutTextWidth / 2, logoutButtonYPos - 0.04, addButtonDepth + 0.01);
+            dashboardGroup.add(logoutText);
+            allForms.dashboard.logoutButtonText = logoutText;
+        }
+
+        function createNoteEditorElements(font) {
+            const editorGroup = new THREE.Group();
+            scene.add(editorGroup);
+            allForms.noteEditor.group = editorGroup;
+            editorGroup.visible = false;
+            editorGroup.scale.set(0.001, 0.001, 0.001);
+
+            const fieldWidth = 3.5;
+            const titleFieldHeight = 0.6;
+            const contentFieldHeight = 1.6;
+            const fieldDepth = 0.05;
+            const textInputSize = 0.15;
+            // const labelTextSize = 0.18; // Labels removed
+
+            // Title Field
+            const titlePanelGeometry = new THREE.BoxGeometry(fieldWidth, titleFieldHeight, fieldDepth);
+            const fieldPanelMaterial = new THREE.MeshStandardMaterial({ color: 0x2d3748, roughness: 0.7, metalness: 0.2, transparent: true, opacity: 0.9 });
+            const titlePanelMesh = new THREE.Mesh(titlePanelGeometry, fieldPanelMaterial);
+            titlePanelMesh.position.set(0, 1.0, 0); // Position for title field
+            titlePanelMesh.userData.fieldId = 'noteTitle';
+            titlePanelMesh.userData.formType = 'noteEditor';
+            editorGroup.add(titlePanelMesh);
+
+            // Removed Title Label
+
+            const titleInputMesh = create3DText('Enter note title', font, textInputSize, 0xffffff, true); // Placeholder text
+            titleInputMesh.userData.isPlaceholder = true;
+            titleInputMesh.position.set(-fieldWidth / 2 + 0.1, 1.0 - textInputSize / 2 + 0.02, fieldDepth / 2 + 0.01); // Centered in panel
+            editorGroup.add(titleInputMesh);
+            allForms.noteEditor.titleField = {
+                id: 'noteTitle',
+                panelMesh: titlePanelMesh,
+                inputTextMesh: titleInputMesh,
+                currentValue: '',
+                placeholder: 'Enter note title',
+                type: 'text' // Added type for consistency
+            };
+
+            // Content Field
+            const contentPanelGeometry = new THREE.BoxGeometry(fieldWidth, contentFieldHeight, fieldDepth);
+            const contentPanelMesh = new THREE.Mesh(contentPanelGeometry, fieldPanelMaterial);
+            // Position content field below title field
+            contentPanelMesh.position.set(0, titlePanelMesh.position.y - titleFieldHeight / 2 - contentFieldHeight / 2 - 0.2, 0);
+            contentPanelMesh.userData.fieldId = 'noteContent';
+            contentPanelMesh.userData.formType = 'noteEditor';
+            editorGroup.add(contentPanelMesh);
+
+            // Removed Content Label
+
+            const contentInputMesh = create3DText('Enter note content (multi-line supported)', font, textInputSize, 0xffffff, true); // Placeholder
+            contentInputMesh.userData.isPlaceholder = true;
+            // Position content text at top-left of its panel
+            contentInputMesh.position.set(
+                -fieldWidth / 2 + 0.1,
+                contentPanelMesh.position.y + contentFieldHeight / 2 - textInputSize - 0.03, // Align top
+                fieldDepth / 2 + 0.01
+            );
+            editorGroup.add(contentInputMesh);
+            allForms.noteEditor.contentField = {
+                id: 'noteContent',
+                panelMesh: contentPanelMesh,
+                inputTextMesh: contentInputMesh,
+                currentValue: '',
+                placeholder: 'Enter note content (multi-line supported)',
+                type: 'textarea' // Custom type to identify content field
+            };
+
+
+            // Save Button
+            const saveButtonGeometry = new THREE.BoxGeometry(1.0, 0.5, 0.1);
+            const saveButtonMaterial = new THREE.MeshStandardMaterial({ color: 0x48bb78, roughness: 0.7, metalness: 0.2 });
+            const saveButtonMesh = new THREE.Mesh(saveButtonGeometry, saveButtonMaterial);
+            // Position buttons below content field
+            saveButtonMesh.position.set(-0.7, contentPanelMesh.position.y - contentFieldHeight / 2 - 0.5 / 2 - 0.15, 0);
+            saveButtonMesh.userData.action = 'saveNote';
+            editorGroup.add(saveButtonMesh);
+            allForms.noteEditor.saveButton = saveButtonMesh;
+
+            const saveButtonText = create3DText('Save', font, 0.15, 0xffffff, false, true);
+            saveButtonText.position.set(saveButtonMesh.position.x - saveButtonText.geometry.boundingBox.max.x / 2, saveButtonMesh.position.y - 0.05, 0.1 + 0.01);
+            editorGroup.add(saveButtonText);
+
+            // Cancel Button
+            const cancelButtonGeometry = new THREE.BoxGeometry(1.0, 0.5, 0.1);
+            const cancelButtonMaterial = new THREE.MeshStandardMaterial({ color: 0xe53e3e, roughness: 0.7, metalness: 0.2 });
+            const cancelButtonMesh = new THREE.Mesh(cancelButtonGeometry, cancelButtonMaterial);
+            cancelButtonMesh.position.set(0.7, contentPanelMesh.position.y - contentFieldHeight / 2 - 0.5 / 2 - 0.15, 0);
+            cancelButtonMesh.userData.action = 'cancelEdit';
+            editorGroup.add(cancelButtonMesh);
+            allForms.noteEditor.cancelButton = cancelButtonMesh;
+
+            const cancelButtonText = create3DText('Cancel', font, 0.15, 0xffffff, false, true);
+            cancelButtonText.position.set(cancelButtonMesh.position.x - cancelButtonText.geometry.boundingBox.max.x / 2, cancelButtonMesh.position.y - 0.05, 0.1 + 0.01);
+            editorGroup.add(cancelButtonText);
+        }
+
+
+        /**
+         * Helper function to create 3D text.
+         * @param {string} text - The text string.
+         * @param {THREE.Font} font - The loaded font.
+         * @param {number} size - Font size.
+         * @param {number} color - Hex color for the text.
+         * @param {boolean} isPlaceholder - Whether this text is a placeholder.
+         * @param {boolean} isButtonText - Whether this text is on a button (to disable raycast).
+         * @returns {THREE.Mesh} The 3D text mesh.
+         */
+        function create3DText(text, font, size, color, isPlaceholder = false, isButtonText = false) {
+            const actualColor = isPlaceholder ? 0xaaaaaa : color;
+            const textGeometry = new THREE.TextGeometry(text, {
+                font: font,
+                size: size,
+                height: size * 0.1, // Thinner text
+                curveSegments: 12
+            });
+            textGeometry.computeBoundingBox();
+            const textMaterial = new THREE.MeshBasicMaterial({ color: actualColor });
+            const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+            if (isButtonText) {
+                textMesh.raycast = function () { };
+            }
+            return textMesh;
+        }
+
+
+        function createCursor() {
+            const cursorHeight = 0.18; // Adjusted to match text input size
+            const cursorGeometry = new THREE.BoxGeometry(0.015, cursorHeight, 0.01); // Slimmer cursor
+            const cursorMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            cursorMesh = new THREE.Mesh(cursorGeometry, cursorMaterial);
+            cursorMesh.visible = false;
+            scene.add(cursorMesh);
+            cursorBlinkInterval = setInterval(() => {
+                cursorMesh.visible = activeField ? !cursorMesh.visible : false;
+            }, 500);
+        }
+
+        /**
+         * Updates the 3D input text mesh for the active field.
+         * @param {string} newText - The new text string.
+         * @param {boolean} [isPlaceholderUpdate=false] - True if updating to show a placeholder.
+         */
+        function update3DInputText(newText, isPlaceholderUpdate = false) {
+            if (!activeField || !font) return;
+
+            if (activeField.inputTextMesh && activeField.inputTextMesh.parent) {
+                activeField.inputTextMesh.geometry.dispose();
+                activeField.inputTextMesh.material.dispose();
+                activeField.inputTextMesh.parent.remove(activeField.inputTextMesh);
+            }
+
+            const isPasswordField = activeField.type === 'password';
+            const isContentField = activeField.id === 'noteContent' || activeField.type === 'textarea';
+            const displayMaxLength = isContentField ? 200 : 20;
+
+            let textToDisplay;
+            if (isPlaceholderUpdate) {
+                textToDisplay = activeField.placeholder || '';
+            } else if (isPasswordField) {
+                textToDisplay = '*'.repeat(activeField.currentValue.length);
+            } else {
+                textToDisplay = newText;
+            }
+
+            if (textToDisplay.length > displayMaxLength && !isContentField && !isPasswordField) {
+                textToDisplay = textToDisplay.substring(0, displayMaxLength - 3) + '...';
+            }
+
+            // For 3D display, newlines are replaced with spaces. Data is stored with \n.
+            if (isContentField && !isPlaceholderUpdate) {
+                textToDisplay = newText.replace(/\n/g, ' ');
+                if (textToDisplay.length > displayMaxLength) {
+                    textToDisplay = textToDisplay.substring(0, displayMaxLength - 3) + '...';
+                }
+            }
+
+
+            const textInputSize = 0.15;
+            const newTextMesh = create3DText(
+                textToDisplay,
+                font,
+                textInputSize,
+                0xffffff,
+                isPlaceholderUpdate && !isPasswordField
+            );
+            newTextMesh.userData.isPlaceholder = isPlaceholderUpdate;
+
+
+            newTextMesh.position.copy(activeField.panelMesh.position);
+            newTextMesh.position.x -= activeField.panelMesh.geometry.parameters.width / 2 - 0.1;
+
+            if (isContentField) {
+                newTextMesh.position.y = activeField.panelMesh.position.y + activeField.panelMesh.geometry.parameters.height / 2 - textInputSize - 0.03;
+            } else {
+                newTextMesh.position.y = activeField.panelMesh.position.y - textInputSize / 2 + 0.02;
+            }
+
+            newTextMesh.position.z += activeField.panelMesh.geometry.parameters.depth / 2 + 0.01;
+
+
+            const parentGroup = (currentActiveScene === 'register' || currentActiveScene === 'login') ?
+                allForms[currentActiveScene].group : allForms.noteEditor.group;
+            if (parentGroup) {
+                parentGroup.add(newTextMesh);
+            }
+            activeField.inputTextMesh = newTextMesh;
+            updateCursorPosition();
+        }
+
+
+        function updateCursorPosition() {
+            if (activeField && activeField.inputTextMesh && font) {
+                let textForWidthMeasurement = "";
+                const textInputSize = 0.15;
+
+                if (activeField.id === 'noteContent' || activeField.type === 'textarea') {
+                    const lines = activeField.currentValue.split('\n');
+                    textForWidthMeasurement = lines[lines.length - 1];
+                } else if (activeField.type === 'password') {
+                    textForWidthMeasurement = '*'.repeat(activeField.currentValue.length);
+                } else {
+                    textForWidthMeasurement = activeField.currentValue;
+                }
+
+                let textWidth = 0;
+                if (textForWidthMeasurement.length > 0) {
+                    const tempMesh = create3DText(textForWidthMeasurement, font, textInputSize, 0xffffff);
+                    tempMesh.geometry.computeBoundingBox();
+                    textWidth = tempMesh.geometry.boundingBox.max.x - tempMesh.geometry.boundingBox.min.x;
+                    if (tempMesh.geometry) tempMesh.geometry.dispose();
+                    if (tempMesh.material) tempMesh.material.dispose();
+                }
+
+                cursorMesh.position.x = activeField.inputTextMesh.position.x + textWidth + (textForWidthMeasurement.length > 0 ? 0.01 : 0);
+
+                // Align cursor Y with the inputTextMesh's Y position.
+                // The inputTextMesh itself is positioned either centered (single line) or top-aligned (content field).
+                cursorMesh.position.y = activeField.inputTextMesh.position.y + (textInputSize / 2) - (cursorMesh.geometry.parameters.height / 2);
+
+                cursorMesh.position.z = activeField.inputTextMesh.position.z + 0.005;
+                cursorMesh.visible = true;
+            } else {
+                cursorMesh.visible = false;
+            }
+        }
+
+
+        function startScaleAnimation(targetGroup, endScale, onComplete = null) {
+            scaleAnimation.isAnimating = true;
+            scaleAnimation.startTime = performance.now();
+            scaleAnimation.targetGroup = targetGroup;
+            scaleAnimation.startScale.copy(targetGroup.scale);
+            scaleAnimation.endScale.copy(endScale);
+            scaleAnimation.onComplete = onComplete;
+        }
+
+        function updateScaleAnimation() {
+            if (!scaleAnimation.isAnimating) return;
+            const elapsed = performance.now() - scaleAnimation.startTime;
+            const progress = Math.min(elapsed / scaleAnimation.duration, 1);
+            scaleAnimation.targetGroup.scale.lerpVectors(scaleAnimation.startScale, scaleAnimation.endScale, progress);
+            if (progress === 1) {
+                scaleAnimation.isAnimating = false;
+                if (scaleAnimation.onComplete) scaleAnimation.onComplete();
+            }
+        }
+
+        function switchToScene(newSceneType) {
+            if (scaleAnimation.isAnimating || currentActiveScene === newSceneType) return;
+
+            if (activeField) {
+                if (activeField.currentValue === '' && activeField.placeholder) {
+                    update3DInputText(activeField.placeholder, true);
+                }
+                activeField = null;
+                cursorMesh.visible = false;
+            }
+
+
+            let oldGroup = allForms[currentActiveScene]?.group;
+            let newGroup = allForms[newSceneType]?.group;
+
+            if (oldGroup) {
+                startScaleAnimation(oldGroup, new THREE.Vector3(0.001, 0.001, 0.001), () => {
+                    oldGroup.visible = false;
+                    if (allForms[currentActiveScene]?.switchButton) allForms[currentActiveScene].switchButton.visible = false;
+                    if (allForms[currentActiveScene]?.switchButtonHitbox) allForms[currentActiveScene].switchButtonHitbox.visible = false;
+
+                    if (newGroup) {
+                        newGroup.visible = true;
+                        if (allForms[newSceneType]?.switchButton) allForms[newSceneType].switchButton.visible = true;
+                        if (allForms[newSceneType]?.switchButtonHitbox) allForms[newSceneType].switchButtonHitbox.visible = true;
+                        startScaleAnimation(newGroup, new THREE.Vector3(1, 1, 1));
+                    }
+                    currentActiveScene = newSceneType;
+                    if (newSceneType === 'dashboard') fetchNotebooks();
+                });
+            } else {
+                if (newGroup) {
+                    newGroup.visible = true;
+                    if (allForms[newSceneType]?.switchButton) allForms[newSceneType].switchButton.visible = true;
+                    if (allForms[newSceneType]?.switchButtonHitbox) allForms[newSceneType].switchButtonHitbox.visible = true;
+                    newGroup.scale.set(1, 1, 1);
+                }
+                currentActiveScene = newSceneType;
+                if (newSceneType === 'dashboard' && !oldGroup) {
+                    fetchNotebooks();
+                }
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function onCanvasClick(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children, true);
+
+            let clickedActionableItem = false;
+
+            if (intersects.length > 0) {
+                for (let i = 0; i < intersects.length; i++) {
+                    const clickedObject = intersects[i].object;
+                    if (clickedObject.userData.action) {
+                        handleAction(clickedObject.userData.action, clickedObject.userData.notebookId);
+                        clickedActionableItem = true;
+                        return;
+                    }
+
+                    if (clickedObject.userData.fieldId && clickedObject.userData.formType === currentActiveScene) {
+                        if (clickedObject.userData.fieldId === 'submit') {
+                            handleSubmit(currentActiveScene);
+                            clickedActionableItem = true;
+                            return;
+                        }
+                        const field = (currentActiveScene === 'noteEditor') ?
+                            (clickedObject.userData.fieldId === 'noteTitle' ? allForms.noteEditor.titleField : allForms.noteEditor.contentField) :
+                            allForms[currentActiveScene].fields.find(f => f.id === clickedObject.userData.fieldId);
+
+                        if (field) {
+                            if (activeField && activeField !== field && activeField.currentValue === '') {
+                                update3DInputText(activeField.placeholder, true);
+                            }
+                            activeField = field;
+                            if (activeField.currentValue === '' && (activeField.inputTextMesh.userData.isPlaceholder || activeField.type === 'password')) {
+                                update3DInputText('', false);
+                            } else {
+                                update3DInputText(activeField.currentValue, false);
+                            }
+                            updateCursorPosition();
+                            clickedActionableItem = true;
+                            return;
+                        }
+                    }
+                }
+            }
+            if (!clickedActionableItem && activeField) {
+                if (activeField.currentValue === '') {
+                    update3DInputText(activeField.placeholder, true);
+                }
+                activeField = null;
+                cursorMesh.visible = false;
+            }
+        }
+
+
+        function handleAction(action, notebookId) {
+            switch (action) {
+                case 'switchToLogin': switchToScene('login'); break;
+                case 'switchToRegister': switchToScene('register'); break;
+                case 'addNotebook': openNoteEditor(null); break;
+                case 'logout':
+                    currentUserId = null;
+                    showMessage("Logged out successfully!", "success");
+                    allForms.dashboard.notebooks = [];
+                    renderNotebooks();
+                    switchToScene('login');
+                    break;
+                case 'editNotebook': openNoteEditor(notebookId); break;
+                case 'deleteNotebook': deleteNotebook(notebookId); break;
+                case 'saveNote': saveNote(); break;
+                case 'cancelEdit': switchToScene('dashboard'); break;
+            }
+        }
+
+        function onKeyDown(event) {
+            if (!activeField) return;
+
+            const key = event.key;
+            // Updated regex to be more inclusive of international characters, including Turkish.
+            // This regex allows letters (including accented), numbers, and specified symbols.
+            const allowedCharsRegex = /^[a-zA-Z0-9@._\- \p{L}]$/u;
+
+
+            if ((activeField.id === 'noteContent' || activeField.type === 'textarea') && key === 'Enter') {
+                activeField.currentValue += '\n';
+                update3DInputText(activeField.currentValue, false);
+            } else if (key.length === 1 && allowedCharsRegex.test(key)) {
+                activeField.currentValue += key;
+                update3DInputText(activeField.currentValue, false);
+            } else if (key === 'Backspace') {
+                activeField.currentValue = activeField.currentValue.slice(0, -1);
+                update3DInputText(activeField.currentValue, false);
+            } else if (key === 'Enter' && !(activeField.id === 'noteContent' || activeField.type === 'textarea')) {
+                if (currentActiveScene === 'register' || currentActiveScene === 'login') handleSubmit(currentActiveScene);
+                else if (currentActiveScene === 'noteEditor') saveNote();
+            }
+            if (key === 'Backspace' || key === 'Enter' || (key.length === 1 && allowedCharsRegex.test(key))) {
+                event.preventDefault();
+            }
+        }
+
+
+        async function handleSubmit(formType) {
+            const formData = {};
+            allForms[formType].fields.forEach(field => {
+                formData[field.id] = field.currentValue;
+            });
+
+            if (formType === 'register') {
+                if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
+                    showMessage('Registration: All fields are required!', 'error'); return;
+                }
+                if (formData.password !== formData.confirmPassword) {
+                    showMessage('Registration: Passwords do not match!', 'error'); return;
+                }
+                if (formData.password.length < 6) {
+                    showMessage('Registration: Password must be at least 6 characters long!', 'error'); return;
+                }
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(formData.email)) {
+                    showMessage('Registration: Please enter a valid email address!', 'error'); return;
+                }
+
+                try {
+                    const response = await fetch('http://localhost:3000/api/auth/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: formData.username,
+                            email: formData.email,
+                            password: formData.password
+                        })
+                    });
+                    const data = await response.json();
+                    if (!response.ok) {
+                        showMessage(`Registration failed: ${data.message || 'Server error'}`, 'error');
+                        return;
+                    }
+                    showMessage('Registration successful! Please login.', 'success');
+                    allForms.register.fields.forEach(field => {
+                        field.currentValue = '';
+                        update3DInputTextForSpecificField(field, field.placeholder, true);
+                    });
+                    switchToScene('login');
+                } catch (error) {
+                    console.error('Registration error:', error);
+                    showMessage('Registration failed: Network error or server unavailable.', 'error');
+                }
+
+            } else if (formType === 'login') {
+                if (!formData.loginEmail || !formData.loginPassword) {
+                    showMessage('Login: Both email and password are required!', 'error'); return;
+                }
+                try {
+                    const response = await fetch('http://localhost:3000/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: formData.loginEmail,
+                            password: formData.loginPassword
+                        })
+                    });
+                    const data = await response.json();
+                    if (!response.ok) {
+                        showMessage(`Login failed: ${data.message || 'Invalid credentials'}`, 'error');
+                        return;
+                    }
+                    currentUserId = data.user._id;
+                    showMessage(`Login successful! Welcome ${data.user.username}.`, 'success');
+                    allForms.login.fields.forEach(field => {
+                        field.currentValue = '';
+                        update3DInputTextForSpecificField(field, field.placeholder, true);
+                    });
+                    switchToScene('dashboard');
+                } catch (error) {
+                    console.error('Login error:', error);
+                    showMessage('Login failed: Network error or server unavailable.', 'error');
+                }
+            }
+        }
+
+        function update3DInputTextForSpecificField(field, text, isPlaceholderUpdate = false) {
+            if (!field || !font) return;
+            if (field.inputTextMesh && field.inputTextMesh.parent) {
+                field.inputTextMesh.geometry.dispose();
+                field.inputTextMesh.material.dispose();
+                field.inputTextMesh.parent.remove(field.inputTextMesh);
+            }
+
+            const isPasswordField = field.type === 'password';
+            const isContentField = field.id === 'noteContent' || field.type === 'textarea';
+            const displayMaxLength = isContentField ? 200 : 20;
+
+            let textToDisplay;
+            if (isPlaceholderUpdate) {
+                textToDisplay = field.placeholder || '';
+            } else if (isPasswordField) {
+                textToDisplay = '*'.repeat(field.currentValue.length);
+            } else {
+                textToDisplay = text;
+            }
+
+
+            if (textToDisplay.length > displayMaxLength && !isContentField && !isPasswordField) {
+                textToDisplay = textToDisplay.substring(0, displayMaxLength - 3) + '...';
+            }
+            if (isContentField && !isPlaceholderUpdate) {
+                textToDisplay = text.replace(/\n/g, ' ');
+                if (textToDisplay.length > displayMaxLength) {
+                    textToDisplay = textToDisplay.substring(0, displayMaxLength - 3) + '...';
+                }
+            }
+
+
+            const newTextMesh = create3DText(
+                textToDisplay,
+                font,
+                0.15,
+                0xffffff, // Color handled by create3DText
+                isPlaceholderUpdate && !isPasswordField
+            );
+            newTextMesh.userData.isPlaceholder = isPlaceholderUpdate;
+
+            newTextMesh.position.copy(field.panelMesh.position);
+            newTextMesh.position.x -= field.panelMesh.geometry.parameters.width / 2 - 0.1;
+
+            // Vertical centering
+            newTextMesh.position.y = field.panelMesh.position.y - 0.15 / 2 + 0.02;
+            if (isContentField) {
+                // Align text to top-left of content panel
+                newTextMesh.position.y = field.panelMesh.position.y + field.panelMesh.geometry.parameters.height / 2 - 0.15 - 0.03;
+            }
+
+            newTextMesh.position.z += field.panelMesh.geometry.parameters.depth / 2 + 0.01;
+
+
+            const formType = field.panelMesh.userData.formType;
+            const parentGroup = (formType === 'register' || formType === 'login') ?
+                allForms[formType].group : allForms.noteEditor.group;
+            if (parentGroup) {
+                parentGroup.add(newTextMesh);
+            }
+            field.inputTextMesh = newTextMesh;
+        }
+
+
+        async function fetchNotebooks() {
+            if (!currentUserId) {
+                showMessage("Please log in to view notebooks.", "error");
+                switchToScene('login');
+                return;
+            }
+            try {
+                const response = await fetch('http://localhost:3000/api/notebooks', {
+                    headers: { 'X-User-Id': currentUserId }
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message}`);
+                }
+                const notebooks = await response.json();
+                allForms.dashboard.notebooks = notebooks;
+                renderNotebooks();
+            } catch (error) {
+                console.error("Error fetching notebooks:", error);
+                showMessage(`Failed to load notebooks: ${error.message}`, "error");
+            }
+        }
+
+        function renderNotebooks() {
+            const dashboardGroup = allForms.dashboard.group;
+            if (!dashboardGroup || !allForms.dashboard.backplate) return;
+
+            const removableMeshes = [];
+            dashboardGroup.children.forEach(child => {
+                if (child.userData.isNotebookItem) {
+                    removableMeshes.push(child);
+                }
+            });
+            removableMeshes.forEach(mesh => {
+                if (mesh.geometry) mesh.geometry.dispose();
+                if (mesh.material) mesh.material.dispose();
+                dashboardGroup.remove(mesh);
+            });
+
+            const backplateHeight = allForms.dashboard.backplate.geometry.parameters.height;
+            const backplateWidth = allForms.dashboard.backplate.geometry.parameters.width;
+
+            const listTopY = allForms.dashboard.addNotebookButton.position.y - allForms.dashboard.addNotebookButton.geometry.parameters.height / 2 - 0.1;
+            const listBottomY = allForms.dashboard.logoutButton.position.y + allForms.dashboard.logoutButton.geometry.parameters.height / 2 + 0.1;
+
+            const noteHeight = 0.35;
+            const noteSpacing = 0.1;
+            const noteWidth = backplateWidth * 0.9;
+            const noteItemDepth = 0.05;
+            const deleteButtonDepthOffset = 0.03;
+
+            let currentY = listTopY - noteHeight / 2;
+
+            allForms.dashboard.notebooks.forEach((notebook, index) => {
+                if (currentY - noteHeight / 2 < listBottomY) {
+                    console.warn("Not enough space to render all notebooks on dashboard.");
+                    return;
+                }
+
+                const panelGeometry = new THREE.BoxGeometry(noteWidth, noteHeight, noteItemDepth);
+                const panelMaterial = new THREE.MeshStandardMaterial({ color: 0x4a5568, roughness: 0.7, metalness: 0.2 });
+                const panelMesh = new THREE.Mesh(panelGeometry, panelMaterial);
+                panelMesh.position.set(0, currentY, noteItemDepth / 2 + 0.01);
+                panelMesh.userData = { action: 'editNotebook', notebookId: notebook._id, isNotebookItem: true };
+                dashboardGroup.add(panelMesh);
+
+                const titleTextContent = notebook.title.length > 25 ? notebook.title.substring(0, 22) + "..." : (notebook.title || 'Untitled');
+                const titleMesh = create3DText(titleTextContent, font, 0.12, 0xe2e8f0, false, true);
+                titleMesh.position.set(-noteWidth / 2 + 0.1, currentY - 0.02, panelMesh.position.z + noteItemDepth / 2 + 0.01);
+                titleMesh.userData.isNotebookItem = true; // Ensure title text is marked for removal
+                dashboardGroup.add(titleMesh);
+
+                const deleteButtonSize = 0.2;
+                const deleteButtonPanelZ = panelMesh.position.z + noteItemDepth / 2 + deleteButtonDepthOffset;
+
+                const deleteButtonGeometry = new THREE.BoxGeometry(deleteButtonSize, deleteButtonSize, noteItemDepth * 0.8);
+                const deleteButtonMaterial = new THREE.MeshStandardMaterial({ color: 0xc53030, roughness: 0.7, metalness: 0.2 });
+                const deleteButtonMesh = new THREE.Mesh(deleteButtonGeometry, deleteButtonMaterial);
+                deleteButtonMesh.position.set(noteWidth / 2 - deleteButtonSize / 2 - 0.05, currentY, deleteButtonPanelZ);
+                deleteButtonMesh.userData = { action: 'deleteNotebook', notebookId: notebook._id, isNotebookItem: true };
+                dashboardGroup.add(deleteButtonMesh);
+
+                const deleteText = create3DText('X', font, 0.1, 0xffffff, false, true);
+                deleteText.position.set(deleteButtonMesh.position.x - deleteText.geometry.boundingBox.max.x / 2, currentY - 0.03, deleteButtonMesh.position.z + (noteItemDepth * 0.8) / 2 + 0.01);
+                deleteText.userData.isNotebookItem = true; // Ensure delete button text is marked for removal
+                dashboardGroup.add(deleteText);
+
+                currentY -= (noteHeight + noteSpacing);
+            });
+        }
+
+
+        async function openNoteEditor(notebookId) {
+            allForms.noteEditor.activeNoteId = notebookId;
+            let noteToEdit = { title: '', content: '' };
+
+            if (notebookId) {
+                if (!currentUserId) { showMessage("Login required.", "error"); return; }
+                try {
+                    const response = await fetch(`http://localhost:3000/api/notebooks/${notebookId}`, {
+                        headers: { 'X-User-Id': currentUserId }
+                    });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || response.statusText}`);
+                    }
+                    noteToEdit = await response.json();
+                } catch (error) {
+                    console.error("Error fetching note for editing:", error);
+                    showMessage(`Failed to load note: ${error.message}`, "error"); return;
+                }
+            }
+            allForms.noteEditor.titleField.currentValue = noteToEdit.title;
+            allForms.noteEditor.contentField.currentValue = noteToEdit.content;
+
+            const isTitleActuallyEmpty = noteToEdit.title === '';
+            const isContentActuallyEmpty = noteToEdit.content === '';
+
+            update3DInputTextForEditor(allForms.noteEditor.titleField, isTitleActuallyEmpty ? allForms.noteEditor.titleField.placeholder : noteToEdit.title, isTitleActuallyEmpty);
+            update3DInputTextForEditor(allForms.noteEditor.contentField, isContentActuallyEmpty ? allForms.noteEditor.contentField.placeholder : noteToEdit.content, isContentActuallyEmpty);
+
+            switchToScene('noteEditor');
+        }
+
+        function update3DInputTextForEditor(field, text, isCurrentlyPlaceholder) {
+            if (!field || !font) return;
+            if (field.inputTextMesh && field.inputTextMesh.parent) {
+                field.inputTextMesh.geometry.dispose();
+                field.inputTextMesh.material.dispose();
+                field.inputTextMesh.parent.remove(field.inputTextMesh);
+            }
+
+            const isPasswordField = field.type === 'password';
+            const isContentField = field.id === 'noteContent' || field.type === 'textarea';
+            const displayMaxLength = isContentField ? 200 : 20;
+
+            let textToDisplay = isCurrentlyPlaceholder ? (field.placeholder || '') : text;
+
+            if (isPasswordField && !isCurrentlyPlaceholder) {
+                textToDisplay = '*'.repeat(text.length);
+            } else if (isContentField && !isCurrentlyPlaceholder) {
+                textToDisplay = text.replace(/\n/g, ' ');
+                if (textToDisplay.length > displayMaxLength) {
+                    textToDisplay = textToDisplay.substring(0, displayMaxLength - 3) + '...';
+                }
+            } else if (!isPasswordField && !isCurrentlyPlaceholder && textToDisplay.length > displayMaxLength) {
+                textToDisplay = textToDisplay.substring(0, displayMaxLength - 3) + '...';
+            }
+
+
+            const newTextMesh = create3DText(
+                textToDisplay,
+                font,
+                0.15, // textInputSize
+                0xffffff, // Default color, create3DText handles placeholder color
+                isCurrentlyPlaceholder && !isPasswordField // isPlaceholder flag for create3DText
+            );
+            newTextMesh.userData.isPlaceholder = isCurrentlyPlaceholder;
+
+
+            newTextMesh.position.copy(field.panelMesh.position);
+            newTextMesh.position.x -= field.panelMesh.geometry.parameters.width / 2 - 0.1;
+
+            if (isContentField) {
+                newTextMesh.position.y = field.panelMesh.position.y + field.panelMesh.geometry.parameters.height / 2 - 0.15 - 0.03; // 0.15 is textInputSize
+            } else {
+                newTextMesh.position.y = field.panelMesh.position.y - 0.15 / 2 + 0.02;
+            }
+            newTextMesh.position.z += field.panelMesh.geometry.parameters.depth / 2 + 0.01;
+
+            if (allForms.noteEditor.group) {
+                allForms.noteEditor.group.add(newTextMesh);
+            }
+            field.inputTextMesh = newTextMesh;
+        }
+
+
+        async function saveNote() {
+            if (!currentUserId) { showMessage("Please log in to save notes.", "error"); return; }
+            const title = allForms.noteEditor.titleField.currentValue;
+            const content = allForms.noteEditor.contentField.currentValue;
+            const notebookId = allForms.noteEditor.activeNoteId;
+            if (!title) { showMessage("Note title cannot be empty!", "error"); return; }
+
+            try {
+                const notebookData = { title: title, content: content, userId: currentUserId };
+                let response;
+                if (notebookId) {
+                    response = await fetch(`http://localhost:3000/api/notebooks/${notebookId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUserId },
+                        body: JSON.stringify(notebookData)
+                    });
+                } else {
+                    response = await fetch('http://localhost:3000/api/notebooks', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUserId },
+                        body: JSON.stringify(notebookData)
+                    });
+                }
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || response.statusText}`);
+                }
+                showMessage(notebookId ? "Notebook updated!" : "Notebook added!", "success");
+                allForms.noteEditor.titleField.currentValue = '';
+                allForms.noteEditor.contentField.currentValue = '';
+                allForms.noteEditor.activeNoteId = null;
+                update3DInputTextForEditor(allForms.noteEditor.titleField, allForms.noteEditor.titleField.placeholder, true);
+                update3DInputTextForEditor(allForms.noteEditor.contentField, allForms.noteEditor.contentField.placeholder, true);
+
+                switchToScene('dashboard');
+            } catch (error) {
+                console.error("Error saving note:", error);
+                showMessage(`Failed to save notebook: ${error.message}`, "error");
+            }
+        }
+
+        async function deleteNotebook(notebookId) {
+            if (!currentUserId) { showMessage("Please log in to delete notes.", "error"); return; }
+            if (!confirm("Are you sure you want to delete this notebook? This action cannot be undone.")) return;
+
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/notebooks/${notebookId}`, {
+                    method: 'DELETE', headers: { 'X-User-Id': currentUserId }
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || response.statusText}`);
+                }
+                showMessage("Notebook deleted successfully!", "success");
+                fetchNotebooks();
+            } catch (error) {
+                console.error("Error deleting note:", error);
+                showMessage(`Failed to delete notebook: ${error.message}`, "error");
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            updateScaleAnimation();
+            renderer.render(scene, camera);
+        }
+
+        window.onload = async function () {
+            init();
+            animate();
+        };
+    </script>
+</body>
+</ht
