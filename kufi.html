@@ -746,7 +746,7 @@
                 okButton: "OK",
                 cancelButton: "Cancel",
                 colorBlack: 'Black',
-                colorWhite: 'White',
+                // colorWhite: 'White', // Removed
                 colorRed: 'Red',
                 colorGreen: 'Green',
                 colorBlue: 'Blue',
@@ -756,7 +756,7 @@
                 colorOrange: 'Orange',
                 colorPurple: 'Purple',
                 colorBrown: 'Brown',
-                colorGray: 'Gray',
+                // colorGray: 'Gray', // Removed
             },
             tr: {
                 loadObj: 'OBJ Yükle',
@@ -813,7 +813,7 @@
                 okButton: "Tamam",
                 cancelButton: "İptal",
                 colorBlack: 'Siyah',
-                colorWhite: 'Beyaz',
+                // colorWhite: 'Beyaz', // Removed
                 colorRed: 'Kırmızı',
                 colorGreen: 'Yeşil',
                 colorBlue: 'Mavi',
@@ -823,7 +823,7 @@
                 colorOrange: 'Turuncu',
                 colorPurple: 'Mor',
                 colorBrown: 'Kahverengi',
-                colorGray: 'Gri',
+                // colorGray: 'Gri', // Removed
             },
             ar: {
                 loadObj: 'تحميل OBJ',
@@ -880,7 +880,7 @@
                 okButton: "موافق",
                 cancelButton: "إلغاء",
                 colorBlack: 'أسود',
-                colorWhite: 'أبيض',
+                // colorWhite: 'أبيض', // Removed
                 colorRed: 'أحمر',
                 colorGreen: 'أخضر',
                 colorBlue: 'أزرق',
@@ -890,7 +890,7 @@
                 colorOrange: 'برتقالي',
                 colorPurple: 'بنفسجي',
                 colorBrown: 'بني',
-                colorGray: 'رمادي',
+                // colorGray: 'رمادي', // Removed
             }
         };
 
@@ -910,7 +910,11 @@
             });
 
             // Update specific elements that need dynamic content or special handling
-            document.getElementById('canvas-placeholder-text').textContent = translations[currentLanguage].canvasPlaceholder;
+            // Check if canvasPlaceholderSpan exists before trying to access its textContent
+            const canvasPlaceholderSpan = document.getElementById('canvas-placeholder-text');
+            if (canvasPlaceholderSpan) {
+                canvasPlaceholderSpan.textContent = translations[currentLanguage].canvasPlaceholder;
+            }
 
             // Update color names in the palette
             const colorButtons = document.querySelectorAll('#color-palette button');
@@ -930,14 +934,14 @@
             });
             document.getElementById(`flag-${currentLanguage}`).classList.add('active');
 
-            // Adjust text direction for Arabic
-            if (currentLanguage === 'ar') {
-                document.body.style.direction = 'rtl';
-                document.body.style.textAlign = 'right';
-            } else {
-                document.body.style.direction = 'ltr';
-                document.body.style.textAlign = 'left';
-            }
+            // Removed: Adjust text direction for Arabic
+            // if (currentLanguage === 'ar') {
+            //     document.body.style.direction = 'rtl';
+            //     document.body.style.textAlign = 'right';
+            // } else {
+            //     document.body.style.direction = 'ltr';
+            //     document.body.style.textAlign = 'left';
+            // }
         }
 
         // --- Functions ---
@@ -2014,7 +2018,7 @@
 
         async function saveProject(forceSaveAs = false, callback = () => { }) {
             if (vertices.length === 0) {
-                showMessageBox(translations[currentLanguage].noProjectTitle, translations[currentLanguage].noProjectMessage, 'info');
+                showMessageBox(translations[currentLanguage].noContentMessage, translations[currentLanguage].noContentMessage, 'info');
                 return;
             }
 
@@ -2279,7 +2283,7 @@
         // Color palette buttons
         const colors = [
             { name: 'Black', color: 'rgba(60, 60, 60, 1)' },
-            { name: 'White', color: 'rgba(240, 240, 240, 1)' },
+            // { name: 'White', color: 'rgba(240, 240, 240, 1)' }, // Removed
             { name: 'Red', color: 'rgba(255, 104, 104, 1)' },
             { name: 'Green', color: 'rgba(96, 160, 96, 1)' },
             { name: 'Blue', color: 'rgba(104, 136, 200, 1)' },
@@ -2289,7 +2293,7 @@
             { name: 'Orange', color: 'rgba(255, 165, 0, 1)' },
             { name: 'Purple', color: 'rgba(128, 0, 128, 1)' },
             { name: 'Brown', color: 'rgba(139, 69, 19, 1)' },
-            { name: 'Gray', color: 'rgba(128, 128, 128, 1)' },
+            // { name: 'Gray', color: 'rgba(128, 128, 128, 1)' }, // Removed
         ];
 
         colors.forEach((col, index) => {
@@ -2379,6 +2383,85 @@
             }
         });
         resizeObserver.observe(canvas.parentElement);
+
+        // --- Drag and Drop functionality ---
+        document.body.addEventListener('dragover', (event) => {
+            event.preventDefault(); // Prevent default to allow drop
+            event.stopPropagation();
+            document.body.classList.add('bg-blue-300'); // Optional: visual feedback
+        });
+
+        document.body.addEventListener('dragleave', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            document.body.classList.remove('bg-blue-300'); // Optional: visual feedback
+        });
+
+        document.body.addEventListener('drop', (event) => {
+            event.preventDefault(); // Prevent default file opening
+            event.stopPropagation();
+            document.body.classList.remove('bg-blue-300'); // Optional: visual feedback
+
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                const fileName = file.name.toLowerCase();
+
+                const processFile = (fileToProcess) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        if (fileName.endsWith('.obj')) {
+                            loadObjFileContent(e.target.result);
+                        } else if (fileName.endsWith('.kufi')) {
+                            try {
+                                const data = JSON.parse(e.target.result);
+                                vertices = data.vertices || [];
+                                faces = data.faces || [];
+                                const loadedFaceColors = {};
+                                for (const key in data.faceColors) {
+                                    loadedFaceColors[parseInt(key)] = data.faceColors[key];
+                                }
+                                faceColors = loadedFaceColors;
+                                selectedFaces = new Set(data.selectedFaces || []);
+                                zoom = data.zoom || 1.0;
+                                const pan = data.panOffset || [0, 0];
+                                panOffset = new Point(pan[0], pan[1]);
+                                undoStack = [];
+                                redoStack = [];
+                                movePoints = null;
+                                selectedPoints = new Set();
+                                currentFilePath = fileToProcess.name;
+                                isModified = false;
+                                computeFaceCenters();
+                                cacheFacePolygons();
+                                requestRedraw();
+                                updateTitle();
+                                showMessageBox(translations[currentLanguage].successTitle, translations[currentLanguage].projectLoadedMessage, 'info');
+                            } catch (error) {
+                                showMessageBox(translations[currentLanguage].errorTitle, `${translations[currentLanguage].projectLoadErrorMessage}: ${error.message}`, 'error');
+                            }
+                        } else {
+                            showMessageBox(translations[currentLanguage].errorTitle, "Unsupported file type. Please drop .obj or .kufi files.", 'error');
+                        }
+                    };
+                    reader.readAsText(fileToProcess);
+                };
+
+                if (isModified) {
+                    showMessageBox(translations[currentLanguage].unsavedChangesTitle, translations[currentLanguage].unsavedChangesMessage, 'question', true)
+                        .then(({ confirmed }) => {
+                            if (confirmed) {
+                                saveProject(true, () => processFile(file));
+                            } else {
+                                processFile(file);
+                            }
+                        });
+                } else {
+                    processFile(file);
+                }
+            }
+        });
+
 
         // Show instructions on first run
         function showInstructionsIfNeeded() {
