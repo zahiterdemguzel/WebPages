@@ -291,8 +291,8 @@
                 this.m12 = m12; // skewY
                 this.m21 = m21; // skewX
                 this.m22 = m22; // scaleY
-                this.dx = dx;   // translateX
-                this.dy = dy;   // translateY
+                this.dx = dx;    // translateX
+                this.dy = dy;    // translateY
             }
 
             map(point) {
@@ -535,10 +535,10 @@
         let rotateOriginalSelected = new Set(); // Keys/faces that were selected at start of rotate
 
         let zoom = 1.0;
-        let panOffset = new Point(0, 0);
+        let panOffset = new Point(0, 0); // panOffset is in screen pixels
         let middleMouseDown = false;
+        let isPanningCanvas = false; // New state variable for left-click canvas pan
         let lastPanPoint = null;
-        const panSensitivity = 25.0;
 
         let undoStack = [];
         let redoStack = [];
@@ -692,7 +692,10 @@
                 s = Math.min((w - 2 * margin) / modelWidth, (h - 2 * margin) / modelHeight);
             }
 
+            // Base transform to fit model into canvas with Y-axis flip
             const baseTransform = new Transform(s, 0, 0, -s, margin - s * min_x, margin + s * max_z);
+
+            // User transform for pan and zoom (applied after base transform)
             const userTransform = new Transform()
                 .scale(zoom, zoom)
                 .translate(panOffset.x, panOffset.y);
@@ -928,8 +931,8 @@
 
         function paintAt(pos, tool) {
             const T = computeTransform();
-            const invertedT = T.inverted()[0];
-            if (!invertedT) return;
+            const [invertedT, ok] = T.inverted();
+            if (!ok) return;
 
             const modelPos = invertedT.map(pos);
 
@@ -1138,8 +1141,8 @@
                 rotateStartPos = null;
                 rotateCurrentPos = null;
                 rotateOriginalState = {};
-                rotateOriginalSelected = new Set();
                 // selectedFaces is already updated by updateRotatePreview
+                rotateOriginalSelected = new Set();
                 onProjectModified();
             }
             draw();
@@ -1149,13 +1152,15 @@
             const rect = canvas.getBoundingClientRect();
             const pos = new Point(event.clientX - rect.left, event.clientY - rect.top);
 
-            if (event.button === 1) { // Middle mouse button for pan
+            // Prioritize middle mouse button for pan
+            if (event.button === 1) { // Middle mouse button
                 middleMouseDown = true;
                 lastPanPoint = pos;
                 canvas.style.cursor = 'grab';
                 return;
             }
 
+            // Tool actions (left click or right click for paint/erase)
             if (currentTool === 'paint' || currentTool === 'erase') {
                 const effectiveTool = event.button === 0 ? currentTool : (currentTool === 'paint' ? 'erase' : 'paint');
                 if (!strokeInProgress) {
@@ -1208,7 +1213,7 @@
                         moveOriginalState = { ...faceColors };
                         moveOriginalSelected = new Set(selectedFaces);
                     }
-                } else {
+                } else { // Start selection or pan canvas if no selection/gizmo clicked
                     isSelecting = true;
                     selectStart = pos;
                     selectRect = new Rect(pos.x, pos.y, 0, 0);
@@ -1226,18 +1231,27 @@
                 draw();
                 return;
             }
+
+            // Default left-click pan for canvas if no specific tool action is taken
+            if (event.button === 0) {
+                isPanningCanvas = true;
+                lastPanPoint = pos;
+                canvas.style.cursor = 'grab';
+                return;
+            }
         }
 
         function handleMouseMove(event) {
             const rect = canvas.getBoundingClientRect();
             const pos = new Point(event.clientX - rect.left, event.clientY - rect.top);
 
-            if (middleMouseDown) {
+            if (middleMouseDown || isPanningCanvas) {
                 const delta = pos.subtract(lastPanPoint);
-                panOffset = panOffset.add(new Point(
-                    delta.x / (panSensitivity * zoom),
-                    -delta.y / (panSensitivity * zoom)
-                ));
+                // panOffset is in screen pixels, so add the pixel delta directly
+                // Note: The Y-axis is inverted in the baseTransform for OBJ models (Z-up becomes Y-down).
+                // So, if the mouse moves down (positive delta.y), we want the content to move down,
+                // which means panOffset.y should increase.
+                panOffset = panOffset.add(delta);
                 lastPanPoint = pos;
                 draw();
                 return;
@@ -1267,7 +1281,11 @@
             if (event.button === 1) { // Middle mouse button
                 middleMouseDown = false;
                 canvas.style.cursor = 'default';
-                return;
+            }
+
+            if (isPanningCanvas) { // Left mouse button pan
+                isPanningCanvas = false;
+                canvas.style.cursor = 'default';
             }
 
             if (currentTool === 'paint' || currentTool === 'erase') {
@@ -1348,12 +1366,12 @@
                             selectedPoints = newSelected;
                         } else {
                             const newSelected = selectModifiers ? new Set(selectedFaces) : new Set();
-                            for (const faceIdxStr in faceColors) {
-                                const faceIdx = parseInt(faceIdxStr);
-                                const centerModel = getFaceCenter(faceIdx);
+                            // Iterate over ALL faces to select them, not just painted ones
+                            for (let i = 0; i < faces.length; i++) {
+                                const centerModel = getFaceCenter(i);
                                 const centerWidget = T.map(centerModel);
                                 if (normalizedRect.contains(centerWidget.toIntegerPoint())) {
-                                    newSelected.add(faceIdx);
+                                    newSelected.add(i);
                                 }
                             }
                             selectedFaces = newSelected;
@@ -1370,21 +1388,26 @@
         }
 
         function handleWheel(event) {
-            if (event.ctrlKey || event.metaKey) {
-                event.preventDefault();
-                const angle = event.deltaY;
-                const factor = angle > 0 ? 1.05 : 0.95;
-                zoom *= factor;
-                draw();
-            } else {
-                const deltaX = event.deltaX;
-                const deltaY = event.deltaY;
-                panOffset = panOffset.add(new Point(
-                    deltaX / (panSensitivity * zoom),
-                    deltaY / (panSensitivity * zoom)
-                ));
-                draw();
-            }
+            event.preventDefault(); // Prevent page scrolling
+
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+
+            // Calculate mouse position in the current "viewport" coordinates (after base transform, before user pan/zoom)
+            // screen_x = (model_x_after_base * zoom) + panOffset.x
+            // screen_y = (model_y_after_base * zoom) + panOffset.y
+            const modelX = (mouseX - panOffset.x) / zoom;
+            const modelY = (mouseY - panOffset.y) / zoom;
+
+            const factor = event.deltaY > 0 ? 0.9 : 1.1; // Adjust zoom speed here
+            zoom *= factor;
+
+            // Update panOffset to keep the model point under the mouse cursor
+            panOffset.x = mouseX - (modelX * zoom);
+            panOffset.y = mouseY - (modelY * zoom);
+
+            draw();
         }
 
         function draw() {
@@ -1948,8 +1971,9 @@
                     `   Points are drawn at a fixed size (e.g., 10px) in widget coordinates.\n` +
                     `5) While selecting, a selection rectangle appears (unfilled).\n` +
                     `6) Points snap to the nearest face when switching out of 'Move' mode.\n` +
-                    `7) Pan with middle mouse button, zoom with Ctrl+scroll.\n` +
-                    `8) Undo/Redo with Ctrl+Z / Ctrl+Y.\n\n` +
+                    `7) Pan with middle mouse button, or left-click drag when no tool is active.\n` +
+                    `8) Zoom with Ctrl+scroll (zooms around cursor).\n` +
+                    `9) Undo/Redo with Ctrl+Z / Ctrl+Y.\n\n` +
                     `Happy creating!`,
                     'info', false, true, "Don't show again"
                 ).then(({ checkboxChecked }) => {
