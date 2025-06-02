@@ -1543,7 +1543,7 @@
 
             // Tool actions (left click or right click for paint/erase)
             if (currentTool === 'paint' || currentTool === 'erase') {
-                const effectiveTool = event.button === 0 || event.type === 'touchstart' ? currentTool : (currentTool === 'paint' ? 'erase' : 'paint');
+                const effectiveTool = event.button === 0 ? currentTool : (currentTool === 'paint' ? 'erase' : 'paint');
                 if (!strokeInProgress) {
                     pushUndoState();
                     strokeInProgress = true;
@@ -2272,6 +2272,7 @@
         canvas.addEventListener('touchmove', handlePointerMove, { passive: false });
         canvas.addEventListener('touchend', handlePointerUp);
         canvas.addEventListener('touchcancel', handlePointerUp); // Handle touch cancellation
+        canvas.addEventListener('contextmenu', (event) => event.preventDefault()); // Disable right-click context menu
 
         canvas.addEventListener('wheel', handleWheel, { passive: false }); // Use passive: false for preventDefault on wheel
 
