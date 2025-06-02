@@ -501,6 +501,40 @@
             });
         }
 
+        // --- Custom Save Dialog ---
+        function showSaveDialog(title, defaultFilename, extension) {
+            return new Promise(resolve => {
+                const inputId = 'save-filename-input';
+                const contentHtml = `
+                    <div class="space-y-4">
+                        <div>
+                            <label for="${inputId}" class="block text-gray-700 text-sm font-bold mb-2">Filename:</label>
+                            <input id="${inputId}" type="text" value="${defaultFilename}"
+                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+                    </div>
+                `;
+                showModal(title, contentHtml, true).then(confirmed => {
+                    if (confirmed) {
+                        let filename = document.getElementById(inputId).value.trim();
+                        if (filename) {
+                            // Ensure the correct extension is present
+                            if (!filename.endsWith(extension)) {
+                                filename += extension;
+                            }
+                            resolve(filename);
+                        } else {
+                            // If filename is empty after trim, consider it cancelled or invalid
+                            showMessageBox("Invalid Filename", "Filename cannot be empty.", 'warning');
+                            resolve(null); // Or prompt again, depending on desired strictness
+                        }
+                    } else {
+                        resolve(null); // User cancelled
+                    }
+                });
+            });
+        }
+
         // --- Global State ---
         let vertices = [];
         let faces = [];
@@ -1532,7 +1566,7 @@
                 showMessageBox("Unsaved Changes", "There are unsaved changes. Do you want to save them now?", 'question', true)
                     .then(({ confirmed }) => {
                         if (confirmed) {
-                            saveProject(() => {
+                            saveProject(true, () => { // Pass true to force save-as behavior for initial save
                                 const reader = new FileReader();
                                 reader.onload = (e) => loadObjFileContent(e.target.result);
                                 reader.readAsText(file);
@@ -1599,7 +1633,7 @@
                 showMessageBox("Unsaved Changes", "There are unsaved changes. Do you want to save them now?", 'question', true)
                     .then(({ confirmed }) => {
                         if (confirmed) {
-                            saveProject(() => loadFileContent(file));
+                            saveProject(true, () => loadFileContent(file)); // Pass true to force save-as behavior
                         } else {
                             loadFileContent(file);
                         }
@@ -1611,10 +1645,25 @@
             event.target.value = '';
         });
 
-        function saveProject(callback = () => { }) {
+        async function saveProject(forceSaveAs = false, callback = () => { }) {
             if (vertices.length === 0) {
                 showMessageBox("No Project", "There is no project to save.", 'info');
                 return;
+            }
+
+            let filename = currentFilePath;
+
+            if (forceSaveAs || !currentFilePath) {
+                const defaultName = currentFilePath ? currentFilePath.replace(/\.kufi$/, '') : 'untitled';
+                const result = await showSaveDialog("Save Project As", defaultName, '.kufi');
+                if (result) {
+                    filename = result;
+                    currentFilePath = filename; // Update currentFilePath for future saves
+                } else {
+                    showMessageBox("Save Cancelled", "Project save was cancelled.", 'info');
+                    callback(); // Still call callback even if cancelled, if it's part of a larger flow
+                    return;
+                }
             }
 
             const projectData = {
@@ -1631,7 +1680,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = currentFilePath || 'untitled.kufi';
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -1639,47 +1688,27 @@
 
             isModified = false;
             updateTitle();
-            showMessageBox("Success", "Project saved.", 'info');
+            showMessageBox("Success", `Project saved as "${filename}".`, 'info');
             callback();
         }
         saveProjectBtn.addEventListener('click', () => saveProject());
 
-        function saveProjectAs() {
-            if (vertices.length === 0) {
-                showMessageBox("No Project", "There is no project to save.", 'info');
-                return;
-            }
-
-            const projectData = {
-                vertices: vertices,
-                faces: faces,
-                faceColors: faceColors,
-                selectedFaces: Array.from(selectedFaces),
-                zoom: zoom,
-                panOffset: [panOffset.x, panOffset.y],
-            };
-
-            const dataStr = JSON.stringify(projectData);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'untitled.kufi';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            currentFilePath = 'untitled.kufi';
-            isModified = false;
-            updateTitle();
-            showMessageBox("Success", "Project saved as.", 'info');
+        async function saveProjectAs() {
+            await saveProject(true); // Force save-as behavior
         }
         saveProjectAsBtn.addEventListener('click', saveProjectAs);
 
-        function exportSVG() {
+        async function exportSVG() {
             if (vertices.length === 0) {
                 showMessageBox("No Content", "There is no content to export.", 'info');
+                return;
+            }
+
+            const defaultName = currentFilePath ? currentFilePath.replace(/\.kufi$/, '.svg') : 'exported.svg';
+            const filename = await showSaveDialog("Export SVG As", defaultName, '.svg');
+
+            if (!filename) {
+                showMessageBox("Export Cancelled", "SVG export was cancelled.", 'info');
                 return;
             }
 
@@ -1730,21 +1759,21 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'exported.svg';
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            showMessageBox("Success", "SVG successfully exported.", 'info');
+            showMessageBox("Success", `SVG successfully exported as "${filename}".`, 'info');
         }
         exportSvgBtn.addEventListener('click', exportSVG);
 
-        function handleExportPng() {
+        async function handleExportPng() {
             if (vertices.length === 0) {
                 showMessageBox("No Content", "There is no content to export.", 'info');
                 return;
             }
-            showModal("Export Resolution", `
+            const confirmedResolution = await showModal("Export Resolution", `
                 <div class="space-y-4">
                     <div>
                         <label for="export-width" class="block text-gray-700 text-sm font-bold mb-2">Width:</label>
@@ -1757,19 +1786,29 @@
                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                     </div>
                 </div>
-            `, true).then(confirmed => {
-                if (confirmed) {
-                    const widthInput = document.getElementById('export-width');
-                    const heightInput = document.getElementById('export-height');
-                    exportResolution.width = parseInt(widthInput.value);
-                    exportResolution.height = parseInt(heightInput.value);
-                    confirmExportPng();
-                }
-            });
+            `, true);
+
+            if (confirmedResolution) {
+                const widthInput = document.getElementById('export-width');
+                const heightInput = document.getElementById('export-height');
+                exportResolution.width = parseInt(widthInput.value);
+                exportResolution.height = parseInt(heightInput.value);
+                await confirmExportPng();
+            } else {
+                showMessageBox("Export Cancelled", "PNG export was cancelled.", 'info');
+            }
         }
         exportPngBtn.addEventListener('click', handleExportPng);
 
-        function confirmExportPng() {
+        async function confirmExportPng() {
+            const defaultName = currentFilePath ? currentFilePath.replace(/\.kufi$/, '.png') : 'exported.png';
+            const filename = await showSaveDialog("Export PNG As", defaultName, '.png');
+
+            if (!filename) {
+                showMessageBox("Export Cancelled", "PNG export was cancelled.", 'info');
+                return;
+            }
+
             const { width: userWidth, height: userHeight } = exportResolution;
 
             const { min_x, max_x, min_z, max_z } = boundingBox();
@@ -1824,11 +1863,11 @@
             const dataURL = exportCanvas.toDataURL('image/png');
             const a = document.createElement('a');
             a.href = dataURL;
-            a.download = 'exported.png';
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            showMessageBox("Success", "PNG successfully exported.", 'info');
+            showMessageBox("Success", `PNG successfully exported as "${filename}".`, 'info');
         }
 
         function clearCanvas() {
