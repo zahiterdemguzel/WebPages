@@ -610,6 +610,23 @@
         const undoBtn = document.getElementById('undo-btn');
         const redoBtn = document.getElementById('redo-btn');
 
+        // --- Performance Optimization: Request Animation Frame for drawing ---
+        let needsRedraw = false;
+
+        function requestRedraw() {
+            if (!needsRedraw) {
+                needsRedraw = true;
+                requestAnimationFrame(animate);
+            }
+        }
+
+        function animate() {
+            if (needsRedraw) {
+                draw();
+                needsRedraw = false;
+            }
+        }
+
         // --- Functions ---
 
         function updateTitle() {
@@ -688,7 +705,7 @@
             isModified = true;
             computeFaceCenters();
             cacheFacePolygons();
-            draw();
+            requestRedraw(); // Use requestRedraw
             updateTitle();
             statusBar.textContent = "OBJ Template loaded.";
             setTimeout(() => statusBar.textContent = "Ready", 3000);
@@ -750,10 +767,14 @@
                         sumZ += v[2];
                         count++;
                     }
+                    else {
+                        console.warn(`Invalid vertex index ${idx} in face. Skipping.`);
+                    }
                 }
                 if (count > 0) {
                     faceCenters.push(new Point(sumX / count, sumZ / count));
                 } else {
+                    // If a face has no valid vertices, push a default point to maintain index alignment
                     faceCenters.push(new Point(0, 0));
                 }
             }
@@ -864,7 +885,7 @@
                 selectedPoints = new Set();
             }
             currentTool = newTool;
-            draw();
+            requestRedraw(); // Use requestRedraw
         }
 
         function pointAt(pos) {
@@ -941,7 +962,7 @@
             movePoints = lastState.movePoints;
             selectedPoints = lastState.selectedPoints;
             onProjectModified();
-            draw();
+            requestRedraw(); // Use requestRedraw
         }
 
         function redo() {
@@ -960,7 +981,7 @@
             movePoints = nextState.movePoints;
             selectedPoints = nextState.selectedPoints;
             onProjectModified();
-            draw();
+            requestRedraw(); // Use requestRedraw
         }
 
         function paintAt(pos, tool) {
@@ -987,7 +1008,7 @@
                 if (faceColors[foundFaceIndex] !== fillColor) {
                     faceColors[foundFaceIndex] = fillColor;
                     onProjectModified();
-                    draw();
+                    requestRedraw(); // Use requestRedraw
                 }
             } else if (tool === "erase") {
                 if (faceColors.hasOwnProperty(foundFaceIndex)) {
@@ -996,7 +1017,7 @@
                         selectedFaces.delete(foundFaceIndex);
                     }
                     onProjectModified();
-                    draw();
+                    requestRedraw(); // Use requestRedraw
                 }
             }
         }
@@ -1056,7 +1077,7 @@
                 faceColors = newFaceColorsPreview; // Apply preview to actual faceColors
                 selectedFaces = previewSelected; // Apply preview to actual selectedFaces
             }
-            draw();
+            requestRedraw(); // Use requestRedraw
         }
 
         function commitMovePreview() {
@@ -1074,7 +1095,7 @@
                 // selectedFaces is already updated by updateMovePreview
                 onProjectModified();
             }
-            draw();
+            requestRedraw(); // Use requestRedraw
         }
 
         function updateRotatePreview() {
@@ -1159,7 +1180,7 @@
                 faceColors = newFaceColorsPreview;
                 selectedFaces = previewSelected;
             }
-            draw();
+            requestRedraw(); // Use requestRedraw
         }
 
         function commitRotatePreview() {
@@ -1179,15 +1200,24 @@
                 rotateOriginalSelected = new Set();
                 onProjectModified();
             }
-            draw();
+            requestRedraw(); // Use requestRedraw
         }
 
-        function handleMouseDown(event) {
-            const rect = canvas.getBoundingClientRect();
-            const pos = new Point(event.clientX - rect.left, event.clientY - rect.top);
+        // Unified event handler for mouse and touch start
+        function handlePointerDown(event) {
+            // Prevent default touch actions like scrolling/zooming
+            if (event.type.startsWith('touch')) {
+                event.preventDefault();
+            }
 
-            // Prioritize middle mouse button for pan
-            if (event.button === 1) { // Middle mouse button
+            const clientX = event.clientX || event.touches[0].clientX;
+            const clientY = event.clientY || event.touches[0].clientY;
+
+            const rect = canvas.getBoundingClientRect();
+            const pos = new Point(clientX - rect.left, clientY - rect.top);
+
+            // Prioritize middle mouse button for pan (or two-finger touch for future pinch-zoom)
+            if (event.button === 1 || (event.type === 'touchstart' && event.touches.length === 2)) {
                 middleMouseDown = true;
                 lastPanPoint = pos;
                 canvas.style.cursor = 'grab';
@@ -1196,7 +1226,7 @@
 
             // Tool actions (left click or right click for paint/erase)
             if (currentTool === 'paint' || currentTool === 'erase') {
-                const effectiveTool = event.button === 0 ? currentTool : (currentTool === 'paint' ? 'erase' : 'paint');
+                const effectiveTool = event.button === 0 || event.type === 'touchstart' ? currentTool : (currentTool === 'paint' ? 'erase' : 'paint');
                 if (!strokeInProgress) {
                     pushUndoState();
                     strokeInProgress = true;
@@ -1262,12 +1292,12 @@
                         }
                     }
                 }
-                draw();
+                requestRedraw(); // Use requestRedraw
                 return;
             }
 
-            // Default left-click pan for canvas if no specific tool action is taken
-            if (event.button === 0) {
+            // Default left-click/single-touch pan for canvas if no specific tool action is taken
+            if (event.button === 0 || (event.type === 'touchstart' && event.touches.length === 1)) {
                 isPanningCanvas = true;
                 lastPanPoint = pos;
                 canvas.style.cursor = 'grab';
@@ -1275,19 +1305,24 @@
             }
         }
 
-        function handleMouseMove(event) {
+        // Unified event handler for mouse and touch move
+        function handlePointerMove(event) {
+            // Prevent default touch actions like scrolling/zooming
+            if (event.type.startsWith('touch')) {
+                event.preventDefault();
+            }
+
+            const clientX = event.clientX || event.touches[0].clientX;
+            const clientY = event.clientY || event.touches[0].clientY;
+
             const rect = canvas.getBoundingClientRect();
-            const pos = new Point(event.clientX - rect.left, event.clientY - rect.top);
+            const pos = new Point(clientX - rect.left, clientY - rect.top);
 
             if (middleMouseDown || isPanningCanvas) {
                 const delta = pos.subtract(lastPanPoint);
-                // panOffset is in screen pixels, so add the pixel delta directly
-                // Note: The Y-axis is inverted in the baseTransform for OBJ models (Z-up becomes Y-down).
-                // So, if the mouse moves down (positive delta.y), we want the content to move down,
-                // which means panOffset.y should increase.
                 panOffset = panOffset.add(delta);
                 lastPanPoint = pos;
-                draw();
+                requestRedraw(); // Use requestRedraw
                 return;
             }
 
@@ -1305,25 +1340,40 @@
                     updateMovePreview();
                 } else if (isSelecting) {
                     selectRect = new Rect(selectStart.x, selectStart.y, pos.x - selectStart.x, pos.y - selectStart.y);
-                    draw();
+                    requestRedraw(); // Use requestRedraw
                 }
                 return;
             }
         }
 
-        function handleMouseUp(event) {
-            if (event.button === 1) { // Middle mouse button
+        // Unified event handler for mouse and touch end/cancel
+        function handlePointerUp(event) {
+            // Check for touchcancel to ensure state is reset
+            if (event.type === 'touchcancel') {
+                isPainting = false;
+                strokeInProgress = false;
+                isSelecting = false;
+                isMovingSelection = false;
+                isRotatingSelection = false;
+                middleMouseDown = false;
+                isPanningCanvas = false;
+                canvas.style.cursor = 'default';
+                requestRedraw(); // Request redraw to clear any partial states
+                return;
+            }
+
+            if (event.button === 1 || (event.type === 'touchend' && !event.touches.length && middleMouseDown)) { // Middle mouse button or end of 2-finger touch
                 middleMouseDown = false;
                 canvas.style.cursor = 'default';
             }
 
-            if (isPanningCanvas) { // Left mouse button pan
+            if (isPanningCanvas) { // Left mouse button pan or single-touch pan
                 isPanningCanvas = false;
                 canvas.style.cursor = 'default';
             }
 
             if (currentTool === 'paint' || currentTool === 'erase') {
-                if (isPainting && (event.button === 0 || event.button === 2)) {
+                if (isPainting && (event.button === 0 || event.button === 2 || event.type === 'touchend')) {
                     isPainting = false;
                     strokeInProgress = false;
                 }
@@ -1339,8 +1389,10 @@
                     const normalizedRect = selectRect.normalized();
                     if (normalizedRect.width < 5 && normalizedRect.height < 5) { // Single click
                         if (movePoints) {
+                            const clientX = event.clientX || event.changedTouches[0].clientX;
+                            const clientY = event.clientY || event.changedTouches[0].clientY;
                             const rect = canvas.getBoundingClientRect();
-                            const pos = new Point(event.clientX - rect.left, event.clientY - rect.top);
+                            const pos = new Point(clientX - rect.left, clientY - rect.top);
                             const pointKey = pointAt(pos);
                             if (pointKey !== null) {
                                 if (selectModifiers) {
@@ -1359,8 +1411,10 @@
                             const T = computeTransform();
                             const [invT, ok] = T.inverted();
                             if (!ok) return;
+                            const clientX = event.clientX || event.changedTouches[0].clientX;
+                            const clientY = event.clientY || event.changedTouches[0].clientY;
                             const rect = canvas.getBoundingClientRect();
-                            const modelPos = invT.map(new Point(event.clientX - rect.left, event.clientY - rect.top));
+                            const modelPos = invT.map(new Point(clientX - rect.left, clientY - rect.top));
 
                             let clickedFace = null;
                             for (let i = cachedFacePolygons.length - 1; i >= 0; i--) {
@@ -1415,7 +1469,7 @@
                     selectRect = null;
                     selectStart = null;
                     selectModifiers = 0;
-                    draw();
+                    requestRedraw(); // Use requestRedraw
                 }
                 return;
             }
@@ -1441,7 +1495,7 @@
             panOffset.x = mouseX - (modelX * zoom);
             panOffset.y = mouseY - (modelY * zoom);
 
-            draw();
+            requestRedraw(); // Use requestRedraw
         }
 
         function draw() {
@@ -1470,7 +1524,7 @@
                     ctx.fillStyle = 'white';
                     ctx.fill(path);
                     ctx.strokeStyle = 'black';
-                    ctx.lineWidth = 2 / T.m11; // Changed to 2px fixed on screen
+                    ctx.lineWidth = 1 / T.m11; // Changed to 1px fixed on screen (was 2)
                     ctx.stroke(path);
                 }
                 ctx.restore();
@@ -1502,12 +1556,12 @@
                     ctx.fillStyle = faceColors[i] || 'white';
                     ctx.fill(path);
                     ctx.strokeStyle = 'black';
-                    ctx.lineWidth = 2 / T.m11; // Changed to 2px fixed on screen
+                    ctx.lineWidth = 1 / T.m11; // Changed to 1px fixed on screen (was 2)
                     ctx.stroke(path);
 
                     if (selectedFaces.has(i)) {
                         ctx.strokeStyle = 'blue';
-                        ctx.lineWidth = 1 / T.m11; // Changed to 1px fixed on screen for dashed line
+                        ctx.lineWidth = 0.5 / T.m11; // Changed to 0.5px fixed on screen (was 1)
                         ctx.setLineDash([5 / T.m11, 5 / T.m11]);
                         ctx.stroke(path);
                         ctx.setLineDash([]);
@@ -1619,7 +1673,7 @@
                         isModified = false;
                         computeFaceCenters();
                         cacheFacePolygons();
-                        draw();
+                        requestRedraw(); // Use requestRedraw
                         updateTitle();
                         showMessageBox("Success", "Project loaded.", 'info');
                     } catch (error) {
@@ -1751,7 +1805,7 @@
 
                 const pointsStr = points.join(" ");
                 const fill = faceColors[i] || 'white';
-                svgContent += `<polygon points="${pointsStr}" fill="${fill}" stroke="black" stroke-width="1"/>\n`;
+                svgContent += `<polygon points="${pointsStr}" fill="${fill}" stroke="black" stroke-width="0.5"/>\n`;
             }
             svgContent += `</svg>\n`;
 
@@ -1847,12 +1901,12 @@
                 ctxExport.fillStyle = faceColors[i] || 'white';
                 ctxExport.fill(path);
                 ctxExport.strokeStyle = 'black';
-                ctxExport.lineWidth = 2 / exportTransform.m11; // Changed to 2px fixed on screen
+                ctxExport.lineWidth = 1 / exportTransform.m11; // Changed to 1px fixed on screen (was 2)
                 ctxExport.stroke(path);
 
                 if (selectedFaces.has(i)) {
                     ctxExport.strokeStyle = 'blue';
-                    ctxExport.lineWidth = 1 / exportTransform.m11; // Changed to 1px fixed on screen for dashed line
+                    ctxExport.lineWidth = 0.5 / exportTransform.m11; // Changed to 0.5px fixed on screen (was 1)
                     ctxExport.setLineDash([5 / exportTransform.m11, 5 / exportTransform.m11]);
                     ctxExport.stroke(path);
                     ctxExport.setLineDash([]);
@@ -1885,7 +1939,7 @@
                         selectedPoints = new Set();
                         isModified = true;
                         updateTitle();
-                        draw();
+                        requestRedraw(); // Use requestRedraw
                         showMessageBox("Success", "Canvas cleared.", 'info');
                     }
                 });
@@ -1893,9 +1947,15 @@
         clearCanvasBtn.addEventListener('click', clearCanvas);
 
         // --- Event Listeners ---
-        canvas.addEventListener('mousedown', handleMouseDown);
-        canvas.addEventListener('mousemove', handleMouseMove);
-        canvas.addEventListener('mouseup', handleMouseUp);
+        // Unified pointer events for mouse and touch
+        canvas.addEventListener('mousedown', handlePointerDown);
+        canvas.addEventListener('mousemove', handlePointerMove);
+        canvas.addEventListener('mouseup', handlePointerUp);
+        canvas.addEventListener('touchstart', handlePointerDown, { passive: false });
+        canvas.addEventListener('touchmove', handlePointerMove, { passive: false });
+        canvas.addEventListener('touchend', handlePointerUp);
+        canvas.addEventListener('touchcancel', handlePointerUp); // Handle touch cancellation
+
         canvas.addEventListener('wheel', handleWheel, { passive: false }); // Use passive: false for preventDefault on wheel
 
         // Tool buttons
@@ -1990,7 +2050,7 @@
                 const { width, height } = entry.contentRect;
                 canvas.width = width;
                 canvas.height = height;
-                draw();
+                requestRedraw(); // Use requestRedraw
             }
         });
         resizeObserver.observe(canvas.parentElement);
@@ -2023,7 +2083,7 @@
 
         // Initial setup
         window.onload = () => {
-            draw();
+            requestRedraw(); // Initial draw
             showInstructionsIfNeeded();
         };
 
