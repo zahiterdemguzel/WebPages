@@ -22,15 +22,25 @@ const detectedPages = [];
 function setupDynamicRoutes() {
     console.log('Scanning for websites...');
     const currentDir = __dirname;
+    // IMPORTANT CHANGE HERE: Point to the WEBPAGES directory
+    const webpagesRoot = path.join(currentDir, 'WEBPAGES');
 
-    // Read all entries in the current directory
-    const dirents = fs.readdirSync(currentDir, { withFileTypes: true });
+    // Verify that the WEBPAGES directory exists
+    if (!fs.existsSync(webpagesRoot) || !fs.statSync(webpagesRoot).isDirectory()) {
+        console.error(`Error: 'WEBPAGES' directory not found at "${webpagesRoot}" or it's not a directory.`);
+        console.error('Please ensure your project structure matches the server.js expectations.');
+        return; // Exit the function if the main content directory is missing
+    }
+
+    // Read all entries within the WEBPAGES directory
+    const dirents = fs.readdirSync(webpagesRoot, { withFileTypes: true });
 
     dirents.forEach(dirent => {
         // Only process directories that are not 'node_modules', '.git', or '.vscode'
         if (dirent.isDirectory() && dirent.name !== 'node_modules' && dirent.name !== '.git' && dirent.name !== '.vscode') {
             const folderName = dirent.name;
-            const folderPath = path.join(currentDir, folderName);
+            // Construct path relative to the WEBPAGES root
+            const folderPath = path.join(webpagesRoot, folderName);
             let backendFilePath = path.join(folderPath, 'backend.js');
             let hasBackend = fs.existsSync(backendFilePath);
 
@@ -118,7 +128,7 @@ setupDynamicRoutes();
 function generateMainPageHtml() {
     let buttonsHtml = '';
     if (detectedPages.length === 0) {
-        buttonsHtml = '<p>No websites detected. Create subfolders with `index.html` files.</p>';
+        buttonsHtml = '<p>No websites detected. Ensure `WEBPAGES` folder exists and contains valid web pages.</p>';
     } else {
         buttonsHtml = detectedPages.map(page => `
             <a href="/${page.name}" class="page-button">
@@ -225,10 +235,10 @@ app.listen(PORT, () => {
     console.log('Detected pages:', detectedPages.map(p => p.name).join(', ') || 'None');
     console.log('----------------------------------------------------');
     console.log('To add a new website:');
-    console.log('1. Create a new folder (e.g., "my-new-site") next to server.js.');
-    console.log('2. Inside "my-new-site", add an "index.html" file for the frontend.');
+    console.log('1. Create a new folder (e.g., "my-new-site") inside the "WEBPAGES" folder.');
+    console.log('2. Inside "my-new-site", add an "index.html" file for the frontend (or a single other .html file).');
     console.log('3. (Optional) For a backend, add a "backend.js" file that exports an Express Router (e.g., `module.exports = router;`).');
     console.log('   Alternatively, if no `backend.js` is present, a single other `.js` file will be used as backend.');
-    console.log('4. Restart the server to detect the new site.');
+    console.log('4. Commit changes and trigger a new deploy on Render.');
     console.log('----------------------------------------------------');
 });
