@@ -629,6 +629,14 @@
         let isPanningCanvas = false; // New state variable for left-click canvas pan
         let lastPanPoint = null;
 
+        // Pinch-to-zoom specific states
+        let isPinching = false;
+        let initialPinchDistance = 0;
+        let initialPinchMidpoint = new Point(0, 0);
+        let initialZoom = 1.0;
+        let initialPanOffset = new Point(0, 0);
+
+
         let undoStack = [];
         let redoStack = [];
         const maxUndoStackSize = 30;
@@ -1527,23 +1535,35 @@
                 event.preventDefault();
             }
 
-            const clientX = event.clientX || event.touches[0].clientX;
-            const clientY = event.clientY || event.touches[0].clientY;
-
             const rect = canvas.getBoundingClientRect();
+            const clientX = event.clientX || (event.touches[0] ? event.touches[0].clientX : 0);
+            const clientY = event.clientY || (event.touches[0] ? event.touches[0].clientY : 0);
             const pos = new Point(clientX - rect.left, clientY - rect.top);
 
-            // Prioritize middle mouse button for pan (or two-finger touch for future pinch-zoom)
-            if (event.button === 1 || (event.type === 'touchstart' && event.touches.length === 2)) {
+            // Handle multi-touch (pinch-to-zoom)
+            if (event.touches && event.touches.length === 2) {
+                isPinching = true;
+                initialPinchDistance = pos.distanceTo(new Point(event.touches[1].clientX - rect.left, event.touches[1].clientY - rect.top));
+                initialPinchMidpoint = new Point(
+                    ((event.touches[0].clientX + event.touches[1].clientX) / 2) - rect.left,
+                    ((event.touches[0].clientY + event.touches[1].clientY) / 2) - rect.top
+                );
+                initialZoom = zoom;
+                initialPanOffset = new Point(panOffset.x, panOffset.y);
+                return;
+            }
+
+            // Prioritize middle mouse button for pan
+            if (event.button === 1) { // Middle mouse button
                 middleMouseDown = true;
                 lastPanPoint = pos;
                 canvas.style.cursor = 'grab';
                 return;
             }
 
-            // Tool actions (left click or right click for paint/erase)
+            // Tool actions (left click or single touch for paint/erase)
             if (currentTool === 'paint' || currentTool === 'erase') {
-                const effectiveTool = event.button === 0 ? currentTool : (currentTool === 'paint' ? 'erase' : 'paint');
+                const effectiveTool = event.button === 0 || (event.type === 'touchstart' && event.touches.length === 1) ? currentTool : (currentTool === 'paint' ? 'erase' : 'paint');
                 if (!strokeInProgress) {
                     pushUndoState();
                     strokeInProgress = true;
@@ -1629,11 +1649,30 @@
                 event.preventDefault();
             }
 
-            const clientX = event.clientX || event.touches[0].clientX;
-            const clientY = event.clientY || event.touches[0].clientY;
-
             const rect = canvas.getBoundingClientRect();
+            const clientX = event.clientX || (event.touches[0] ? event.touches[0].clientX : 0);
+            const clientY = event.clientY || (event.touches[0] ? event.touches[0].clientY : 0);
             const pos = new Point(clientX - rect.left, clientY - rect.top);
+
+            // Handle pinch-to-zoom
+            if (isPinching && event.touches && event.touches.length === 2) {
+                const currentPinchDistance = pos.distanceTo(new Point(event.touches[1].clientX - rect.left, event.touches[1].clientY - rect.top));
+                const currentPinchMidpoint = new Point(
+                    ((event.touches[0].clientX + event.touches[1].clientX) / 2) - rect.left,
+                    ((event.touches[0].clientY + event.touches[1].clientY) / 2) - rect.top
+                );
+
+                const scaleFactor = currentPinchDistance / initialPinchDistance;
+                zoom = initialZoom * scaleFactor;
+
+                // Adjust pan offset to zoom around the midpoint
+                panOffset.x = initialPanOffset.x + (currentPinchMidpoint.x - initialPinchMidpoint.x) - (initialPinchMidpoint.x - initialPanOffset.x) * (scaleFactor - 1);
+                panOffset.y = initialPanOffset.y + (currentPinchMidpoint.y - initialPinchMidpoint.y) - (initialPinchMidpoint.y - initialPanOffset.y) * (scaleFactor - 1);
+
+                requestRedraw();
+                return;
+            }
+
 
             if (middleMouseDown || isPanningCanvas) {
                 const delta = pos.subtract(lastPanPoint);
@@ -1674,9 +1713,15 @@
                 isRotatingSelection = false;
                 middleMouseDown = false;
                 isPanningCanvas = false;
+                isPinching = false; // Reset pinch state
                 canvas.style.cursor = 'default';
                 requestRedraw(); // Request redraw to clear any partial states
                 return;
+            }
+
+            // Only reset pinch state if all touches are lifted
+            if (isPinching && event.touches && event.touches.length === 0) {
+                isPinching = false;
             }
 
             if (event.button === 1 || (event.type === 'touchend' && !event.touches.length && middleMouseDown)) { // Middle mouse button or end of 2-finger touch
@@ -1706,8 +1751,8 @@
                     const normalizedRect = selectRect.normalized();
                     if (normalizedRect.width < 5 && normalizedRect.height < 5) { // Single click
                         if (movePoints) {
-                            const clientX = event.clientX || event.changedTouches[0].clientX;
-                            const clientY = event.clientY || event.changedTouches[0].clientY;
+                            const clientX = event.clientX || (event.changedTouches[0] ? event.changedTouches[0].clientX : 0);
+                            const clientY = event.clientY || (event.changedTouches[0] ? event.changedTouches[0].clientY : 0);
                             const rect = canvas.getBoundingClientRect();
                             const pos = new Point(clientX - rect.left, clientY - rect.top);
                             const pointKey = pointAt(pos);
@@ -1728,8 +1773,8 @@
                             const T = computeTransform();
                             const [invT, ok] = T.inverted();
                             if (!ok) return;
-                            const clientX = event.clientX || event.changedTouches[0].clientX;
-                            const clientY = event.clientY || event.changedTouches[0].clientY;
+                            const clientX = event.clientX || (event.changedTouches[0] ? event.changedTouches[0].clientX : 0);
+                            const clientY = event.clientY || (event.changedTouches[0] ? event.changedTouches[0].clientY : 0);
                             const rect = canvas.getBoundingClientRect();
                             const modelPos = invT.map(new Point(clientX - rect.left, clientY - rect.top));
 
