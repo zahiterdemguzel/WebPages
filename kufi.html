@@ -19,6 +19,24 @@
             touch-action: none;
             /* Disable default touch actions for custom pan/zoom */
         }
+
+        .flag-icon {
+            width: 30px;
+            height: 20px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border-radius: 3px;
+        }
+
+        .flag-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .flag-icon.active {
+            border: 2px solid #FFD700;
+            /* Gold border for active flag */
+        }
     </style>
 </head>
 
@@ -33,7 +51,7 @@
                     d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
                 </path>
             </svg>
-            Load OBJ
+            <span data-lang-key="loadObj">Load OBJ</span>
         </button>
         <input id="load-obj-input" type="file" accept=".obj" class="hidden">
 
@@ -45,7 +63,7 @@
                     d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z">
                 </path>
             </svg>
-            Open Project
+            <span data-lang-key="openProject">Open Project</span>
         </button>
         <input id="open-project-input" type="file" accept=".kufi" class="hidden">
 
@@ -57,7 +75,7 @@
                     d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
                 </path>
             </svg>
-            Save Project
+            <span data-lang-key="saveProject">Save Project</span>
         </button>
 
         <button id="save-project-as-btn"
@@ -68,7 +86,7 @@
                     d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
                 </path>
             </svg>
-            Save Project As
+            <span data-lang-key="saveProjectAs">Save Project As</span>
         </button>
 
         <button id="export-svg-btn"
@@ -79,7 +97,7 @@
                     d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z">
                 </path>
             </svg>
-            Export SVG
+            <span data-lang-key="exportSvg">Export SVG</span>
         </button>
 
         <button id="export-png-btn"
@@ -90,7 +108,7 @@
                     d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
                 </path>
             </svg>
-            Export PNG
+            <span data-lang-key="exportPng">Export PNG</span>
         </button>
 
         <button id="clear-canvas-btn"
@@ -101,7 +119,7 @@
                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
                 </path>
             </svg>
-            Clear
+            <span data-lang-key="clear">Clear</span>
         </button>
     </div>
 
@@ -116,7 +134,7 @@
                             d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2V5a2 2 0 00-2-2h-2.586a1 1 0 01-.707-.293l-5.414-5.414a1 1 0 00-.707-.293H7a2 2 0 00-2 2v12a4 4 0 014 4z">
                         </path>
                     </svg>
-                    Paint
+                    <span data-lang-key="paintTool">Paint</span>
                 </button>
                 <button id="tool-erase"
                     class="flex flex-col items-center justify-center p-2 rounded-md transition duration-200 bg-gray-700 hover:bg-gray-600">
@@ -126,7 +144,7 @@
                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
                         </path>
                     </svg>
-                    Erase
+                    <span data-lang-key="eraseTool">Erase</span>
                 </button>
                 <button id="tool-move"
                     class="flex flex-col items-center justify-center p-2 rounded-md transition duration-200 bg-gray-700 hover:bg-gray-600">
@@ -136,12 +154,12 @@
                             d="M8 9l3 3m0 0l3-3m-3 3v4m0 1.5a.5.5 0 01-.5.5h-3a.5.5 0 01-.5-.5v-3a.5.5 0 01.5-.5h3a.5.5 0 01.5.5v3zM12 12a9 9 0 100 18 9 9 0 000-18z">
                         </path>
                     </svg>
-                    Move
+                    <span data-lang-key="moveTool">Move</span>
                 </button>
             </div>
 
             <div class="h-px bg-gray-600 my-4"></div>
-            <h3 class="text-sm font-bold text-gray-400 mb-2">Colors:</h3>
+            <h3 class="text-sm font-bold text-gray-400 mb-2" data-lang-key="colorsTitle">Colors:</h3>
             <div class="grid grid-cols-2 gap-2" id="color-palette">
             </div>
 
@@ -153,7 +171,7 @@
                         d="M12 14l-4-4m0 0l4-4m-4 4h11a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h1">
                     </path>
                 </svg>
-                Undo
+                <span data-lang-key="undo">Undo</span>
             </button>
             <button id="redo-btn"
                 class="flex flex-col items-center justify-center p-2 rounded-md bg-gray-700 hover:bg-gray-600 transition duration-200">
@@ -163,7 +181,7 @@
                         d="M12 10l4 4m0 0l-4 4m4-4H3a2 2 0 01-2-2V7a2 2 0 012-2h11a2 2 0 012 2v8a2 2 0 01-2 2H12z">
                     </path>
                 </svg>
-                Redo
+                <span data-lang-key="redo">Redo</span>
             </button>
         </div>
 
@@ -173,8 +191,45 @@
     </div>
 
     <div id="status-bar" class="bg-gray-700 text-white text-sm py-2 px-4 shadow-inner">
-        Ready
+        <span data-lang-key="readyStatus">Ready</span>
     </div>
+
+    <div class="absolute bottom-4 right-4 flex space-x-2 z-50">
+        <div id="flag-en" class="flag-icon" data-lang="en" title="English">
+            <svg viewBox="0 0 60 30" width="100%" height="100%">
+                <clipPath id="a">
+                    <path d="M0 0v30h60V0z" />
+                </clipPath>
+                <clipPath id="b">
+                    <path d="M30 15h30v15H30zM0 15h30v15H0zM30 0h30v15H30zM0 0h30v15H0z" />
+                </clipPath>
+                <g clip-path="url(#a)">
+                    <path d="M0 0v30h60V0z" fill="#012169" />
+                    <path d="M0 0L60 30M60 0L0 30" stroke="#fff" stroke-width="6" />
+                    <path d="M0 0L60 30M60 0L0 30" stroke="#C8102E" stroke-width="4" clip-path="url(#b)" />
+                    <path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10" />
+                    <path d="M30 0v30M0 15h60" stroke="#C8102E" stroke-width="6" />
+                </g>
+            </svg>
+        </div>
+        <div id="flag-tr" class="flag-icon" data-lang="tr" title="Türkçe">
+            <svg viewBox="0 0 60 30" width="100%" height="100%">
+                <rect width="60" height="30" fill="#E30A17" />
+                <circle cx="22.5" cy="15" r="7.5" fill="#fff" />
+                <circle cx="24" cy="15" r="6" fill="#E30A17" />
+                <path d="M33 15l7.5-2.5-4.5 7.5 4.5 7.5-7.5-2.5-7.5 2.5 4.5-7.5-4.5-7.5z" fill="#fff" />
+            </svg>
+        </div>
+        <div id="flag-ar" class="flag-icon" data-lang="ar" title="العربية">
+            <svg viewBox="0 0 60 30" width="100%" height="100%">
+                <rect width="60" height="30" fill="#007A3D" />
+                <rect width="60" height="20" fill="#fff" />
+                <rect width="60" height="10" fill="#000" />
+                <path d="M0 0v30l15-15z" fill="#C8102E" />
+            </svg>
+        </div>
+    </div>
+
 
     <div id="modal-container"
         class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
@@ -184,11 +239,11 @@
             <div class="flex justify-end space-x-3">
                 <button id="modal-cancel-btn"
                     class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition duration-200">
-                    Cancel
+                    <span data-lang-key="cancelButton">Cancel</span>
                 </button>
                 <button id="modal-ok-btn"
                     class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200">
-                    OK
+                    <span data-lang-key="okButton">OK</span>
                 </button>
             </div>
         </div>
@@ -212,11 +267,11 @@
             <div class="flex justify-end">
                 <button id="message-box-ok-btn"
                     class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200">
-                    OK
+                    <span data-lang-key="okButton">OK</span>
                 </button>
                 <button id="message-box-cancel-btn"
                     class="ml-3 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition duration-200 hidden">
-                    Cancel
+                    <span data-lang-key="cancelButton">Cancel</span>
                 </button>
             </div>
         </div>
@@ -508,7 +563,7 @@
                 const contentHtml = `
                     <div class="space-y-4">
                         <div>
-                            <label for="${inputId}" class="block text-gray-700 text-sm font-bold mb-2">Filename:</label>
+                            <label for="${inputId}" class="block text-gray-700 text-sm font-bold mb-2" data-lang-key="filenameLabel">Filename:</label>
                             <input id="${inputId}" type="text" value="${defaultFilename}"
                                 class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                         </div>
@@ -525,7 +580,7 @@
                             resolve(filename);
                         } else {
                             // If filename is empty after trim, consider it cancelled or invalid
-                            showMessageBox("Invalid Filename", "Filename cannot be empty.", 'warning');
+                            showMessageBox(translations[currentLanguage].invalidFilenameTitle, translations[currentLanguage].invalidFilenameMessage, 'warning');
                             resolve(null); // Or prompt again, depending on desired strictness
                         }
                     } else {
@@ -610,6 +665,11 @@
         const undoBtn = document.getElementById('undo-btn');
         const redoBtn = document.getElementById('redo-btn');
 
+        // Language elements
+        const flagEn = document.getElementById('flag-en');
+        const flagTr = document.getElementById('flag-tr');
+        const flagAr = document.getElementById('flag-ar');
+
         // --- Performance Optimization: Request Animation Frame for drawing ---
         let needsRedraw = false;
 
@@ -624,6 +684,259 @@
             if (needsRedraw) {
                 draw();
                 needsRedraw = false;
+            }
+        }
+
+        // --- Language and Translation ---
+        let currentLanguage = localStorage.getItem('appLanguage') || 'en';
+
+        const translations = {
+            en: {
+                loadObj: 'Load OBJ',
+                openProject: 'Open Project',
+                saveProject: 'Save Project',
+                saveProjectAs: 'Save Project As',
+                exportSvg: 'Export SVG',
+                exportPng: 'Export PNG',
+                clear: 'Clear',
+                paintTool: 'Paint',
+                eraseTool: 'Erase',
+                moveTool: 'Move',
+                colorsTitle: 'Colors:',
+                undo: 'Undo',
+                redo: 'Redo',
+                readyStatus: 'Ready',
+                canvasPlaceholder: 'Load a 3D OBJ file to start...',
+                unsavedChangesTitle: 'Unsaved Changes',
+                unsavedChangesMessage: 'There are unsaved changes. Do you want to save them now?',
+                errorTitle: 'Error',
+                objLoadErrorMessage: 'Failed to load OBJ file or file is empty.',
+                successTitle: 'Success',
+                projectLoadedMessage: 'Project loaded.',
+                saveCancelledMessage: 'Project save was cancelled.',
+                projectSavedMessage: (filename) => `Project saved as "${filename}".`,
+                filenameLabel: 'Filename:',
+                invalidFilenameTitle: 'Invalid Filename',
+                invalidFilenameMessage: 'Filename cannot be empty.',
+                exportResolutionTitle: 'Export Resolution',
+                exportCancelledMessage: (type) => `${type} export was cancelled.`,
+                svgExportSuccessMessage: (filename) => `SVG successfully exported as "${filename}".`,
+                pngExportSuccessMessage: (filename) => `PNG successfully exported as "${filename}".`,
+                noContentMessage: 'There is no content to export.',
+                clearCanvasTitle: 'Clear Canvas',
+                clearCanvasMessage: 'Do you want to clear all painted faces?',
+                canvasClearedMessage: 'Canvas cleared.',
+                canvasAlreadyEmpty: 'Canvas is already empty.',
+                usageInstructionsTitle: 'Usage Instructions',
+                usageInstructionsMessage: `Instructions:\n\n` +
+                    `1) Load a 3D OBJ file with 'Load OBJ' (Ctrl+L).\n` +
+                    `   The file is shown in top-down view (orthonormal projection).\n` +
+                    `2) Paint/erase faces in 'Paint' or 'Erase' mode.\n` +
+                    `3) Switch to 'Move' mode: painted faces convert to points.\n` +
+                    `   (If no faces are painted, white points appear at all face centers.)\n` +
+                    `4) In 'Move' mode, select points (click or marquee) to drag or rotate.\n` +
+                    `   Points are drawn at a fixed size (e.g., 10px) in widget coordinates.\n` +
+                    `5) While selecting, a selection rectangle appears (unfilled).\n` +
+                    `6) Points snap to the nearest face when switching out of 'Move' mode.\n` +
+                    `7) Pan with middle mouse button, or left-click drag when no tool is active.\n` +
+                    `8) Zoom with Ctrl+scroll (zooms around cursor).\n` +
+                    `9) Undo/Redo with Ctrl+Z / Ctrl+Y.\n\n` +
+                    `Happy creating!`,
+                dontShowAgain: "Don't show again",
+                okButton: "OK",
+                cancelButton: "Cancel",
+                colorBlack: 'Black',
+                colorWhite: 'White',
+                colorRed: 'Red',
+                colorGreen: 'Green',
+                colorBlue: 'Blue',
+                colorYellow: 'Yellow',
+                colorCyan: 'Cyan',
+                colorMagenta: 'Magenta',
+                colorOrange: 'Orange',
+                colorPurple: 'Purple',
+                colorBrown: 'Brown',
+                colorGray: 'Gray',
+            },
+            tr: {
+                loadObj: 'OBJ Yükle',
+                openProject: 'Proje Aç',
+                saveProject: 'Projeyi Kaydet',
+                saveProjectAs: 'Projeyi Farklı Kaydet',
+                exportSvg: 'SVG Dışa Aktar',
+                exportPng: 'PNG Dışa Aktar',
+                clear: 'Temizle',
+                paintTool: 'Boyama',
+                eraseTool: 'Silgi',
+                moveTool: 'Taşı',
+                colorsTitle: 'Renkler:',
+                undo: 'Geri Al',
+                redo: 'Yinele',
+                readyStatus: 'Hazır',
+                canvasPlaceholder: 'Başlamak için bir 3D OBJ dosyası yükleyin...',
+                unsavedChangesTitle: 'Kaydedilmemiş Değişiklikler',
+                unsavedChangesMessage: 'Kaydedilmemiş değişiklikler var. Şimdi kaydetmek ister misiniz?',
+                errorTitle: 'Hata',
+                objLoadErrorMessage: 'OBJ dosyası yüklenemedi veya dosya boş.',
+                successTitle: 'Başarılı',
+                projectLoadedMessage: 'Proje yüklendi.',
+                saveCancelledMessage: 'Proje kaydetme iptal edildi.',
+                projectSavedMessage: (filename) => `Proje "${filename}" olarak kaydedildi.`,
+                filenameLabel: 'Dosya Adı:',
+                invalidFilenameTitle: 'Geçersiz Dosya Adı',
+                invalidFilenameMessage: 'Dosya adı boş olamaz.',
+                exportResolutionTitle: 'Dışa Aktarma Çözünürlüğü',
+                exportCancelledMessage: (type) => `${type} dışa aktarma iptal edildi.`,
+                svgExportSuccessMessage: (filename) => `SVG başarıyla "${filename}" olarak dışa aktarıldı.`,
+                pngExportSuccessMessage: (filename) => `PNG başarıyla "${filename}" olarak dışa aktarıldı.`,
+                noContentMessage: 'Dışa aktarılacak içerik yok.',
+                clearCanvasTitle: 'Tuvali Temizle',
+                clearCanvasMessage: 'Tüm boyalı yüzeyleri temizlemek istiyor musunuz?',
+                canvasClearedMessage: 'Tuval temizlendi.',
+                canvasAlreadyEmpty: 'Tuval zaten boş.',
+                usageInstructionsTitle: 'Kullanım Talimatları',
+                usageInstructionsMessage: `Talimatlar:\n\n` +
+                    `1) 'OBJ Yükle' (Ctrl+L) ile bir 3D OBJ dosyası yükleyin.\n` +
+                    `   Dosya yukarıdan aşağıya görünümde (ortogonal projeksiyon) gösterilir.\n` +
+                    `2) 'Boyama' veya 'Silgi' modunda yüzeyleri boyayın/silin.\n` +
+                    `3) 'Taşı' moduna geçin: boyalı yüzeyler noktalara dönüşür.\n` +
+                    `   (Hiçbir yüzey boyanmamışsa, tüm yüzey merkezlerinde beyaz noktalar görünür.)\n` +
+                    `4) 'Taşı' modunda, sürüklemek veya döndürmek için noktaları (tıklayarak veya seçim kutusuyla) seçin.\n` +
+                    `   Noktalar widget koordinatlarında sabit bir boyutta (örn. 10 piksel) çizilir.\n` +
+                    `5) Seçim yaparken bir seçim dikdörtgeni görünür (içi boş).\n` +
+                    `6) 'Taşı' modundan çıkarken noktalar en yakın yüzeye yapışır.\n` +
+                    `7) Orta fare tuşuyla veya hiçbir araç etkin değilken sol tıklama sürüklemesiyle kaydırın.\n` +
+                    `8) Ctrl+kaydırma ile yakınlaştırın (imleç etrafında yakınlaştırır).\n` +
+                    `9) Ctrl+Z / Ctrl+Y ile Geri Al/Yinele.\n\n` +
+                    `Mutlu yaratımlar!`,
+                dontShowAgain: "Tekrar gösterme",
+                okButton: "Tamam",
+                cancelButton: "İptal",
+                colorBlack: 'Siyah',
+                colorWhite: 'Beyaz',
+                colorRed: 'Kırmızı',
+                colorGreen: 'Yeşil',
+                colorBlue: 'Mavi',
+                colorYellow: 'Sarı',
+                colorCyan: 'Camgöbeği',
+                colorMagenta: 'Macenta',
+                colorOrange: 'Turuncu',
+                colorPurple: 'Mor',
+                colorBrown: 'Kahverengi',
+                colorGray: 'Gri',
+            },
+            ar: {
+                loadObj: 'تحميل OBJ',
+                openProject: 'فتح مشروع',
+                saveProject: 'حفظ المشروع',
+                saveProjectAs: 'حفظ المشروع باسم',
+                exportSvg: 'تصدير SVG',
+                exportPng: 'تصدير PNG',
+                clear: 'مسح',
+                paintTool: 'طلاء',
+                eraseTool: 'مسح',
+                moveTool: 'نقل',
+                colorsTitle: 'الألوان:',
+                undo: 'تراجع',
+                redo: 'إعادة',
+                readyStatus: 'جاهز',
+                canvasPlaceholder: 'قم بتحميل ملف OBJ ثلاثي الأبعاد للبدء...',
+                unsavedChangesTitle: 'تغييرات غير محفوظة',
+                unsavedChangesMessage: 'هناك تغييرات غير محفوظة. هل تريد حفظها الآن؟',
+                errorTitle: 'خطأ',
+                objLoadErrorMessage: 'فشل تحميل ملف OBJ أو الملف فارغ.',
+                successTitle: 'نجاح',
+                projectLoadedMessage: 'تم تحميل المشروع.',
+                saveCancelledMessage: 'تم إلغاء حفظ المشروع.',
+                projectSavedMessage: (filename) => `تم حفظ المشروع باسم "${filename}".`,
+                filenameLabel: 'اسم الملف:',
+                invalidFilenameTitle: 'اسم ملف غير صالح',
+                invalidFilenameMessage: 'لا يمكن أن يكون اسم الملف فارغًا.',
+                exportResolutionTitle: 'دقة التصدير',
+                exportCancelledMessage: (type) => `تم إلغاء تصدير ${type}.`,
+                svgExportSuccessMessage: (filename) => `تم تصدير SVG بنجاح باسم "${filename}".`,
+                pngExportSuccessMessage: (filename) => `تم تصدير PNG بنجاح باسم "${filename}".`,
+                noContentMessage: 'لا يوجد محتوى للتصدير.',
+                clearCanvasTitle: 'مسح اللوحة',
+                clearCanvasMessage: 'هل تريد مسح جميع الوجوه المطلية؟',
+                canvasClearedMessage: 'تم مسح اللوحة.',
+                canvasAlreadyEmpty: 'اللوحة فارغة بالفعل.',
+                usageInstructionsTitle: 'تعليمات الاستخدام',
+                usageInstructionsMessage: `التعليمات:\n\n` +
+                    `1) قم بتحميل ملف OBJ ثلاثي الأبعاد باستخدام "تحميل OBJ" (Ctrl+L).\n` +
+                    `   يتم عرض الملف في عرض من الأعلى (إسقاط متعامد).\n` +
+                    `2) قم بطلاء/مسح الوجوه في وضع "الطلاء" أو "المسح".\n` +
+                    `3) قم بالتبديل إلى وضع "النقل": تتحول الوجوه المطلية إلى نقاط.\n` +
+                    `   (إذا لم يتم طلاء أي وجوه، تظهر نقاط بيضاء في جميع مراكز الوجوه.)\n` +
+                    `4) في وضع "النقل"، حدد النقاط (بالنقر أو التحديد المستطيل) لسحبها أو تدويرها.\n` +
+                    `   يتم رسم النقاط بحجم ثابت (مثل 10 بكسل) في إحداثيات الأداة.\n` +
+                    `5) أثناء التحديد، يظهر مستطيل التحديد (غير مملوء).\n` +
+                    `6) تلتصق النقاط بأقرب وجه عند التبديل من وضع "النقل".\n` +
+                    `7) قم بالتحريك بزر الفأرة الأوسط، أو السحب بالزر الأيسر عندما لا تكون أي أداة نشطة.\n` +
+                    `8) قم بالتكبير/التصغير باستخدام Ctrl+scroll (يكبر حول المؤشر).\n` +
+                    `9) تراجع/إعادة باستخدام Ctrl+Z / Ctrl+Y.\n\n` +
+                    `استمتع بالإبداع!`,
+                dontShowAgain: "لا تظهر مرة أخرى",
+                okButton: "موافق",
+                cancelButton: "إلغاء",
+                colorBlack: 'أسود',
+                colorWhite: 'أبيض',
+                colorRed: 'أحمر',
+                colorGreen: 'أخضر',
+                colorBlue: 'أزرق',
+                colorYellow: 'أصفر',
+                colorCyan: 'سماوي',
+                colorMagenta: 'أرجواني',
+                colorOrange: 'برتقالي',
+                colorPurple: 'بنفسجي',
+                colorBrown: 'بني',
+                colorGray: 'رمادي',
+            }
+        };
+
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            localStorage.setItem('appLanguage', lang);
+            updateUIForLanguage();
+        }
+
+        function updateUIForLanguage() {
+            const elements = document.querySelectorAll('[data-lang-key]');
+            elements.forEach(el => {
+                const key = el.dataset.langKey;
+                if (translations[currentLanguage][key]) {
+                    el.textContent = translations[currentLanguage][key];
+                }
+            });
+
+            // Update specific elements that need dynamic content or special handling
+            document.getElementById('canvas-placeholder-text').textContent = translations[currentLanguage].canvasPlaceholder;
+
+            // Update color names in the palette
+            const colorButtons = document.querySelectorAll('#color-palette button');
+            colors.forEach((col, index) => {
+                const button = colorButtons[index];
+                if (button) {
+                    const colorNameKey = `color${col.name}`; // e.g., 'colorBlack'
+                    if (translations[currentLanguage][colorNameKey]) {
+                        button.textContent = translations[currentLanguage][colorNameKey];
+                    }
+                }
+            });
+
+            // Update active flag visual
+            document.querySelectorAll('.flag-icon').forEach(flag => {
+                flag.classList.remove('active');
+            });
+            document.getElementById(`flag-${currentLanguage}`).classList.add('active');
+
+            // Adjust text direction for Arabic
+            if (currentLanguage === 'ar') {
+                document.body.style.direction = 'rtl';
+                document.body.style.textAlign = 'right';
+            } else {
+                document.body.style.direction = 'ltr';
+                document.body.style.textAlign = 'left';
             }
         }
 
@@ -687,7 +1000,7 @@
             }
 
             if (verts.length === 0 || fcs.length === 0) {
-                showMessageBox("Error", "Failed to load OBJ file or file is empty.", 'error');
+                showMessageBox(translations[currentLanguage].errorTitle, translations[currentLanguage].objLoadErrorMessage, 'error');
                 return;
             }
 
@@ -707,8 +1020,8 @@
             cacheFacePolygons();
             requestRedraw(); // Use requestRedraw
             updateTitle();
-            statusBar.textContent = "OBJ Template loaded.";
-            setTimeout(() => statusBar.textContent = "Ready", 3000);
+            statusBar.textContent = translations[currentLanguage].readyStatus; // Update status bar
+            setTimeout(() => statusBar.textContent = translations[currentLanguage].readyStatus, 3000);
         }
 
         function boundingBox() {
@@ -1510,7 +1823,7 @@
                 ctx.font = '20px Inter, sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText("Load a 3D OBJ file to start...", canvas.width / 2, canvas.height / 2);
+                ctx.fillText(translations[currentLanguage].canvasPlaceholder, canvas.width / 2, canvas.height / 2);
                 return;
             }
 
@@ -1617,7 +1930,7 @@
             if (!file) return;
 
             if (isModified) {
-                showMessageBox("Unsaved Changes", "There are unsaved changes. Do you want to save them now?", 'question', true)
+                showMessageBox(translations[currentLanguage].unsavedChangesTitle, translations[currentLanguage].unsavedChangesMessage, 'question', true)
                     .then(({ confirmed }) => {
                         if (confirmed) {
                             saveProject(true, () => { // Pass true to force save-as behavior for initial save
@@ -1675,16 +1988,16 @@
                         cacheFacePolygons();
                         requestRedraw(); // Use requestRedraw
                         updateTitle();
-                        showMessageBox("Success", "Project loaded.", 'info');
+                        showMessageBox(translations[currentLanguage].successTitle, translations[currentLanguage].projectLoadedMessage, 'info');
                     } catch (error) {
-                        showMessageBox("Error", `Failed to load project: ${error.message}`, 'error');
+                        showMessageBox(translations[currentLanguage].errorTitle, `${translations[currentLanguage].projectLoadErrorMessage}: ${error.message}`, 'error');
                     }
                 };
                 reader.readAsText(fileToLoad);
             };
 
             if (isModified) {
-                showMessageBox("Unsaved Changes", "There are unsaved changes. Do you want to save them now?", 'question', true)
+                showMessageBox(translations[currentLanguage].unsavedChangesTitle, translations[currentLanguage].unsavedChangesMessage, 'question', true)
                     .then(({ confirmed }) => {
                         if (confirmed) {
                             saveProject(true, () => loadFileContent(file)); // Pass true to force save-as behavior
@@ -1701,7 +2014,7 @@
 
         async function saveProject(forceSaveAs = false, callback = () => { }) {
             if (vertices.length === 0) {
-                showMessageBox("No Project", "There is no project to save.", 'info');
+                showMessageBox(translations[currentLanguage].noProjectTitle, translations[currentLanguage].noProjectMessage, 'info');
                 return;
             }
 
@@ -1709,12 +2022,12 @@
 
             if (forceSaveAs || !currentFilePath) {
                 const defaultName = currentFilePath ? currentFilePath.replace(/\.kufi$/, '') : 'untitled';
-                const result = await showSaveDialog("Save Project As", defaultName, '.kufi');
+                const result = await showSaveDialog(translations[currentLanguage].saveProjectAs, defaultName, '.kufi');
                 if (result) {
                     filename = result;
                     currentFilePath = filename; // Update currentFilePath for future saves
                 } else {
-                    showMessageBox("Save Cancelled", "Project save was cancelled.", 'info');
+                    showMessageBox(translations[currentLanguage].saveCancelledMessage, translations[currentLanguage].saveCancelledMessage, 'info');
                     callback(); // Still call callback even if cancelled, if it's part of a larger flow
                     return;
                 }
@@ -1742,7 +2055,7 @@
 
             isModified = false;
             updateTitle();
-            showMessageBox("Success", `Project saved as "${filename}".`, 'info');
+            showMessageBox(translations[currentLanguage].successTitle, translations[currentLanguage].projectSavedMessage(filename), 'info');
             callback();
         }
         saveProjectBtn.addEventListener('click', () => saveProject());
@@ -1754,15 +2067,15 @@
 
         async function exportSVG() {
             if (vertices.length === 0) {
-                showMessageBox("No Content", "There is no content to export.", 'info');
+                showMessageBox(translations[currentLanguage].noContentMessage, translations[currentLanguage].noContentMessage, 'info');
                 return;
             }
 
             const defaultName = currentFilePath ? currentFilePath.replace(/\.kufi$/, '.svg') : 'exported.svg';
-            const filename = await showSaveDialog("Export SVG As", defaultName, '.svg');
+            const filename = await showSaveDialog(translations[currentLanguage].exportSvg, defaultName, '.svg');
 
             if (!filename) {
-                showMessageBox("Export Cancelled", "SVG export was cancelled.", 'info');
+                showMessageBox(translations[currentLanguage].exportCancelledMessage('SVG'), translations[currentLanguage].exportCancelledMessage('SVG'), 'info');
                 return;
             }
 
@@ -1818,16 +2131,16 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            showMessageBox("Success", `SVG successfully exported as "${filename}".`, 'info');
+            showMessageBox(translations[currentLanguage].successTitle, translations[currentLanguage].svgExportSuccessMessage(filename), 'info');
         }
         exportSvgBtn.addEventListener('click', exportSVG);
 
         async function handleExportPng() {
             if (vertices.length === 0) {
-                showMessageBox("No Content", "There is no content to export.", 'info');
+                showMessageBox(translations[currentLanguage].noContentMessage, translations[currentLanguage].noContentMessage, 'info');
                 return;
             }
-            const confirmedResolution = await showModal("Export Resolution", `
+            const confirmedResolution = await showModal(translations[currentLanguage].exportResolutionTitle, `
                 <div class="space-y-4">
                     <div>
                         <label for="export-width" class="block text-gray-700 text-sm font-bold mb-2">Width:</label>
@@ -1849,17 +2162,17 @@
                 exportResolution.height = parseInt(heightInput.value);
                 await confirmExportPng();
             } else {
-                showMessageBox("Export Cancelled", "PNG export was cancelled.", 'info');
+                showMessageBox(translations[currentLanguage].exportCancelledMessage('PNG'), translations[currentLanguage].exportCancelledMessage('PNG'), 'info');
             }
         }
         exportPngBtn.addEventListener('click', handleExportPng);
 
         async function confirmExportPng() {
             const defaultName = currentFilePath ? currentFilePath.replace(/\.kufi$/, '.png') : 'exported.png';
-            const filename = await showSaveDialog("Export PNG As", defaultName, '.png');
+            const filename = await showSaveDialog(translations[currentLanguage].exportPng, defaultName, '.png');
 
             if (!filename) {
-                showMessageBox("Export Cancelled", "PNG export was cancelled.", 'info');
+                showMessageBox(translations[currentLanguage].exportCancelledMessage('PNG'), translations[currentLanguage].exportCancelledMessage('PNG'), 'info');
                 return;
             }
 
@@ -1921,15 +2234,15 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            showMessageBox("Success", `PNG successfully exported as "${filename}".`, 'info');
+            showMessageBox(translations[currentLanguage].successTitle, translations[currentLanguage].pngExportSuccessMessage(filename), 'info');
         }
 
         function clearCanvas() {
             if (vertices.length === 0) {
-                showMessageBox("No Content", "Canvas is already empty.", 'info');
+                showMessageBox(translations[currentLanguage].noContentMessage, translations[currentLanguage].canvasAlreadyEmpty, 'info');
                 return;
             }
-            showMessageBox("Clear Canvas", "Do you want to clear all painted faces?", 'question', true)
+            showMessageBox(translations[currentLanguage].clearCanvasTitle, translations[currentLanguage].clearCanvasMessage, 'question', true)
                 .then(({ confirmed }) => {
                     if (confirmed) {
                         pushUndoState();
@@ -1940,7 +2253,7 @@
                         isModified = true;
                         updateTitle();
                         requestRedraw(); // Use requestRedraw
-                        showMessageBox("Success", "Canvas cleared.", 'info');
+                        showMessageBox(translations[currentLanguage].successTitle, translations[currentLanguage].canvasClearedMessage, 'info');
                     }
                 });
         }
@@ -1981,7 +2294,7 @@
 
         colors.forEach((col, index) => {
             const button = document.createElement('button');
-            button.textContent = col.name;
+            button.textContent = translations[currentLanguage][`color${col.name}`]; // Set initial translated text
             button.className = `flex flex-col items-center justify-center p-2 rounded-md transition duration-200 text-white text-sm`;
             button.style.backgroundColor = col.color;
             // Adjust text color for light backgrounds
@@ -2071,22 +2384,13 @@
         function showInstructionsIfNeeded() {
             const showInstructions = localStorage.getItem('show_instructions');
             if (showInstructions === null || showInstructions === 'true') {
-                showMessageBox("Usage Instructions",
-                    `Instructions:\n\n` +
-                    `1) Load a 3D OBJ file with 'Load OBJ' (Ctrl+L).\n` +
-                    `   The file is shown in top-down view (orthonormal projection).\n` +
-                    `2) Paint/erase faces in 'Paint' or 'Erase' mode.\n` +
-                    `3) Switch to 'Move' mode: painted faces convert to points.\n` +
-                    `   (If no faces are painted, white points appear at all face centers.)\n` +
-                    `4) In 'Move' mode, select points (click or marquee) to drag or rotate.\n` +
-                    `   Points are drawn at a fixed size (e.g., 10px) in widget coordinates.\n` +
-                    `5) While selecting, a selection rectangle appears (unfilled).\n` +
-                    `6) Points snap to the nearest face when switching out of 'Move' mode.\n` +
-                    `7) Pan with middle mouse button, or left-click drag when no tool is active.\n` +
-                    `8) Zoom with Ctrl+scroll (zooms around cursor).\n` +
-                    `9) Undo/Redo with Ctrl+Z / Ctrl+Y.\n\n` +
-                    `Happy creating!`,
-                    'info', false, true, "Don't show again"
+                showMessageBox(
+                    translations[currentLanguage].usageInstructionsTitle,
+                    translations[currentLanguage].usageInstructionsMessage,
+                    'info',
+                    false,
+                    true,
+                    translations[currentLanguage].dontShowAgain
                 ).then(({ checkboxChecked }) => {
                     localStorage.setItem('show_instructions', !checkboxChecked);
                 });
@@ -2095,8 +2399,20 @@
 
         // Initial setup
         window.onload = () => {
+            // Add a span for the canvas placeholder text to be translatable
+            const canvasPlaceholderSpan = document.createElement('span');
+            canvasPlaceholderSpan.id = 'canvas-placeholder-text';
+            canvasPlaceholderSpan.style.display = 'none'; // Hidden, only used for text content
+            document.body.appendChild(canvasPlaceholderSpan);
+
+            setLanguage(currentLanguage); // Set initial language and update UI
             requestRedraw(); // Initial draw
             showInstructionsIfNeeded();
+
+            // Event listeners for language flags
+            flagEn.addEventListener('click', () => setLanguage('en'));
+            flagTr.addEventListener('click', () => setLanguage('tr'));
+            flagAr.addEventListener('click', () => setLanguage('ar'));
         };
 
     </script>
