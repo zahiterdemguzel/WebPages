@@ -489,7 +489,7 @@
                 };
 
                 const handleCancel = () => {
-                    messageBoxContainer.classList.add('hidden');
+                    modalContainer.classList.add('hidden');
                     messageBoxOkBtn.removeEventListener('click', handleOk);
                     messageBoxCancelBtn.removeEventListener('click', handleCancel);
                     resolve({ confirmed: false, checkboxChecked: messageBoxCheckbox.checked });
@@ -1966,9 +1966,17 @@
         // Color palette buttons
         const colors = [
             { name: 'Black', color: 'rgba(60, 60, 60, 1)' },
-            { name: 'Blue', color: 'rgba(104, 136, 200, 1)' },
+            { name: 'White', color: 'rgba(240, 240, 240, 1)' },
             { name: 'Red', color: 'rgba(255, 104, 104, 1)' },
             { name: 'Green', color: 'rgba(96, 160, 96, 1)' },
+            { name: 'Blue', color: 'rgba(104, 136, 200, 1)' },
+            { name: 'Yellow', color: 'rgba(255, 255, 100, 1)' },
+            { name: 'Cyan', color: 'rgba(100, 255, 255, 1)' },
+            { name: 'Magenta', color: 'rgba(255, 100, 255, 1)' },
+            { name: 'Orange', color: 'rgba(255, 165, 0, 1)' },
+            { name: 'Purple', color: 'rgba(128, 0, 128, 1)' },
+            { name: 'Brown', color: 'rgba(139, 69, 19, 1)' },
+            { name: 'Gray', color: 'rgba(128, 128, 128, 1)' },
         ];
 
         colors.forEach((col, index) => {
@@ -1976,6 +1984,10 @@
             button.textContent = col.name;
             button.className = `flex flex-col items-center justify-center p-2 rounded-md transition duration-200 text-white text-sm`;
             button.style.backgroundColor = col.color;
+            // Adjust text color for light backgrounds
+            if (['White', 'Yellow', 'Cyan'].includes(col.name)) {
+                button.style.color = 'rgba(60, 60, 60, 1)'; // Darker text for light colors
+            }
             if (col.name === 'Red') { // Default selected color
                 button.classList.add('border-2', 'border-yellow-400');
                 fillColor = col.color;
