@@ -112,8 +112,10 @@
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            width: 90%;
-            max-width: 500px;
+            width: 95%;
+            /* Make it take more width on smaller screens */
+            max-width: 700px;
+            /* Increased max-width for wider modal */
             position: relative;
             animation: fadeIn 0.3s ease-out;
         }
@@ -154,14 +156,14 @@
     <div class="max-w-4xl w-full bg-white rounded-xl shadow-lg p-6 sm:p-8 space-y-8">
 
         <header
-            class="text-center pb-4 border-b border-gray-200 relative flex flex-col sm:flex-row sm:justify-between sm:items-center p-4">
-            <div class="flex justify-center sm:justify-start mb-2 sm:mb-0">
+            class="text-center pb-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center p-4">
+            <div class="flex justify-center sm:justify-start w-full sm:w-auto order-2 sm:order-1 mb-2 sm:mb-0">
                 <button id="settingsButton"
                     class="bg-blue-500 text-white px-4 py-2 rounded-full shadow-md hover:bg-blue-600 transition-colors duration-200 hidden">
                     <i class="fas fa-cog mr-2"></i>Settings
                 </button>
             </div>
-            <div class="text-center sm:flex-grow">
+            <div class="text-center sm:flex-grow w-full sm:w-auto order-1 sm:order-2">
                 <h1 class="text-4xl sm:text-5xl font-extrabold text-dark-green mb-2">
                     <i class="fas fa-mosque mr-3 text-primary-green"></i>Prayer Tracker
                 </h1>
@@ -171,7 +173,7 @@
                 <p id="userIdDisplay" class="text-xs text-gray-500 mt-1 hidden">User ID: <span
                         class="font-mono text-gray-600"></span></p>
             </div>
-            <div class="flex justify-center sm:justify-end mt-2 sm:mt-0 space-x-2">
+            <div class="flex justify-center sm:justify-end mt-2 sm:mt-0 space-x-2 order-3 sm:order-3">
                 <button id="authButton"
                     class="bg-primary-green text-white px-4 py-2 rounded-full shadow-md hover:bg-dark-green transition-colors duration-200">
                     Login / Register
@@ -196,15 +198,18 @@
         </div>
 
         <div id="prayerList" class="flex flex-col gap-6 w-full">
-            <div id="mainPrayersRow" class="flex flex-row flex-wrap justify-center gap-4">
+            <div id="mainPrayersRow"
+                class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-4 place-items-center">
             </div>
-            <div id="optionalPrayersRow" class="flex flex-row flex-wrap justify-center gap-4 mt-4">
+            <div id="optionalPrayersRow"
+                class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-4 mt-4 place-items-center">
             </div>
         </div>
 
         <div class="mt-8 pt-6 border-t border-gray-200">
             <h3 class="text-2xl font-bold text-dark-green mb-4 text-center">Monthly Overview</h3>
-            <div class="flex justify-center mb-4"> <button id="todayButton"
+            <div class="flex justify-center mb-4">
+                <button id="todayButton"
                     class="bg-accent-green text-white px-4 py-2 rounded-full shadow-md hover:bg-primary-green transition-colors duration-200">
                     <i class="fas fa-calendar-day mr-2"></i>Today
                 </button>
@@ -218,6 +223,13 @@
                 <div class="font-semibold text-primary-green">Fri</div>
                 <div class="font-semibold text-primary-green">Sat</div>
             </div>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+            <button id="statsButton"
+                class="bg-indigo-500 text-white px-6 py-3 rounded-full shadow-md hover:bg-indigo-600 transition-colors duration-200 text-lg font-semibold hidden">
+                <i class="fas fa-chart-bar mr-2"></i>View Statistics
+            </button>
         </div>
 
         <footer class="mt-8 pt-6 border-t border-gray-200 text-center text-gray-500 text-sm">
@@ -289,6 +301,43 @@
         </div>
     </div>
 
+    <div id="statsModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button" id="closeStatsModalBtn">&times;</span>
+            <h2 class="text-3xl font-bold text-dark-green mb-6 text-center">Prayer Statistics</h2>
+
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-xl font-semibold text-dark-green mb-2">Overall Prayer Rate:</h3>
+                    <p id="overallRate" class="text-2xl font-bold text-primary-green text-center">--%</p>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-semibold text-dark-green mb-2">Individual Prayer Rates:</h3>
+                    <ul id="individualRatesList" class="space-y-2">
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-semibold text-dark-green mb-2">Prayer by Day of Week:</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-600">Day
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="dayOfWeekStatsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <p id="statsMessage" class="text-red-500 text-sm italic text-center mt-2"></p>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         // --- Global Variables and Constants ---
         const PRAYER_NAMES = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha']; // Mandatory prayers
@@ -299,14 +348,14 @@
         let authToken = localStorage.getItem('authToken'); // Get from localStorage
         let userSettings = { optionalPrayers: [] }; // Stores user-specific settings like optional prayers
 
-        const API_BASE_URL = 'http://localhost:3000/api'; // Your Node.js server URL
+        const API_BASE_URL = 'http://localhost:3000/api';  // Your Node.js server URL
 
         // --- DOM Elements ---
         const currentDateDisplay = document.getElementById('currentDateDisplay');
         const prevDayBtn = document.getElementById('prevDayBtn');
         const nextDayBtn = document.getElementById('nextDayBtn');
         const monthlyOverviewContainer = document.getElementById('monthlyOverview');
-        const todayButton = document.getElementById('todayButton'); // New: Today button
+        const todayButton = document.getElementById('todayButton');
 
         // Prayer List Containers
         const mainPrayersRow = document.getElementById('mainPrayersRow');
@@ -340,10 +389,19 @@
         const optionalPrayersList = document.getElementById('optionalPrayersList');
         const settingsMessage = document.getElementById('settingsMessage'); // For displaying messages in settings modal
 
+        // Stats Modal Elements
+        const statsButton = document.getElementById('statsButton'); // New: Stats button
+        const statsModal = document.getElementById('statsModal'); // New: Stats modal
+        const closeStatsModalBtn = document.getElementById('closeStatsModalBtn'); // New: Close stats modal button
+        const overallRateDisplay = document.getElementById('overallRate'); // New: Overall rate display
+        const individualRatesList = document.getElementById('individualRatesList'); // New: Individual rates list
+        const dayOfWeekStatsTableBody = document.getElementById('dayOfWeekStatsTableBody'); // New: Day of week table body
+        const statsMessage = document.getElementById('statsMessage'); // New: Stats message
+
         // --- Utility Functions ---
 
         /**
-         * Formats a Date object into a YYYY-MM-DD string.
+         * Formats a Date object into aYYYY-MM-DD string.
          * @param {Date} date - The date object to format.
          * @returns {string} Formatted date string.
          */
@@ -365,7 +423,35 @@
         }
 
         /**
-         * Fetches prayer data from the backend.
+         * Fetches all prayer data for the current user from the backend.
+         * This is used for statistics calculation.
+         * @returns {Promise<Object>} A promise that resolves with all prayer data.
+         */
+        async function loadAllPrayerDataForStats() {
+            if (!currentUserId || !authToken) {
+                return {};
+            }
+            try {
+                const response = await fetch(`${API_BASE_URL}/prayers/${currentUserId}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        console.error("Authentication error loading all prayer data for stats. Logging out.");
+                        logoutUser();
+                        return {};
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error("Error loading all prayer data for stats:", error);
+                return {};
+            }
+        }
+
+        /**
+         * Fetches prayer data for the currently selected date from the backend.
          */
         async function loadPrayerData() {
             if (!currentUserId || !authToken) {
@@ -421,9 +507,6 @@
                     }
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                // Data is updated on the backend, re-fetch to ensure consistency if needed,
-                // but for simple toggles, local update is usually fine.
-                // await loadPrayerData(); // Uncomment if you want to re-fetch all data after every save
             } catch (e) {
                 console.error("Error saving prayer data:", e);
             }
@@ -489,7 +572,6 @@
                     }
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                // No need to re-fetch, as the local userSettings is already updated
             } catch (e) {
                 console.error("Error saving user settings:", e);
             }
@@ -529,8 +611,9 @@
         function createPrayerCard(prayerName, isPrayed) {
             const card = document.createElement('div');
             // Adjusted width classes to help prayers fit on one row on larger screens
+            // Adjusted lg:w-40 and added xl:w-40 to ensure 5 columns on larger screens
             card.className = `
-                flex-shrink-0 w-32 sm:w-36 md:w-40 lg:w-48 rounded-xl shadow-md p-4 flex flex-col items-center justify-center
+                flex-shrink-0 w-32 sm:w-36 md:w-40 lg:w-40 xl:w-40 rounded-xl shadow-md p-4 flex flex-col items-center justify-center
                 transition-all duration-300 transform hover:scale-105 cursor-pointer
                 ${isPrayed ? 'bg-green-100 border-4 border-primary-green' : 'bg-white border-2 border-gray-200'}
             `;
@@ -717,6 +800,7 @@
                 authButton.classList.add('hidden');
                 logoutButton.classList.remove('hidden');
                 settingsButton.classList.remove('hidden'); // Show settings button when logged in
+                statsButton.classList.remove('hidden'); // Show stats button when logged in
                 loggedInUserDisplay.classList.remove('hidden');
                 userIdDisplay.classList.remove('hidden');
                 loggedInUsernameSpan.textContent = currentUsername;
@@ -725,6 +809,7 @@
                 authButton.classList.remove('hidden');
                 logoutButton.classList.add('hidden');
                 settingsButton.classList.add('hidden'); // Hide settings button when logged out
+                statsButton.classList.add('hidden'); // Hide stats button when logged out
                 loggedInUserDisplay.classList.add('hidden');
                 userIdDisplay.classList.add('hidden');
                 loggedInUsernameSpan.textContent = '';
@@ -761,7 +846,8 @@
                 } else {
                     authMessage.textContent = data.message || 'Login failed.';
                 }
-            } catch (error) {
+            }
+            catch (error) {
                 console.error("Login error:", error);
                 authMessage.textContent = 'An error occurred during login. Is the server running?';
             }
@@ -794,7 +880,8 @@
                 } else {
                     authMessage.textContent = data.message || 'Registration failed.';
                 }
-            } catch (error) {
+            }
+            catch (error) {
                 console.error("Registration error:", error);
                 authMessage.textContent = 'An error occurred during registration. Is the server running?';
             }
@@ -910,6 +997,133 @@
             }
         }
 
+        // --- Statistics Functions ---
+
+        /**
+         * Calculates and renders prayer statistics.
+         */
+        async function calculateAndRenderStats() {
+            statsMessage.textContent = ''; // Clear previous messages
+            overallRateDisplay.textContent = '--%';
+            individualRatesList.innerHTML = '';
+            dayOfWeekStatsTableBody.innerHTML = '';
+
+            if (!currentUserId) {
+                statsMessage.textContent = "Please login to view statistics.";
+                statsModal.classList.remove('hidden');
+                return;
+            }
+
+            const allPrayerRecords = await loadAllPrayerDataForStats();
+            const allPrayerNames = [...PRAYER_NAMES, ...(userSettings.optionalPrayers || [])];
+
+            let totalPrayersCompleted = 0;
+            let totalPossiblePrayers = 0;
+            const individualPrayerCounts = {}; // { prayerName: { completed: 0, possible: 0 } }
+            const dayOfWeekCounts = { // { dayName: { prayerName: { completed: 0, possible: 0 } } }
+                "Sunday": {}, "Monday": {}, "Tuesday": {}, "Wednesday": {},
+                "Thursday": {}, "Friday": {}, "Saturday": {}
+            };
+            const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+            // Initialize counts
+            allPrayerNames.forEach(p => {
+                individualPrayerCounts[p] = { completed: 0, possible: 0 };
+            });
+            daysOfWeek.forEach(day => {
+                allPrayerNames.forEach(p => {
+                    dayOfWeekCounts[day][p] = { completed: 0, possible: 0 };
+                });
+            });
+
+            // Process all prayer records
+            for (const dateStr in allPrayerRecords) {
+                const dailyPrayers = allPrayerRecords[dateStr];
+                const date = new Date(dateStr);
+                const dayName = daysOfWeek[date.getDay()];
+
+                allPrayerNames.forEach(prayer => {
+                    const isPrayed = dailyPrayers[prayer] === true; // Ensure boolean
+
+                    // Overall stats
+                    totalPossiblePrayers++;
+                    if (isPrayed) {
+                        totalPrayersCompleted++;
+                    }
+
+                    // Individual stats
+                    individualPrayerCounts[prayer].possible++;
+                    if (isPrayed) {
+                        individualPrayerCounts[prayer].completed++;
+                    }
+
+                    // Day of week stats
+                    dayOfWeekCounts[dayName][prayer].possible++;
+                    if (isPrayed) {
+                        dayOfWeekCounts[dayName][prayer].completed++;
+                    }
+                });
+            }
+
+            // Render Overall Rate
+            const overallPercentage = totalPossiblePrayers > 0
+                ? ((totalPrayersCompleted / totalPossiblePrayers) * 100).toFixed(1)
+                : 0;
+            overallRateDisplay.textContent = `${overallPercentage}%`;
+
+            // Render Individual Prayer Rates
+            if (allPrayerNames.length === 0) {
+                individualRatesList.innerHTML = '<li class="text-gray-500">No prayers tracked yet.</li>';
+            } else {
+                allPrayerNames.forEach(prayer => {
+                    const stats = individualPrayerCounts[prayer];
+                    const percentage = stats.possible > 0
+                        ? ((stats.completed / stats.possible) * 100).toFixed(1)
+                        : 0;
+                    const listItem = document.createElement('li');
+                    listItem.className = 'flex justify-between items-center bg-gray-50 p-2 rounded-lg';
+                    listItem.innerHTML = `
+                        <span class="font-medium">${prayer}:</span>
+                        <span class="font-semibold text-primary-green">${percentage}% (${stats.completed}/${stats.possible})</span>
+                    `;
+                    individualRatesList.appendChild(listItem);
+                });
+            }
+
+            // Render Day of Week Stats Table
+            const tableHeadRow = dayOfWeekStatsTableBody.previousElementSibling.querySelector('tr');
+            // Clear existing prayer headers
+            tableHeadRow.querySelectorAll('.prayer-header').forEach(el => el.remove());
+
+            // Add dynamic prayer headers
+            allPrayerNames.forEach(prayer => {
+                const th = document.createElement('th');
+                // Adjusted padding for prayer headers in the table
+                th.className = 'py-2 px-2 border-b text-center text-sm font-semibold text-gray-600 prayer-header';
+                th.textContent = prayer;
+                tableHeadRow.appendChild(th);
+            });
+
+            if (Object.keys(allPrayerRecords).length === 0) {
+                dayOfWeekStatsTableBody.innerHTML = '<tr><td colspan="8" class="py-4 text-center text-gray-500">No prayer data available for statistics.</td></tr>';
+            } else {
+                daysOfWeek.forEach(day => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b last:border-b-0';
+                    row.innerHTML = `<td class="py-2 px-4">${day}</td>`;
+                    allPrayerNames.forEach(prayer => {
+                        const stats = dayOfWeekCounts[day][prayer];
+                        const percentage = stats.possible > 0
+                            ? ((stats.completed / stats.possible) * 100).toFixed(0) // Round to whole number for table
+                            : 0;
+                        row.innerHTML += `<td class="py-2 px-2 text-center">${percentage}%</td>`; // Adjusted padding for data cells
+                    });
+                    dayOfWeekStatsTableBody.appendChild(row);
+                });
+            }
+        }
+
+
         // --- Event Listeners ---
 
         prevDayBtn.addEventListener('click', () => {
@@ -932,7 +1146,6 @@
             }
         });
 
-        // New: Today button event listener
         todayButton.addEventListener('click', () => {
             if (currentUserId) {
                 currentSelectedDate = new Date(); // Set to current date
@@ -1020,6 +1233,29 @@
             const prayerName = newOptionalPrayerInput.value.trim();
             if (prayerName) {
                 addOptionalPrayer(prayerName);
+            }
+        });
+
+        // New: Stats button and modal event listeners
+        statsButton.addEventListener('click', async () => {
+            if (currentUserId) {
+                statsModal.classList.remove('hidden');
+                await calculateAndRenderStats();
+            } else {
+                authMessage.textContent = "Please login to view statistics.";
+                authModal.classList.remove('hidden');
+            }
+        });
+
+        closeStatsModalBtn.addEventListener('click', () => {
+            statsModal.classList.add('hidden');
+            statsMessage.textContent = ''; // Clear message on close
+        });
+
+        statsModal.addEventListener('click', (event) => {
+            if (event.target === statsModal) {
+                statsModal.classList.add('hidden');
+                statsMessage.textContent = '';
             }
         });
 
