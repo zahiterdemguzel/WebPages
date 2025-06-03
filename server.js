@@ -1,7 +1,7 @@
 // server.js
 const express = require('express');
 const fs = require('fs');
-const path = require('path');
+const path = require('path');  
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -120,113 +120,14 @@ function setupDynamicRoutes() {
 // Call the function to set up routes when the server starts
 setupDynamicRoutes();
 
-/**
- * Generates the main HTML page dynamically.
- * This page will contain buttons to navigate to each detected website.
- * @returns {string} The generated HTML string.
- */
-function generateMainPageHtml() {
-    let buttonsHtml = '';
-    if (detectedPages.length === 0) {
-        buttonsHtml = '<p>No websites detected. Ensure `WEBPAGES` folder exists and contains valid web pages.</p>';
-    } else {
-        buttonsHtml = detectedPages.map(page => `
-            <a href="/${page.name}" class="page-button">
-                ${page.name} ${page.hasBackend ? '(Backend)' : '(Frontend Only)'}
-            </a>
-        `).join('');
-    }
-
-    return `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Multi-Website Server</title>
-            <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-            <style>
-                body {
-                    font-family: 'Inter', sans-serif;
-                    background-color: #f0f4f8;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    min-height: 100vh;
-                    margin: 0;
-                    padding: 20px;
-                    box-sizing: border-box;
-                }
-                .container {
-                    background-color: #ffffff;
-                    padding: 40px;
-                    border-radius: 12px;
-                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-                    text-align: center;
-                    max-width: 90%;
-                    width: 600px;
-                }
-                h1 {
-                    font-size: 2.5rem;
-                    color: #1a202c;
-                    margin-bottom: 30px;
-                    font-weight: 600;
-                }
-                .button-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 20px;
-                    margin-top: 30px;
-                }
-                .page-button {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    padding: 15px 25px;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                    text-decoration: none;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    font-size: 1.1rem;
-                    transition: all 0.3s ease;
-                    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-                }
-                .page-button:hover {
-                    transform: translateY(-3px);
-                    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
-                    background: linear-gradient(135deg, #5a67d8 0%, #6a3d9a 100%);
-                }
-                @media (max-width: 640px) {
-                    h1 {
-                        font-size: 2rem;
-                    }
-                    .container {
-                        padding: 25px;
-                    }
-                    .button-grid {
-                        grid-template-columns: 1fr;
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>Welcome to Your Multi-Website Server!</h1>
-                <p class="text-gray-600 text-lg">Select a website to visit:</p>
-                <div class="button-grid">
-                    ${buttonsHtml}
-                </div>
-            </div>
-        </body>
-        </html>
-    `;
-}
-
-// Route for the main page
+// Serve the main index.html file for the root route
 app.get('/', (req, res) => {
-    res.send(generateMainPageHtml());
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// New API endpoint to provide the list of detected pages to the frontend
+app.get('/api/pages', (req, res) => {
+    res.json(detectedPages);
 });
 
 // Start the server
