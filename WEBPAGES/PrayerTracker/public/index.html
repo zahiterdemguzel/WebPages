@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Muslim Prayer Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* Custom Tailwind Configuration (optional, but good for consistent palette) */
         :root {
@@ -19,31 +21,41 @@
         }
 
         /* Applying custom colors to Tailwind classes */
-        .bg-primary-green { background-color: var(--color-primary-green); }
-        .bg-light-green { background-color: var(--color-light-green); }
-        .bg-dark-green { background-color: var(--color-dark-green); }
-        .bg-accent-green { background-color: var(--color-accent-green); }
-        .text-primary-green { color: var(--color-primary-green); }
-        .text-dark-green { color: var(--color-dark-green); }
-        .text-text-dark { color: var(--color-text-dark); }
-        .bg-off-white { background-color: var(--color-off-white); }
-        .bg-green-100 { background-color: #F0FDF4; /* A very light green */ }
+        .bg-primary-green {
+            background-color: var(--color-primary-green);
+        }
 
-        /* Custom scrollbar for better aesthetics */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+        .bg-light-green {
+            background-color: var(--color-light-green);
         }
-        ::-webkit-scrollbar-track {
-            background: var(--color-off-white);
-            border-radius: 10px;
+
+        .bg-dark-green {
+            background-color: var(--color-dark-green);
         }
-        ::-webkit-scrollbar-thumb {
-            background: var(--color-light-green);
-            border-radius: 10px;
+
+        .bg-accent-green {
+            background-color: var(--color-accent-green);
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--color-primary-green);
+
+        .text-primary-green {
+            color: var(--color-primary-green);
+        }
+
+        .text-dark-green {
+            color: var(--color-dark-green);
+        }
+
+        .text-text-dark {
+            color: var(--color-text-dark);
+        }
+
+        .bg-off-white {
+            background-color: var(--color-off-white);
+        }
+
+        .bg-green-100 {
+            background-color: #F0FDF4;
+            /* A very light green */
         }
 
         /* Inter font from Google Fonts */
@@ -51,17 +63,44 @@
             font-family: 'Inter', sans-serif;
         }
 
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--color-off-white);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--color-light-green);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--color-primary-green);
+        }
+
         /* Modal specific styles */
         .modal {
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 1000; /* Sit on top */
+            display: none;
+            /* Hidden by default */
+            position: fixed;
+            /* Stay in place */
+            z-index: 1000;
+            /* Sit on top */
             left: 0;
             top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            width: 100%;
+            /* Full width */
+            height: 100%;
+            /* Full height */
+            overflow: auto;
+            /* Enable scroll if needed */
+            background-color: rgba(0, 0, 0, 0.4);
+            /* Black w/ opacity */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -72,7 +111,7 @@
             margin: auto;
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             width: 90%;
             max-width: 500px;
             position: relative;
@@ -80,8 +119,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .close-button {
@@ -102,35 +148,48 @@
             cursor: pointer;
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body class="bg-off-white text-text-dark min-h-screen flex flex-col items-center p-4 sm:p-6">
     <div class="max-w-4xl w-full bg-white rounded-xl shadow-lg p-6 sm:p-8 space-y-8">
 
-        <header class="text-center pb-4 border-b border-gray-200 relative">
-            <h1 class="text-4xl sm:text-5xl font-extrabold text-dark-green mb-2">
-                <i class="fas fa-mosque mr-3 text-primary-green"></i>Prayer Tracker
-            </h1>
-            <p class="text-lg text-gray-600">Track your daily prayers with ease.</p>
-            <div class="absolute top-4 right-4 flex space-x-2">
-                <button id="settingsButton" class="bg-blue-500 text-white px-4 py-2 rounded-full shadow-md hover:bg-blue-600 transition-colors duration-200 hidden">
+        <header
+            class="text-center pb-4 border-b border-gray-200 relative flex flex-col sm:flex-row sm:justify-between sm:items-center p-4">
+            <div class="flex justify-center sm:justify-start mb-2 sm:mb-0">
+                <button id="settingsButton"
+                    class="bg-blue-500 text-white px-4 py-2 rounded-full shadow-md hover:bg-blue-600 transition-colors duration-200 hidden">
                     <i class="fas fa-cog mr-2"></i>Settings
                 </button>
-                <button id="authButton" class="bg-primary-green text-white px-4 py-2 rounded-full shadow-md hover:bg-dark-green transition-colors duration-200">
+            </div>
+            <div class="text-center sm:flex-grow">
+                <h1 class="text-4xl sm:text-5xl font-extrabold text-dark-green mb-2">
+                    <i class="fas fa-mosque mr-3 text-primary-green"></i>Prayer Tracker
+                </h1>
+                <p class="text-lg text-gray-600">Track your daily prayers with ease.</p>
+                <p id="loggedInUser" class="text-sm text-gray-700 mt-2 hidden">Logged in as: <span
+                        class="font-semibold"></span></p>
+                <p id="userIdDisplay" class="text-xs text-gray-500 mt-1 hidden">User ID: <span
+                        class="font-mono text-gray-600"></span></p>
+            </div>
+            <div class="flex justify-center sm:justify-end mt-2 sm:mt-0 space-x-2">
+                <button id="authButton"
+                    class="bg-primary-green text-white px-4 py-2 rounded-full shadow-md hover:bg-dark-green transition-colors duration-200">
                     Login / Register
                 </button>
-                <button id="logoutButton" class="bg-red-500 text-white px-4 py-2 rounded-full shadow-md hover:bg-red-600 transition-colors duration-200 hidden">
+                <button id="logoutButton"
+                    class="bg-red-500 text-white px-4 py-2 rounded-full shadow-md hover:bg-red-600 transition-colors duration-200 hidden">
                     Logout
                 </button>
             </div>
-            <p id="loggedInUser" class="text-sm text-gray-700 mt-2 hidden">Logged in as: <span class="font-semibold"></span></p>
         </header>
 
         <div class="flex items-center justify-between bg-primary-green text-white p-4 rounded-lg shadow-md">
             <button id="prevDayBtn" class="p-2 rounded-full hover:bg-light-green transition-colors duration-200">
                 <i class="fas fa-chevron-left text-xl"></i>
             </button>
-            <h2 id="currentDateDisplay" class="text-2xl font-semibold text-center"></h2>
+            <h2 id="currentDateDisplay"
+                class="text-2xl font-semibold text-center flex-grow min-w-0 whitespace-nowrap overflow-hidden text-ellipsis sm:text-2xl md:text-3xl">
+            </h2>
             <button id="nextDayBtn" class="p-2 rounded-full hover:bg-light-green transition-colors duration-200">
                 <i class="fas fa-chevron-right text-xl"></i>
             </button>
@@ -138,13 +197,18 @@
 
         <div id="prayerList" class="flex flex-col gap-6 w-full">
             <div id="mainPrayersRow" class="flex flex-row flex-wrap justify-center gap-4">
-                </div>
+            </div>
             <div id="optionalPrayersRow" class="flex flex-row flex-wrap justify-center gap-4 mt-4">
-                </div>
+            </div>
         </div>
 
         <div class="mt-8 pt-6 border-t border-gray-200">
             <h3 class="text-2xl font-bold text-dark-green mb-4 text-center">Monthly Overview</h3>
+            <div class="flex justify-center mb-4"> <button id="todayButton"
+                    class="bg-accent-green text-white px-4 py-2 rounded-full shadow-md hover:bg-primary-green transition-colors duration-200">
+                    <i class="fas fa-calendar-day mr-2"></i>Today
+                </button>
+            </div>
             <div id="monthlyOverview" class="grid grid-cols-7 gap-1 text-sm text-center">
                 <div class="font-semibold text-primary-green">Sun</div>
                 <div class="font-semibold text-primary-green">Mon</div>
@@ -153,15 +217,14 @@
                 <div class="font-semibold text-primary-green">Thu</div>
                 <div class="font-semibold text-primary-green">Fri</div>
                 <div class="font-semibold text-primary-green">Sat</div>
-                </div>
+            </div>
         </div>
 
         <footer class="mt-8 pt-6 border-t border-gray-200 text-center text-gray-500 text-sm">
             <p>
                 <i class="fas fa-info-circle mr-1"></i>
-                This application simulates data storage and user authentication using your browser's `localStorage`.
-                In a real-world application, this would be replaced with API calls to a backend database like MongoDB
-                to store user-specific prayer data securely.
+                This application uses a Node.js backend with MongoDB for user management and data storage.
+                Ensure your Node.js server is running on <span class="font-semibold">http://localhost:3000</span>.
             </p>
         </footer>
 
@@ -174,15 +237,20 @@
 
             <form id="authForm" class="space-y-4">
                 <div>
-                    <label for="username" class="block text-gray-700 text-sm font-bold mb-2">Username:</label>
-                    <input type="text" id="username" name="username" class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green" placeholder="Enter your username" required>
+                    <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+                    <input type="email" id="email" name="email"
+                        class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green"
+                        placeholder="Enter your email" required>
                 </div>
                 <div>
                     <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password:</label>
-                    <input type="password" id="password" name="password" class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green" placeholder="Enter your password" required>
+                    <input type="password" id="password" name="password"
+                        class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green"
+                        placeholder="Enter your password" required>
                 </div>
                 <p id="authMessage" class="text-red-500 text-sm italic text-center"></p>
-                <button type="submit" id="submitAuthBtn" class="bg-primary-green hover:bg-dark-green text-white font-bold py-3 px-6 rounded-full w-full transition-colors duration-200 shadow-md">
+                <button type="submit" id="submitAuthBtn"
+                    class="bg-primary-green hover:bg-dark-green text-white font-bold py-3 px-6 rounded-full w-full transition-colors duration-200 shadow-md">
                     Login
                 </button>
             </form>
@@ -201,9 +269,13 @@
 
             <div class="space-y-4">
                 <div>
-                    <label for="newOptionalPrayer" class="block text-gray-700 text-sm font-bold mb-2">Add Optional Prayer:</label>
-                    <input type="text" id="newOptionalPrayer" class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green" placeholder="e.g., Duha, Witr">
-                    <button id="addOptionalPrayerBtn" class="mt-3 bg-accent-green hover:bg-primary-green text-white font-bold py-2 px-4 rounded-full w-full transition-colors duration-200 shadow-md">
+                    <label for="newOptionalPrayer" class="block text-gray-700 text-sm font-bold mb-2">Add Optional
+                        Prayer:</label>
+                    <input type="text" id="newOptionalPrayer"
+                        class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green"
+                        placeholder="e.g., Duha, Witr">
+                    <button id="addOptionalPrayerBtn"
+                        class="mt-3 bg-accent-green hover:bg-primary-green text-white font-bold py-2 px-4 rounded-full w-full transition-colors duration-200 shadow-md">
                         Add Prayer
                     </button>
                     <p id="settingsMessage" class="text-red-500 text-sm italic text-center mt-2"></p>
@@ -211,31 +283,30 @@
                 <div class="mt-6">
                     <h3 class="text-xl font-semibold text-dark-green mb-3">Your Optional Prayers:</h3>
                     <ul id="optionalPrayersList" class="space-y-2">
-                        </ul>
+                    </ul>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
+    <script type="module">
         // --- Global Variables and Constants ---
         const PRAYER_NAMES = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha']; // Mandatory prayers
         let currentSelectedDate = new Date(); // Tracks the date currently displayed
-        let prayerData = {}; // Stores all prayer data, keyed by YYYY-MM-DD
-        let currentUserId = null; // Will store the logged-in user's ID
-        let currentUsername = null; // Will store the logged-in user's username
-        let userSettings = {}; // Stores user-specific settings like optional prayers
+        let prayerData = {}; // Stores all prayer data, keyed byYYYY-MM-DD
+        let currentUserId = localStorage.getItem('userId'); // Get from localStorage
+        let currentUsername = localStorage.getItem('username'); // Get from localStorage
+        let authToken = localStorage.getItem('authToken'); // Get from localStorage
+        let userSettings = { optionalPrayers: [] }; // Stores user-specific settings like optional prayers
 
-        // Dynamically determine the base path for API calls
-        // This assumes the app is hosted at /PrayerTracker/ or directly at root /
-        const BASE_APP_PATH = window.location.pathname.split('/')[1] || '';
-        const API_BASE_URL = BASE_APP_PATH ? `/${BASE_APP_PATH}` : ''; // If hosted at root, it's just ''
+        const API_BASE_URL = 'http://localhost:3000/api'; // Your Node.js server URL
 
         // --- DOM Elements ---
         const currentDateDisplay = document.getElementById('currentDateDisplay');
         const prevDayBtn = document.getElementById('prevDayBtn');
         const nextDayBtn = document.getElementById('nextDayBtn');
         const monthlyOverviewContainer = document.getElementById('monthlyOverview');
+        const todayButton = document.getElementById('todayButton'); // New: Today button
 
         // Prayer List Containers
         const mainPrayersRow = document.getElementById('mainPrayersRow');
@@ -247,7 +318,7 @@
         const authButton = document.getElementById('authButton');
         const logoutButton = document.getElementById('logoutButton');
         const authForm = document.getElementById('authForm');
-        const usernameInput = document.getElementById('username');
+        const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const authMessage = document.getElementById('authMessage');
         const modalTitle = document.getElementById('modalTitle');
@@ -255,6 +326,8 @@
         const toggleAuthModeBtn = document.getElementById('toggleAuthMode');
         const loggedInUserDisplay = document.getElementById('loggedInUser');
         const loggedInUsernameSpan = loggedInUserDisplay.querySelector('span');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const userIdSpan = userIdDisplay.querySelector('span');
 
         let isLoginMode = true; // State for login/register modal
 
@@ -292,134 +365,156 @@
         }
 
         /**
-         * Loads prayer data from localStorage.
-         * In a real app, this would be a fetch() GET request to `${API_BASE_URL}/prayers/${currentUserId}`.
-         * @returns {Promise<Object>} A promise that resolves with the prayer data.
+         * Fetches prayer data from the backend.
          */
         async function loadPrayerData() {
-            if (!currentUserId) {
-                prayerData = {}; // Clear data if no user is logged in
+            if (!currentUserId || !authToken) {
+                prayerData = {}; // Clear data if no user or no token
                 return;
             }
-            // --- CONCEPTUAL BACKEND CALL ---
-            // try {
-            //     const response = await fetch(`${API_BASE_URL}/prayers/${currentUserId}`, {
-            //         headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
-            //     });
-            //     if (!response.ok) throw new Error('Failed to load prayer data');
-            //     prayerData = await response.json();
-            // } catch (error) {
-            //     console.error("Error loading prayer data:", error);
-            //     prayerData = {};
-            // }
-            // --- END CONCEPTUAL BACKEND CALL ---
-
-            // Simulation using localStorage
             try {
-                const storedData = localStorage.getItem(`prayerTracker_${currentUserId}`);
-                if (storedData) {
-                    prayerData = JSON.parse(storedData);
-                } else {
-                    prayerData = {}; // Initialize if no data found for this user
+                const response = await fetch(`${API_BASE_URL}/prayers/${currentUserId}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        console.error("Authentication error loading prayer data. Logging out.");
+                        logoutUser(); // Log out if token is invalid/expired
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-            } catch (e) {
-                console.error("Error loading prayer data from localStorage:", e);
+                prayerData = await response.json();
+            } catch (error) {
+                console.error("Error loading prayer data:", error);
                 prayerData = {}; // Reset to empty on error
+            } finally {
+                renderPrayerCards();
+                renderMonthlyOverview();
             }
         }
 
         /**
-         * Saves prayer data to localStorage.
-         * In a real app, this would be a fetch() PUT/POST request to `${API_BASE_URL}/prayers/${currentUserId}/${dateStr}`.
+         * Saves prayer data to the backend.
+         * @param {string} dateStr - The date string (YYYY-MM-DD) for which to save data.
+         * @param {Object} dailyData - The prayer data for that specific date.
          */
-        async function savePrayerData() {
-            if (!currentUserId) {
-                console.warn("Cannot save data: No user logged in.");
+        async function savePrayerData(dateStr, dailyData) {
+            if (!currentUserId || !authToken) {
+                console.warn("Cannot save prayer data: No user logged in or no token.");
                 return;
             }
-            // --- CONCEPTUAL BACKEND CALL ---
-            // try {
-            //     const dateStr = formatDate(currentSelectedDate);
-            //     const dailyPrayerData = prayerData[dateStr] || {};
-            //     const response = await fetch(`${API_BASE_URL}/prayers/${currentUserId}/${dateStr}`, {
-            //         method: 'PUT', // or POST if creating new daily entry
-            //         headers: {
-            //             'Content-Type': 'application/json',
-            //             'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            //         },
-            //         body: JSON.stringify(dailyPrayerData)
-            //     });
-            //     if (!response.ok) throw new Error('Failed to save prayer data');
-            //     console.log('Prayer data saved successfully.');
-            // } catch (error) {
-            //     console.error("Error saving prayer data:", error);
-            // }
-            // --- END CONCEPTUAL BACKEND CALL ---
-
-            // Simulation using localStorage
             try {
-                localStorage.setItem(`prayerTracker_${currentUserId}`, JSON.stringify(prayerData));
+                const response = await fetch(`${API_BASE_URL}/prayers/${currentUserId}/${dateStr}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(dailyData)
+                });
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        console.error("Authentication error saving prayer data. Logging out.");
+                        logoutUser();
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                // Data is updated on the backend, re-fetch to ensure consistency if needed,
+                // but for simple toggles, local update is usually fine.
+                // await loadPrayerData(); // Uncomment if you want to re-fetch all data after every save
             } catch (e) {
-                console.error("Error saving prayer data to localStorage:", e);
+                console.error("Error saving prayer data:", e);
             }
         }
 
         /**
-         * Loads user settings from localStorage.
+         * Fetches user settings from the backend.
          */
         async function loadUserSettings() {
-            if (!currentUserId) {
-                userSettings = { optionalPrayers: [] };
+            if (!currentUserId || !authToken) {
+                userSettings = { optionalPrayers: [] }; // Reset settings if no user or no token
                 return;
             }
             try {
-                const storedSettings = localStorage.getItem(`userSettings_${currentUserId}`);
-                if (storedSettings) {
-                    userSettings = JSON.parse(storedSettings);
-                } else {
-                    userSettings = { optionalPrayers: [] }; // Default
+                const response = await fetch(`${API_BASE_URL}/settings/${currentUserId}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        console.error("Authentication error loading user settings. Logging out.");
+                        logoutUser();
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                userSettings = data;
+                if (!userSettings.optionalPrayers) {
+                    userSettings.optionalPrayers = []; // Ensure optionalPrayers array exists
                 }
             } catch (e) {
-                console.error("Error loading user settings from localStorage:", e);
-                userSettings = { optionalPrayers: [] };
+                console.error("Error loading user settings:", e);
+                userSettings = { optionalPrayers: [] }; // Reset to default on error
+            } finally {
+                renderPrayerCards(); // Re-render prayer cards as optional prayers might have changed
+                renderMonthlyOverview(); // Re-render monthly overview
+                renderOptionalPrayersListInSettings(); // Update settings modal list
             }
         }
 
         /**
-         * Saves user settings to localStorage.
+         * Saves user settings to the backend.
          */
         async function saveUserSettings() {
-            if (!currentUserId) {
-                console.warn("Cannot save settings: No user logged in.");
+            if (!currentUserId || !authToken) {
+                console.warn("Cannot save user settings: No user logged in or no token.");
                 return;
             }
             try {
-                localStorage.setItem(`userSettings_${currentUserId}`, JSON.stringify(userSettings));
+                const response = await fetch(`${API_BASE_URL}/settings/${currentUserId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(userSettings)
+                });
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        console.error("Authentication error saving user settings. Logging out.");
+                        logoutUser();
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                // No need to re-fetch, as the local userSettings is already updated
             } catch (e) {
-                console.error("Error saving user settings to localStorage:", e);
+                console.error("Error saving user settings:", e);
             }
         }
-
 
         /**
          * Initializes prayer status for a given date if it doesn't exist, including optional prayers.
+         * This function now primarily ensures the structure, actual data comes from the backend.
          * @param {string} dateStr - The date string (YYYY-MM-DD).
          */
         function initializeDailyPrayers(dateStr) {
             if (!prayerData[dateStr]) {
                 prayerData[dateStr] = {};
             }
-            // Initialize mandatory prayers
+            // Ensure all mandatory prayers are present in the current day's data, default to false
             PRAYER_NAMES.forEach(prayer => {
                 if (typeof prayerData[dateStr][prayer] === 'undefined') {
-                    prayerData[dateStr][prayer] = false; // Default to not prayed
+                    prayerData[dateStr][prayer] = false;
                 }
             });
-            // Initialize optional prayers
+            // Ensure all optional prayers are present, default to false
             if (userSettings.optionalPrayers) {
                 userSettings.optionalPrayers.forEach(prayer => {
                     if (typeof prayerData[dateStr][prayer] === 'undefined') {
-                        prayerData[dateStr][prayer] = false; // Default to not prayed
+                        prayerData[dateStr][prayer] = false;
                     }
                 });
             }
@@ -433,8 +528,9 @@
          */
         function createPrayerCard(prayerName, isPrayed) {
             const card = document.createElement('div');
+            // Adjusted width classes to help prayers fit on one row on larger screens
             card.className = `
-                flex-shrink-0 w-40 sm:w-48 md:w-52 rounded-xl shadow-md p-4 flex flex-col items-center justify-center
+                flex-shrink-0 w-32 sm:w-36 md:w-40 lg:w-48 rounded-xl shadow-md p-4 flex flex-col items-center justify-center
                 transition-all duration-300 transform hover:scale-105 cursor-pointer
                 ${isPrayed ? 'bg-green-100 border-4 border-primary-green' : 'bg-white border-2 border-gray-200'}
             `;
@@ -449,8 +545,8 @@
                     ${isPrayed ? 'Prayed <i class="fas fa-check-circle ml-2 text-primary-green"></i>' : 'Not Prayed'}
                 </span>
                 <button class="mt-3 px-4 py-2 text-sm rounded-full text-white font-medium
-                            ${isPrayed ? 'bg-red-500 hover:bg-red-600' : 'bg-primary-green hover:bg-dark-green'}
-                            transition-colors duration-200 shadow-md">
+                                ${isPrayed ? 'bg-red-500 hover:bg-red-600' : 'bg-primary-green hover:bg-dark-green'}
+                                transition-colors duration-200 shadow-md">
                     ${isPrayed ? 'Mark Unprayed' : 'Mark Prayed'}
                 </button>
             `;
@@ -470,7 +566,6 @@
             return card;
         }
 
-
         /**
          * Renders the prayer cards for the currently selected date.
          */
@@ -489,11 +584,11 @@
             }
 
             const dateStr = formatDate(currentSelectedDate);
-            initializeDailyPrayers(dateStr); // Ensure data exists for the current day
+            initializeDailyPrayers(dateStr); // Ensure data structure exists for the current day
 
             // Render Main Prayers
             PRAYER_NAMES.forEach(prayer => {
-                const isPrayed = prayerData[dateStr][prayer];
+                const isPrayed = prayerData[dateStr] ? prayerData[dateStr][prayer] : false;
                 mainPrayersRow.appendChild(createPrayerCard(prayer, isPrayed));
             });
 
@@ -501,7 +596,7 @@
             if (userSettings.optionalPrayers && userSettings.optionalPrayers.length > 0) {
                 optionalPrayersRow.classList.remove('hidden'); // Show optional row
                 userSettings.optionalPrayers.forEach(prayer => {
-                    const isPrayed = prayerData[dateStr][prayer];
+                    const isPrayed = prayerData[dateStr] ? prayerData[dateStr][prayer] : false;
                     optionalPrayersRow.appendChild(createPrayerCard(prayer, isPrayed));
                 });
             }
@@ -511,18 +606,21 @@
          * Toggles the prayer status for a specific prayer on the current date.
          * @param {string} prayerName - The name of the prayer (e.g., 'Fajr').
          */
-        function togglePrayerStatus(prayerName) {
+        async function togglePrayerStatus(prayerName) {
             if (!currentUserId) {
                 authMessage.textContent = "Please login to track prayers.";
                 authModal.classList.remove('hidden');
                 return;
             }
             const dateStr = formatDate(currentSelectedDate);
-            initializeDailyPrayers(dateStr); // Ensure data exists
+            initializeDailyPrayers(dateStr); // Ensure data structure exists
 
+            // Toggle the status locally first for immediate UI feedback
             prayerData[dateStr][prayerName] = !prayerData[dateStr][prayerName];
-            savePrayerData(); // Save changes
-            renderPrayerCards(); // Re-render to reflect changes
+            renderPrayerCards(); // Re-render immediately
+
+            // Save the updated data to the backend
+            await savePrayerData(dateStr, prayerData[dateStr]);
             renderMonthlyOverview(); // Update monthly view
         }
 
@@ -541,7 +639,7 @@
             `; // Reset and add day headers
 
             if (!currentUserId) {
-                 // Clear calendar if not logged in
+                // Clear calendar if not logged in
                 return;
             }
 
@@ -572,18 +670,18 @@
                 const dateStr = formatDate(date);
                 initializeDailyPrayers(dateStr); // Ensure data exists for this day
 
-                const dailyPrayers = prayerData[dateStr];
+                const dailyPrayers = prayerData[dateStr] || {}; // Get daily data, default to empty object
                 const prayedCount = allPrayerNames.filter(p => dailyPrayers[p]).length;
                 const totalPrayers = allPrayerNames.length;
-                const allPrayed = totalPrayers > 0 && prayedCount === totalPrayers; // Ensure totalPrayers > 0 to avoid division by zero or false positive for 0/0
+                const allPrayed = totalPrayers > 0 && prayedCount === totalPrayers;
                 const anyPrayed = prayedCount > 0;
 
                 const dayDiv = document.createElement('div');
                 dayDiv.className = `
                     p-2 rounded-lg cursor-pointer transition-colors duration-200 text-center
                     ${allPrayed ? 'bg-primary-green text-white font-bold shadow-md' :
-                      anyPrayed ? 'bg-light-green text-white shadow-sm' :
-                      'bg-gray-100 text-gray-700 hover:bg-gray-200'}
+                        anyPrayed ? 'bg-light-green text-white shadow-sm' :
+                            'bg-gray-100 text-gray-700 hover:bg-gray-200'}
                     ${dateStr === formatDate(today) ? 'border-2 border-dark-green' : ''}
                     ${dateStr === formatDate(currentSelectedDate) ? 'ring-2 ring-accent-green ring-offset-2' : ''}
                 `;
@@ -606,133 +704,100 @@
          */
         async function updateUI() {
             currentDateDisplay.textContent = formatDisplayDate(currentSelectedDate);
-            await loadUserSettings(); // Load settings first
-            await loadPrayerData(); // Load data for the current user
-            renderPrayerCards();
-            renderMonthlyOverview();
             updateAuthUI();
-            renderOptionalPrayersListInSettings(); // Update settings modal list
+            await loadUserSettings(); // Load settings first
+            await loadPrayerData(); // Then load prayer data
         }
 
         /**
          * Updates the visibility of auth buttons and user display.
          */
         function updateAuthUI() {
-            if (currentUserId) {
+            if (currentUserId && authToken) {
                 authButton.classList.add('hidden');
                 logoutButton.classList.remove('hidden');
                 settingsButton.classList.remove('hidden'); // Show settings button when logged in
                 loggedInUserDisplay.classList.remove('hidden');
+                userIdDisplay.classList.remove('hidden');
                 loggedInUsernameSpan.textContent = currentUsername;
+                userIdSpan.textContent = currentUserId; // Display full user ID
             } else {
                 authButton.classList.remove('hidden');
                 logoutButton.classList.add('hidden');
                 settingsButton.classList.add('hidden'); // Hide settings button when logged out
                 loggedInUserDisplay.classList.add('hidden');
+                userIdDisplay.classList.add('hidden');
                 loggedInUsernameSpan.textContent = '';
+                userIdSpan.textContent = '';
             }
         }
 
-        // --- Authentication Functions (Simulated) ---
+        // --- Authentication Functions (Custom Backend) ---
 
         /**
-         * Simulates user login.
-         * In a real app, this would send credentials to your backend and receive a token.
+         * Handles user login with custom backend.
          */
-        async function loginUser(username, password) {
+        async function loginUser(email, password) {
             authMessage.textContent = 'Logging in...';
-            // --- CONCEPTUAL BACKEND CALL ---
-            // try {
-            //     const response = await fetch(`${API_BASE_URL}/auth/login`, {
-            //         method: 'POST',
-            //         headers: { 'Content-Type': 'application/json' },
-            //         body: JSON.stringify({ username, password })
-            //     });
-            //     const data = await response.json();
-            //     if (response.ok) {
-            //         localStorage.setItem('authToken', data.token);
-            //         localStorage.setItem('userId', data.userId);
-            //         localStorage.setItem('username', data.username);
-            //         currentUserId = data.userId;
-            //         currentUsername = data.username;
-            //         authModal.classList.add('hidden');
-            //         updateUI();
-            //     } else {
-            //         authMessage.textContent = data.message || 'Login failed.';
-            //     }
-            // } catch (error) {
-            //     console.error("Login error:", error);
-            //     authMessage.textContent = 'An error occurred during login.';
-            // }
-            // --- END CONCEPTUAL BACKEND CALL ---
-
-            // Simulated login logic:
-            // For simplicity, we'll store users in localStorage. In a real app, this is insecure!
-            const users = JSON.parse(localStorage.getItem('simulatedUsers') || '{}');
-            if (users[username] && users[username].password === password) {
-                currentUserId = users[username].id;
-                currentUsername = username;
-                localStorage.setItem('userId', currentUserId);
-                localStorage.setItem('username', currentUsername);
-                // Simulate a token for conceptual backend calls
-                localStorage.setItem('authToken', 'dummy_token_for_' + currentUserId);
-                authModal.classList.add('hidden');
-                authMessage.textContent = '';
-                await updateUI(); // Use await here to ensure data is loaded before rendering
-            } else {
-                authMessage.textContent = 'Invalid username or password.';
+            authMessage.classList.remove('text-primary-green');
+            authMessage.classList.add('text-red-500');
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userId', data.userId);
+                    localStorage.setItem('username', data.email); // Store email as username
+                    authToken = data.token;
+                    currentUserId = data.userId;
+                    currentUsername = data.email;
+                    authModal.classList.add('hidden');
+                    authMessage.textContent = '';
+                    await updateUI(); // Load data and update UI after successful login
+                } else {
+                    authMessage.textContent = data.message || 'Login failed.';
+                }
+            } catch (error) {
+                console.error("Login error:", error);
+                authMessage.textContent = 'An error occurred during login. Is the server running?';
             }
         }
 
         /**
-         * Simulates user registration.
-         * In a real app, this would send credentials to your backend to create a new user.
+         * Handles user registration with custom backend.
          */
-        async function registerUser(username, password) {
+        async function registerUser(email, password) {
             authMessage.textContent = 'Registering...';
-            // --- CONCEPTUAL BACKEND CALL ---
-            // try {
-            //     const response = await fetch(`${API_BASE_URL}/auth/register`, {
-            //         method: 'POST',
-            //         headers: { 'Content-Type': 'application/json' },
-            //         body: JSON.stringify({ username, password })
-            //     });
-            //     const data = await response.json();
-            //     if (response.ok) {
-            //         localStorage.setItem('authToken', data.token);
-            //         localStorage.setItem('userId', data.userId);
-            //         localStorage.setItem('username', data.username);
-            //         currentUserId = data.userId;
-            //         currentUsername = data.username;
-            //         authModal.classList.add('hidden');
-            //         updateUI();
-            //     } else {
-            //         authMessage.textContent = data.message || 'Registration failed.';
-            //     }
-            // } catch (error) {
-            //     console.error("Registration error:", error);
-            //     authMessage.textContent = 'An error occurred during registration.';
-            // }
-            // --- END CONCEPTUAL BACKEND CALL ---
-
-            // Simulated registration logic:
-            const users = JSON.parse(localStorage.getItem('simulatedUsers') || '{}');
-            if (users[username]) {
-                authMessage.textContent = 'Username already exists.';
-                return;
+            authMessage.classList.remove('text-primary-green');
+            authMessage.classList.add('text-red-500');
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userId', data.userId);
+                    localStorage.setItem('username', data.email); // Store email as username
+                    authToken = data.token;
+                    currentUserId = data.userId;
+                    currentUsername = data.email;
+                    authModal.classList.add('hidden');
+                    authMessage.textContent = '';
+                    await updateUI(); // Load data and update UI after successful registration
+                } else {
+                    authMessage.textContent = data.message || 'Registration failed.';
+                }
+            } catch (error) {
+                console.error("Registration error:", error);
+                authMessage.textContent = 'An error occurred during registration. Is the server running?';
             }
-            const newUserId = `user_${Date.now()}`; // Simple unique ID
-            users[username] = { id: newUserId, password: password }; // Store password directly for simulation (INSECURE in real app!)
-            localStorage.setItem('simulatedUsers', JSON.stringify(users));
-
-            currentUserId = newUserId;
-            currentUsername = username;
-            localStorage.setItem('userId', currentUserId);
-            localStorage.setItem('username', currentUsername);
-            localStorage.setItem('authToken', 'dummy_token_for_' + currentUserId); // Simulate token
-            authModal.classList.add('hidden');
-            authMessage.textContent = '';
-            await updateUI(); // Use await here to ensure data is loaded before rendering
         }
 
         /**
@@ -742,12 +807,15 @@
             localStorage.removeItem('authToken');
             localStorage.removeItem('userId');
             localStorage.removeItem('username');
+            authToken = null;
             currentUserId = null;
             currentUsername = null;
             prayerData = {}; // Clear local prayer data on logout
             userSettings = { optionalPrayers: [] }; // Clear local settings on logout
-            updateUI();
+            updateUI(); // Update UI to logged-out state
             authMessage.textContent = 'Logged out successfully.';
+            authMessage.classList.remove('text-red-500');
+            authMessage.classList.add('text-primary-green');
             authModal.classList.remove('hidden'); // Show login modal after logout
         }
 
@@ -760,28 +828,35 @@
         async function addOptionalPrayer(prayerName) {
             if (!currentUserId) {
                 settingsMessage.textContent = "Please login to add optional prayers.";
+                settingsMessage.classList.remove('text-primary-green');
+                settingsMessage.classList.add('text-red-500');
                 return;
             }
             if (!prayerName) {
                 settingsMessage.textContent = "Prayer name cannot be empty.";
+                settingsMessage.classList.remove('text-primary-green');
+                settingsMessage.classList.add('text-red-500');
                 return;
             }
+
+            const normalizedPrayerName = prayerName.trim();
 
             if (!userSettings.optionalPrayers) {
                 userSettings.optionalPrayers = [];
             }
 
-            // Prevent duplicates
-            if (!userSettings.optionalPrayers.includes(prayerName)) {
-                userSettings.optionalPrayers.push(prayerName);
+            // Prevent duplicates (case-insensitive check)
+            if (!userSettings.optionalPrayers.some(p => p.toLowerCase() === normalizedPrayerName.toLowerCase())) {
+                userSettings.optionalPrayers.push(normalizedPrayerName);
                 await saveUserSettings();
-                await updateUI(); // Re-render UI to include new prayer
                 newOptionalPrayerInput.value = ''; // Clear input
-                settingsMessage.textContent = `"${prayerName}" added successfully.`;
+                settingsMessage.textContent = `"${normalizedPrayerName}" added successfully.`;
                 settingsMessage.classList.remove('text-red-500');
                 settingsMessage.classList.add('text-primary-green');
+                renderOptionalPrayersListInSettings(); // Refresh the list in the settings modal
+                await updateUI(); // Re-render main prayer cards and monthly overview
             } else {
-                settingsMessage.textContent = `"${prayerName}" already exists!`;
+                settingsMessage.textContent = `"${normalizedPrayerName}" already exists!`;
                 settingsMessage.classList.remove('text-primary-green');
                 settingsMessage.classList.add('text-red-500');
             }
@@ -794,16 +869,19 @@
         async function removeOptionalPrayer(prayerName) {
             if (!currentUserId) {
                 settingsMessage.textContent = "Please login to remove optional prayers.";
+                settingsMessage.classList.remove('text-primary-green');
+                settingsMessage.classList.add('text-red-500');
                 return;
             }
             if (!userSettings.optionalPrayers) return;
 
             userSettings.optionalPrayers = userSettings.optionalPrayers.filter(p => p !== prayerName);
             await saveUserSettings();
-            await updateUI(); // Re-render UI
             settingsMessage.textContent = `"${prayerName}" removed.`;
             settingsMessage.classList.remove('text-red-500');
             settingsMessage.classList.add('text-primary-green');
+            renderOptionalPrayersListInSettings(); // Refresh the list in the settings modal
+            await updateUI(); // Re-render main prayer cards and monthly overview
         }
 
         /**
@@ -832,7 +910,6 @@
             }
         }
 
-
         // --- Event Listeners ---
 
         prevDayBtn.addEventListener('click', () => {
@@ -851,6 +928,17 @@
                 updateUI();
             } else {
                 authMessage.textContent = "Please login to navigate dates.";
+                authModal.classList.remove('hidden');
+            }
+        });
+
+        // New: Today button event listener
+        todayButton.addEventListener('click', () => {
+            if (currentUserId) {
+                currentSelectedDate = new Date(); // Set to current date
+                updateUI();
+            } else {
+                authMessage.textContent = "Please login to use the 'Today' button.";
                 authModal.classList.remove('hidden');
             }
         });
@@ -892,18 +980,18 @@
 
         authForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            const username = usernameInput.value.trim();
+            const email = emailInput.value.trim();
             const password = passwordInput.value.trim();
 
-            if (!username || !password) {
-                authMessage.textContent = 'Please enter both username and password.';
+            if (!email || !password) {
+                authMessage.textContent = 'Please enter both email and password.';
                 return;
             }
 
             if (isLoginMode) {
-                await loginUser(username, password);
+                await loginUser(email, password);
             } else {
-                await registerUser(username, password);
+                await registerUser(email, password);
             }
         });
 
@@ -935,7 +1023,6 @@
             }
         });
 
-
         // --- Initialization ---
 
         /**
@@ -943,10 +1030,7 @@
          */
         function init() {
             // Check for existing login session
-            currentUserId = localStorage.getItem('userId');
-            currentUsername = localStorage.getItem('username');
-
-            if (currentUserId && currentUsername) {
+            if (currentUserId && authToken) {
                 updateUI(); // If logged in, load data and update UI
             } else {
                 // If not logged in, show login modal and clear prayer list
@@ -961,4 +1045,5 @@
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
+
 </html>

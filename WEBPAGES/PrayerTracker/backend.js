@@ -1,33 +1,45 @@
-// routes/api.js (Conceptual Backend Routes - NOT RUNNABLE HERE)
-// This file would contain your API routes, exported as an Express Router.
-
-// 1. Ensure you have these dependencies installed in your backend project:
-// npm install express mongoose bcryptjs jsonwebtoken dotenv cors
-
-// 2. Make sure your .env file is set up in your main server directory:
-// MONGO_URL="YOUR_MONGODB_CONNECTION_STRING_HERE"
-// JWT_SECRET="YOUR_SUPER_SECRET_KEY" // Use a strong, random string
-
+// server.js
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-// dotenv is typically loaded in the main server.js, but included here for clarity
-require('dotenv').config();
+const cors = require('cors'); // Required for cross-origin requests from your client
+const path = require('path'); // Import the path module
+require('dotenv').config(); // To load environment variables from .env file
 
-const router = express.Router(); // Create an Express Router
+const app = express();
+const PORT = process.env.PORT || 3000;
+const MONGO_URL = process.env.MONGO_URL; // Your MongoDB Cluster connection string
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey'; // Change this to a strong, random secret!
 
-const MONGO_URL = process.env.MONGO_URL; // MONGO_URL is needed for schema definitions if models are defined here
-const JWT_SECRET = process.env.JWT_SECRET;
+// --- Middleware ---
+app.use(cors()); // Enable CORS for all routes
+app.use(express.json()); // Enable JSON body parsing for incoming requests
+
+// Serve static files from the 'public' directory
+// Make sure your index.html is inside a folder named 'public'
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Route to serve the index.html file for the root URL
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+
+// --- MongoDB Connection ---
+mongoose.connect(MONGO_URL)
+    .then(() => console.log('MongoDB Connected Successfully!'))
+    .catch(err => console.error('MongoDB connection error:', err));
 
 // --- Mongoose Schemas and Models ---
 
 // User Schema
 const UserSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    registeredAt: { type: Date, default: Date.now }
-});
+    // Optional: You could add a username field if you want it separate from email
+    // username: { type: String, unique: true, sparse: true } 
+}, { timestamps: true });
 
 // Hash password before saving
 UserSchema.pre('save', async function(next) {
@@ -40,135 +52,214 @@ UserSchema.pre('save', async function(next) {
 const User = mongoose.model('User', UserSchema);
 
 // Prayer Data Schema
+// Stores prayer status for each day for a given user
 const PrayerDataSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    date: { type: String, required: true }, // YYYY-MM-DD
-    fajr: { type: Boolean, default: false },
-    dhuhr: { type: Boolean, default: false },
-    asr: { type: Boolean, default: false },
-    maghrib: { type: Boolean, default: false },
-    isha: { type: Boolean, default: false },
-    updatedAt: { type: Date, default: Date.now }
-});
+    date: { type: String, required: true }, //YYYY-MM-DD format
+    prayers: { type: Map, of: Boolean, default: {} } // e.g., { "Fajr": true, "Dhuhr": false, "Duha": true }
+}, { timestamps: true });
 
-// Ensure unique prayer data per user per day
+// Ensure unique combination of userId and date
 PrayerDataSchema.index({ userId: 1, date: 1 }, { unique: true });
 
 const PrayerData = mongoose.model('PrayerData', PrayerDataSchema);
+
+// User Settings Schema
+const UserSettingsSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+    optionalPrayers: { type: [String], default: [] } // Array of custom optional prayer names
+}, { timestamps: true });
+
+const UserSettings = mongoose.model('UserSettings', UserSettingsSchema);
 
 // --- Authentication Middleware ---
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
-    if (!token) return res.status(401).json({ message: 'Authentication token required' });
+    if (!token) {
+        return res.status(401).json({ message: 'Authentication token required' });
+    }
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) return res.status(403).json({ message: 'Invalid or expired token' });
+        if (err) {
+            return res.status(403).json({ message: 'Invalid or expired token' });
+        }
         req.user = user; // Attach user payload to request
         next();
     });
 };
 
-// --- API Routes (attached to the router) ---
+// --- API Routes ---
 
-// Register User
-router.post('/auth/register', async (req, res) => {
-    const { username, password } = req.body;
+// User Registration
+app.post('/api/auth/register', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required.' });
+    }
+
     try {
-        const existingUser = await User.findOne({ username });
+        const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ message: 'Username already exists' });
+            return res.status(409).json({ message: 'Email already registered.' });
         }
 
-        const newUser = new User({ username, password });
+        const newUser = new User({ email, password });
         await newUser.save();
 
-        const token = jwt.sign({ userId: newUser._id, username: newUser.username }, JWT_SECRET, { expiresIn: '1h' });
-        res.status(201).json({ message: 'User registered successfully', token, userId: newUser._id, username: newUser.username });
+        // Create initial settings for the new user
+        const newSettings = new UserSettings({ userId: newUser._id, optionalPrayers: [] });
+        await newSettings.save();
+
+        // Log in the user immediately after registration
+        const token = jwt.sign({ userId: newUser._id, email: newUser.email }, JWT_SECRET, { expiresIn: '1h' });
+        res.status(201).json({ 
+            message: 'User registered successfully. Logged in.', 
+            token, 
+            userId: newUser._id, 
+            email: newUser.email 
+        });
+
     } catch (error) {
         console.error('Registration error:', error);
-        res.status(500).json({ message: 'Server error during registration' });
+        // Handle Mongoose validation errors or other issues
+        if (error.code === 11000) { // Duplicate key error
+            return res.status(409).json({ message: 'Email already registered.' });
+        }
+        res.status(500).json({ message: 'Server error during registration.' });
     }
 });
 
-// Login User
-router.post('/auth/login', async (req, res) => {
-    const { username, password } = req.body;
+// User Login
+app.post('/api/auth/login', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required.' });
+    }
+
     try {
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ email });
         if (!user) {
-            return res.status(400).json({ message: 'Invalid username or password' });
+            return res.status(404).json({ message: 'User not found.' });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid username or password' });
+            return res.status(401).json({ message: 'Invalid credentials.' });
         }
 
-        const token = jwt.sign({ userId: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
-        res.status(200).json({ message: 'Logged in successfully', token, userId: user._id, username: user.username });
+        const token = jwt.sign({ userId: user._id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
+        res.status(200).json({ 
+            message: 'Logged in successfully.', 
+            token, 
+            userId: user._id, 
+            email: user.email 
+        });
+
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ message: 'Server error during login' });
+        res.status(500).json({ message: 'Server error during login.' });
     }
 });
 
-// Get Prayer Data for a User (for a specific date or all)
-router.get('/prayers/:userId', authenticateToken, async (req, res) => {
-    // Ensure the requested userId matches the authenticated user's ID
-    if (req.user.userId.toString() !== req.params.userId) { // Convert ObjectId to string for comparison
-        return res.status(403).json({ message: 'Unauthorized access to prayer data' });
+// Get all prayer data for a user
+app.get('/api/prayers/:userId', authenticateToken, async (req, res) => {
+    // Ensure the requested userId matches the authenticated user's userId
+    if (req.user.userId !== req.params.userId) {
+        return res.status(403).json({ message: 'Unauthorized access to prayer data.' });
     }
-    const { userId } = req.params;
-    const { date } = req.query; // Optional: get data for a specific date
 
     try {
-        let query = { userId };
-        if (date) {
-            query.date = date;
-            const prayer = await PrayerData.findOne(query);
-            return res.status(200).json(prayer || {}); // Return empty object if no data for date
-        } else {
-            // Fetch all prayer data for the user, format as { 'YYYY-MM-DD': {fajr: true, ...} }
-            const prayers = await PrayerData.find(query);
-            const formattedData = {};
-            prayers.forEach(p => {
-                formattedData[p.date] = {
-                    fajr: p.fajr,
-                    dhuhr: p.dhuhr,
-                    asr: p.asr,
-                    maghrib: p.maghrib,
-                    isha: p.isha
-                };
-            });
-            return res.status(200).json(formattedData);
-        }
+        const prayers = await PrayerData.find({ userId: req.params.userId });
+        // Transform data into the { "YYYY-MM-DD": { prayers: { ... } } } format
+        const formattedPrayers = prayers.reduce((acc, curr) => {
+            acc[curr.date] = curr.prayers;
+            return acc;
+        }, {});
+        res.status(200).json(formattedPrayers);
     } catch (error) {
         console.error('Error fetching prayer data:', error);
-        res.status(500).json({ message: 'Server error fetching prayer data' });
+        res.status(500).json({ message: 'Server error fetching prayer data.' });
     }
 });
 
-// Update/Create Prayer Data for a User and Date
-router.put('/prayers/:userId/:date', authenticateToken, async (req, res) => {
-    if (req.user.userId.toString() !== req.params.userId) { // Convert ObjectId to string for comparison
-        return res.status(403).json({ message: 'Unauthorized to update this prayer data' });
+// Update/Set prayer data for a specific date
+app.put('/api/prayers/:userId/:date', authenticateToken, async (req, res) => {
+    // Ensure the requested userId matches the authenticated user's userId
+    if (req.user.userId !== req.params.userId) {
+        return res.status(403).json({ message: 'Unauthorized access to prayer data.' });
     }
+
     const { userId, date } = req.params;
-    const { fajr, dhuhr, asr, maghrib, isha } = req.body;
+    const prayers = req.body; // Expects an object like { "Fajr": true, "Dhuhr": false }
+
+    if (!prayers || typeof prayers !== 'object') {
+        return res.status(400).json({ message: 'Invalid prayer data provided.' });
+    }
 
     try {
-        const updatedPrayer = await PrayerData.findOneAndUpdate(
-            { userId, date },
-            { fajr, dhuhr, asr, maghrib, isha, updatedAt: Date.now() },
-            { new: true, upsert: true } // Create if not exists, return new document
+        const updatedPrayerData = await PrayerData.findOneAndUpdate(
+            { userId: userId, date: date },
+            { $set: { prayers: prayers } }, // Use $set to update the 'prayers' map
+            { upsert: true, new: true } // Create if not exists, return updated document
         );
-        res.status(200).json({ message: 'Prayer data updated successfully', data: updatedPrayer });
+        res.status(200).json({ message: 'Prayer data updated successfully.', data: updatedPrayerData });
     } catch (error) {
         console.error('Error updating prayer data:', error);
-        res.status(500).json({ message: 'Server error updating prayer data' });
+        res.status(500).json({ message: 'Server error updating prayer data.' });
     }
 });
 
-module.exports = router; // Export the router
+// Get user settings
+app.get('/api/settings/:userId', authenticateToken, async (req, res) => {
+    // Ensure the requested userId matches the authenticated user's userId
+    if (req.user.userId !== req.params.userId) {
+        return res.status(403).json({ message: 'Unauthorized access to settings.' });
+    }
+
+    try {
+        const settings = await UserSettings.findOne({ userId: req.params.userId });
+        if (!settings) {
+            // If no settings found, return default empty settings
+            return res.status(200).json({ optionalPrayers: [] });
+        }
+        res.status(200).json(settings);
+    } catch (error) {
+        console.error('Error fetching user settings:', error);
+        res.status(500).json({ message: 'Server error fetching user settings.' });
+    }
+});
+
+// Update user settings
+app.put('/api/settings/:userId', authenticateToken, async (req, res) => {
+    // Ensure the requested userId matches the authenticated user's userId
+    if (req.user.userId !== req.params.userId) {
+        return res.status(403).json({ message: 'Unauthorized access to settings.' });
+    }
+
+    const { userId } = req.params;
+    const { optionalPrayers } = req.body; // Expects { optionalPrayers: ["Duha", "Witr"] }
+
+    if (!Array.isArray(optionalPrayers)) {
+        return res.status(400).json({ message: 'Invalid optionalPrayers format. Expected an array.' });
+    }
+
+    try {
+        const updatedSettings = await UserSettings.findOneAndUpdate(
+            { userId: userId },
+            { $set: { optionalPrayers: optionalPrayers } },
+            { upsert: true, new: true }
+        );
+        res.status(200).json({ message: 'User settings updated successfully.', data: updatedSettings });
+    } catch (error) {
+        console.error('Error updating user settings:', error);
+        res.status(500).json({ message: 'Server error updating user settings.' });
+    }
+});
+
+// --- Start Server ---
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Access client at: http://localhost:${PORT}/index.html (if serving static files)`);
+});
