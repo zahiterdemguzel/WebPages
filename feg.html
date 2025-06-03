@@ -184,15 +184,35 @@
         const yesBtn = document.getElementById('yesBtn');
         const reconciliationMessage = document.getElementById('reconciliationMessage');
         const mainContainer = document.getElementById('mainContainer');
+        const questionText = document.getElementById('questionText'); // Get the question element
+
         let noClickCount = 0;
         const maxNoClicks = 10;
         let yesBtnScale = 1;
         let isNoBtnAbsolute = false; // Flag to track if noBtn is absolutely positioned
 
+        // List of affectionate phrases
+        const affectionatePhrases = [
+            "Lütfen bebeğim, benimle barışır mısın?",
+            "Lütfen çiçeğim, benimle barışır mısın?",
+            "Lütfen aşkım, benimle barışır mısın?",
+            "Aşk, barışır mısın?",
+            "Güzel meleğim, barışır mısın?",
+            "Çok özledim, barışır mısın?",
+            "Aşk bahçem, barışır mısın?",
+            "Sütten, barışır mısın?",
+            "bebişim benim,  barışır mısın?",
+            "Son bir kez daha soruyorum, barışır mısın?"
+        ];
+
         noBtn.addEventListener('click', () => {
             noClickCount++;
 
             if (noClickCount < maxNoClicks) {
+                // Update the question text with an affectionate phrase
+                // Use modulo operator to cycle through phrases if clicks exceed phrase count
+                questionText.textContent = affectionatePhrases[(noClickCount - 1) % affectionatePhrases.length];
+
                 if (!isNoBtnAbsolute) {
                     // On the first click, make it absolute and set its current position
                     const noBtnRect = noBtn.getBoundingClientRect();
@@ -250,6 +270,7 @@
                 yesBtn.style.backgroundColor = '#6B7280'; // Change color to indicate it's disabled
                 yesBtn.textContent = 'Barışıyoruz! :)'; // Change text
                 yesBtn.style.transform = `scale(1.2)`; // Make it prominently large
+                questionText.classList.add('hidden'); // Hide the question text
             }
         });
 
@@ -260,6 +281,7 @@
             yesBtn.style.pointerEvents = 'none'; // Make Yes button unclickable
             yesBtn.style.backgroundColor = '#10B981'; // A more vibrant green
             yesBtn.style.transform = `scale(1.3)`; // Make it very large
+            questionText.classList.add('hidden'); // Hide the question text
         });
 
         // Adjust button positions on window resize to keep them within bounds
