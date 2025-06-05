@@ -37,17 +37,6 @@
             border: 2px solid #FFD700;
             /* Gold border for active flag */
         }
-
-        .template-list-item {
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .template-list-item:hover {
-            background-color: #f0f0f0;
-        }
     </style>
 </head>
 
@@ -98,17 +87,6 @@
                 </path>
             </svg>
             <span data-lang-key="saveProjectAs">Save Project As</span>
-        </button>
-
-        <button id="select-template-btn"
-            class="flex items-center px-3 py-2 rounded-md hover:bg-gray-600 transition duration-200">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 19V6l-2 2m2-2l2 2M9 6h7a2 2 0 012 2v8a2 2 0 01-2 2H9a2 2 0 01-2-2V6a2 2 0 012-2z">
-                </path>
-            </svg>
-            <span data-lang-key="selectTemplate">Select Template</span>
         </button>
 
         <button id="export-svg-btn"
@@ -252,21 +230,6 @@
         </div>
     </div>
 
-    <div id="template-modal-container"
-        class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-        <div id="template-modal-content" class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full mx-4">
-            <h2 id="template-modal-title" class="text-xl font-semibold mb-4 text-gray-800"
-                data-lang-key="selectTemplateTitle">Select Template</h2>
-            <div id="template-list" class="max-h-80 overflow-y-auto border border-gray-300 rounded-md p-2">
-            </div>
-            <div class="flex justify-end space-x-3 mt-6">
-                <button id="template-modal-cancel-btn"
-                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition duration-200">
-                    <span data-lang-key="cancelButton">Cancel</span>
-                </button>
-            </div>
-        </div>
-    </div>
 
     <div id="modal-container"
         class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
@@ -699,7 +662,6 @@
         const openProjectInput = document.getElementById('open-project-input');
         const saveProjectBtn = document.getElementById('save-project-btn');
         const saveProjectAsBtn = document.getElementById('save-project-as-btn');
-        const selectTemplateBtn = document.getElementById('select-template-btn'); // New button
         const exportSvgBtn = document.getElementById('export-svg-btn');
         const exportPngBtn = document.getElementById('export-png-btn');
         const clearCanvasBtn = document.getElementById('clear-canvas-btn');
@@ -715,12 +677,6 @@
         const flagEn = document.getElementById('flag-en');
         const flagTr = document.getElementById('flag-tr');
         const flagAr = document.getElementById('flag-ar');
-
-        // Template selection modal elements
-        const templateModalContainer = document.getElementById('template-modal-container');
-        const templateListDiv = document.getElementById('template-list');
-        const templateModalCancelBtn = document.getElementById('template-modal-cancel-btn');
-
 
         // --- Performance Optimization: Request Animation Frame for drawing ---
         let needsRedraw = false;
@@ -748,7 +704,6 @@
                 openProject: 'Open Project',
                 saveProject: 'Save Project',
                 saveProjectAs: 'Save Project As',
-                selectTemplate: 'Select Template', // New translation
                 exportSvg: 'Export SVG',
                 exportPng: 'Export PNG',
                 clear: 'Clear',
@@ -798,9 +753,6 @@
                 dontShowAgain: "Don't show again",
                 okButton: "OK",
                 cancelButton: "Cancel",
-                selectTemplateTitle: "Select a Template", // New translation
-                noTemplatesFound: "No templates found.", // New translation
-                templateLoadError: "Failed to load template:", // New translation
                 colorBlack: 'Black',
                 // colorWhite: 'White', // Removed
                 colorRed: 'Red',
@@ -819,7 +771,6 @@
                 openProject: 'Proje Aç',
                 saveProject: 'Projeyi Kaydet',
                 saveProjectAs: 'Projeyi Farklı Kaydet',
-                selectTemplate: 'Şablon Seç', // New translation
                 exportSvg: 'SVG Dışa Aktar',
                 exportPng: 'PNG Dışa Aktar',
                 clear: 'Temizle',
@@ -869,9 +820,6 @@
                 dontShowAgain: "Tekrar gösterme",
                 okButton: "Tamam",
                 cancelButton: "İptal",
-                selectTemplateTitle: "Şablon Seç", // New translation
-                noTemplatesFound: "Şablon bulunamadı.", // New translation
-                templateLoadError: "Şablon yüklenemedi:", // New translation
                 colorBlack: 'Siyah',
                 // colorWhite: 'Beyaz', // Removed
                 colorRed: 'Kırmızı',
@@ -890,7 +838,6 @@
                 openProject: 'فتح مشروع',
                 saveProject: 'حفظ المشروع',
                 saveProjectAs: 'حفظ المشروع باسم',
-                selectTemplate: 'تحديد قالب', // New translation
                 exportSvg: 'تصدير SVG',
                 exportPng: 'تصدير PNG',
                 clear: 'مسح',
@@ -940,9 +887,6 @@
                 dontShowAgain: "لا تظهر مرة أخرى",
                 okButton: "موافق",
                 cancelButton: "إلغاء",
-                selectTemplateTitle: "تحديد قالب", // New translation
-                noTemplatesFound: "لم يتم العثور على قوالب.", // New translation
-                templateLoadError: "فشل تحميل القالب:", // New translation
                 colorBlack: 'أسود',
                 // colorWhite: 'أبيض', // Removed
                 colorRed: 'أحمر',
@@ -997,6 +941,15 @@
                 flag.classList.remove('active');
             });
             document.getElementById(`flag-${currentLanguage}`).classList.add('active');
+
+            // Removed: Adjust text direction for Arabic
+            // if (currentLanguage === 'ar') {
+            //     document.body.style.direction = 'rtl';
+            //     document.body.style.textAlign = 'right';
+            // } else {
+            //     document.body.style.direction = 'ltr';
+            //     document.body.style.textAlign = 'left';
+            // }
         }
 
         // --- Functions ---
@@ -1610,7 +1563,7 @@
 
             // Tool actions (left click or single touch for paint/erase)
             if (currentTool === 'paint' || currentTool === 'erase') {
-                const effectiveTool = event.button === 0 ? currentTool : (currentTool === 'paint' ? 'erase' : 'paint');
+                const effectiveTool = event.button === 0 || (event.type === 'touchstart' && event.touches.length === 1) ? currentTool : (currentTool === 'paint' ? 'erase' : 'paint');
                 if (!strokeInProgress) {
                     pushUndoState();
                     strokeInProgress = true;
@@ -2355,77 +2308,6 @@
         }
         clearCanvasBtn.addEventListener('click', clearCanvas);
 
-        // --- Template Selection Functions ---
-        async function fetchTemplates() {
-            try {
-                const response = await fetch('http://localhost:3000/api/templates'); // Adjust URL if your backend is elsewhere
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const templates = await response.json();
-                populateTemplateList(templates);
-            } catch (error) {
-                console.error('Error fetching templates:', error);
-                templateListDiv.innerHTML = `<p class="text-gray-600">${translations[currentLanguage].noTemplatesFound}</p>`;
-                showMessageBox(translations[currentLanguage].errorTitle, `${translations[currentLanguage].templateLoadError} ${error.message}`, 'error');
-            }
-        }
-
-        function populateTemplateList(templates) {
-            templateListDiv.innerHTML = ''; // Clear previous list
-            if (templates.length === 0) {
-                templateListDiv.innerHTML = `<p class="text-gray-600">${translations[currentLanguage].noTemplatesFound}</p>`;
-                return;
-            }
-
-            const ul = document.createElement('ul');
-            ul.className = 'list-none p-0 m-0';
-
-            templates.forEach(templateName => {
-                const li = document.createElement('li');
-                li.className = 'template-list-item text-gray-800 hover:bg-gray-100 rounded-md mb-1';
-                li.textContent = templateName;
-                li.dataset.filename = templateName;
-                li.addEventListener('click', () => handleTemplateSelection(templateName));
-                ul.appendChild(li);
-            });
-            templateListDiv.appendChild(ul);
-        }
-
-        async function handleTemplateSelection(filename) {
-            templateModalContainer.classList.add('hidden'); // Hide the modal
-
-            const loadSelectedTemplate = async () => {
-                try {
-                    const response = await fetch(`http://localhost:3000/api/templates/${filename}`); // Adjust URL
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const fileContent = await response.text();
-                    loadObjFileContent(fileContent); // Use existing OBJ loader
-                    currentFilePath = filename; // Set current file path for save
-                    updateTitle();
-                    showMessageBox(translations[currentLanguage].successTitle, `${translations[currentLanguage].projectLoadedMessage} (${filename})`, 'info');
-                } catch (error) {
-                    console.error('Error loading template file:', error);
-                    showMessageBox(translations[currentLanguage].errorTitle, `${translations[currentLanguage].templateLoadError} ${filename}: ${error.message}`, 'error');
-                }
-            };
-
-            if (isModified) {
-                showMessageBox(translations[currentLanguage].unsavedChangesTitle, translations[currentLanguage].unsavedChangesMessage, 'question', true)
-                    .then(({ confirmed }) => {
-                        if (confirmed) {
-                            saveProject(true, () => loadSelectedTemplate());
-                        } else {
-                            loadSelectedTemplate();
-                        }
-                    });
-            } else {
-                loadSelectedTemplate();
-            }
-        }
-
         // --- Event Listeners ---
         // Unified pointer events for mouse and touch
         canvas.addEventListener('mousedown', handlePointerDown);
@@ -2660,17 +2542,6 @@
             flagEn.addEventListener('click', () => setLanguage('en'));
             flagTr.addEventListener('click', () => setLanguage('tr'));
             flagAr.addEventListener('click', () => setLanguage('ar'));
-
-            // Event listener for Select Template button
-            selectTemplateBtn.addEventListener('click', () => {
-                templateModalContainer.classList.remove('hidden');
-                fetchTemplates(); // Fetch templates when modal is opened
-            });
-
-            // Event listener for Template Modal Cancel button
-            templateModalCancelBtn.addEventListener('click', () => {
-                templateModalContainer.classList.add('hidden');
-            });
         };
 
     </script>
