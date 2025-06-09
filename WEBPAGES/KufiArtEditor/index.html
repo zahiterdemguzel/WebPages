@@ -640,7 +640,7 @@
         let faceColors = {}; // {faceIndex: "rgba(r,g,b,a)"}
         let selectedFaces = new Set();
 
-        let movePoints = null; // {faceIndex: {color: "rgba", pos: Point}}
+        let movePoints = null; // {pointKey: {color: "rgba", pos: Point}}
         let selectedPoints = new Set();
 
         let currentTool = 'paint';
@@ -791,28 +791,29 @@
                     `3) Switch to 'Move' mode: painted faces convert to points.\n` +
                     `   (If no faces are painted, white points appear at all face centers.)\n` +
                     `4) In 'Move' mode, select points (click or marquee) to drag or rotate.\n` +
-                    `   Points are drawn at a fixed size (e.g., 10px) in widget coordinates.\n` +
-                    `5) While selecting, a selection rectangle appears (unfilled).\n` +
-                    `6) Points snap to the nearest face when switching out of 'Move' mode.\n` +
-                    `7) Pan with middle mouse button, or left-click drag when no tool is active.\n` +
-                    `8) Zoom with Ctrl+scroll (zooms around cursor).\n` +
-                    `9) Undo/Redo with Ctrl+Z / Ctrl+Y.\n\n` +
+                    `   Hold Ctrl/Cmd while dragging a selection to duplicate the points.\n` +
+                    `5) Points are drawn at a fixed size (e.g., 10px) in widget coordinates.\n` +
+                    `6) While selecting, a selection rectangle appears (unfilled).\n` +
+                    `7) Points snap to the nearest face when switching out of 'Move' mode.\n` +
+                    `8) Pan with middle mouse button, or left-click drag when no tool is active.\n` +
+                    `9) Zoom with the scroll wheel (zooms around cursor).\n` +
+                    `10) Undo/Redo with Ctrl+Z / Ctrl+Y.\n\n` +
                     `Happy creating!`,
                 dontShowAgain: "Don't show again",
                 okButton: "OK",
                 cancelButton: "Cancel",
-                colorBlack: 'Black',
-                // colorWhite: 'White', // Removed
-                colorRed: 'Red',
-                colorGreen: 'Green',
-                colorBlue: 'Blue',
-                colorYellow: 'Yellow',
-                colorCyan: 'Cyan',
-                colorMagenta: 'Magenta',
-                colorOrange: 'Orange',
-                colorPurple: 'Purple',
-                colorBrown: 'Brown',
-                // colorGray: 'Gray', // Removed
+                // colorBlack: 'Black',
+                // colorWhite: 'White', 
+                // colorRed: 'Red',
+                // colorGreen: 'Green',
+                // colorBlue: 'Blue',
+                // colorYellow: 'Yellow',
+                // colorCyan: 'Cyan',
+                // colorMagenta: 'Magenta',
+                // colorOrange: 'Orange',
+                // colorPurple: 'Purple',
+                // colorBrown: 'Brown',
+                // colorGray: 'Gray', 
             },
             tr: {
                 loadObj: 'OBJ Yükle',
@@ -859,28 +860,29 @@
                     `3) 'Taşı' moduna geçin: boyalı yüzeyler noktalara dönüşür.\n` +
                     `   (Hiçbir yüzey boyanmamışsa, tüm yüzey merkezlerinde beyaz noktalar görünür.)\n` +
                     `4) 'Taşı' modunda, sürüklemek veya döndürmek için noktaları (tıklayarak veya seçim kutusuyla) seçin.\n` +
-                    `   Noktalar widget koordinatlarında sabit bir boyutta (örn. 10 piksel) çizilir.\n` +
-                    `5) Seçim yaparken bir seçim dikdörtgeni görünür (içi boş).\n` +
-                    `6) 'Taşı' modundan çıkarken noktalar en yakın yüzeye yapışır.\n` +
-                    `7) Orta fare tuşuyla veya hiçbir araç etkin değilken sol tıklama sürüklemesiyle kaydırın.\n` +
-                    `8) Ctrl+kaydırma ile yakınlaştırın (imleç etrafında yakınlaştırır).\n` +
-                    `9) Ctrl+Z / Ctrl+Y ile Geri Al/Yinele.\n\n` +
+                    `   Bir seçimi sürüklerken Ctrl/Cmd tuşunu basılı tutarak noktaları çoğaltın.\n` +
+                    `5) Noktalar widget koordinatlarında sabit bir boyutta (örn. 10 piksel) çizilir.\n` +
+                    `6) Seçim yaparken bir seçim dikdörtgeni görünür (içi boş).\n` +
+                    `7) 'Taşı' modundan çıkarken noktalar en yakın yüzeye yapışır.\n` +
+                    `8) Orta fare tuşuyla veya hiçbir araç etkin değilken sol tıklama sürüklemesiyle kaydırın.\n` +
+                    `9) Kaydırma tekerleği ile yakınlaştırın (imleç etrafında yakınlaştırır).\n` +
+                    `10) Ctrl+Z / Ctrl+Y ile Geri Al/Yinele.\n\n` +
                     `Mutlu yaratımlar!`,
                 dontShowAgain: "Tekrar gösterme",
                 okButton: "Tamam",
                 cancelButton: "İptal",
-                colorBlack: 'Siyah',
-                // colorWhite: 'Beyaz', // Removed
-                colorRed: 'Kırmızı',
-                colorGreen: 'Yeşil',
-                colorBlue: 'Mavi',
-                colorYellow: 'Sarı',
-                colorCyan: 'Camgöbeği',
-                colorMagenta: 'Macenta',
-                colorOrange: 'Turuncu',
-                colorPurple: 'Mor',
-                colorBrown: 'Kahverengi',
-                // colorGray: 'Gri', // Removed
+                // colorBlack: 'Siyah',
+                // colorWhite: 'Beyaz',
+                // colorRed: 'Kırmızı',
+                // colorGreen: 'Yeşil',
+                // colorBlue: 'Mavi',
+                // colorYellow: 'Sarı',
+                // colorCyan: 'Camgöbeği',
+                // colorMagenta: 'Macenta',
+                // colorOrange: 'Turuncu',
+                // colorPurple: 'Mor',
+                // colorBrown: 'Kahverengi',
+                // colorGray: 'Gri', 
             },
             ar: {
                 loadObj: 'تحميل OBJ',
@@ -927,27 +929,28 @@
                     `3) قم بالتبديل إلى وضع "النقل": تتحول الوجوه المطلية إلى نقاط.\n` +
                     `   (إذا لم يتم طلاء أي وجوه، تظهر نقاط بيضاء في جميع مراكز الوجوه.)\n` +
                     `4) في وضع "النقل"، حدد النقاط (بالنقر أو التحديد المستطيل) لسحبها أو تدويرها.\n` +
-                    `   يتم رسم النقاط بحجم ثابت (مثل 10 بكسل) في إحداثيات الأداة.\n` +
-                    `5) أثناء التحديد، يظهر مستطيل التحديد (غير مملوء).\n` +
-                    `6) تلتصق النقاط بأقرب وجه عند التبديل من وضع "النقل".\n` +
-                    `7) قم بالتحريك بزر الفأرة الأوسط، أو السحب بالزر الأيسر عندما لا تكون أي أداة نشطة.\n` +
-                    `8) قم بالتكبير/التصغير باستخدام Ctrl+scroll (يكبر حول المؤشر).\n` +
-                    `9) تراجع/إعادة باستخدام Ctrl+Z / Ctrl+Y.\n\n` +
+                    `   استمر في الضغط على Ctrl/Cmd أثناء سحب التحديد لتكرار النقاط.\n` +
+                    `5) يتم رسم النقاط بحجم ثابت (مثل 10 بكسل) في إحداثيات الأداة.\n` +
+                    `6) أثناء التحديد، يظهر مستطيل التحديد (غير مملوء).\n` +
+                    `7) تلتصق النقاط بأقرب وجه عند التبديل من وضع "النقل".\n` +
+                    `8) قم بالتحريك بزر الفأرة الأوسط، أو السحب بالزر الأيسر عندما لا تكون أي أداة نشطة.\n` +
+                    `9) قم بالتكبير/التصغير باستخدام عجلة التمرير (يكبر حول المؤشر).\n` +
+                    `10) تراجع/إعادة باستخدام Ctrl+Z / Ctrl+Y.\n\n` +
                     `استمتع بالإبداع!`,
                 dontShowAgain: "لا تظهر مرة أخرى",
                 okButton: "موافق",
                 cancelButton: "إلغاء",
-                colorBlack: 'أسود',
+                // colorBlack: 'أسود',
                 // colorWhite: 'أبيض', // Removed
-                colorRed: 'أحمر',
-                colorGreen: 'أخضر',
-                colorBlue: 'أزرق',
-                colorYellow: 'أصفر',
-                colorCyan: 'سماوي',
-                colorMagenta: 'أرجواني',
-                colorOrange: 'برتقالي',
-                colorPurple: 'بنفسجي',
-                colorBrown: 'بني',
+                // colorRed: 'أحمر',
+                // colorGreen: 'أخضر',
+                // colorBlue: 'أزرق',
+                // colorYellow: 'أصفر',
+                // colorCyan: 'سماوي',
+                // colorMagenta: 'أرجواني',
+                // colorOrange: 'برتقالي',
+                // colorPurple: 'بنفسجي',
+                // colorBrown: 'بني',
                 // colorGray: 'رمادي', // Removed
             }
         };
@@ -1943,14 +1946,54 @@
                     isMovingSelection = true;
                     moveStartPos = pos;
                     moveDelta = new Point(0, 0);
-                    if (movePoints) {
+
+                    // MODIFIED: Check for Ctrl/Cmd key to duplicate points
+                    const isDuplicating = (event.ctrlKey || event.metaKey) && movePoints && selectedPoints.size > 0;
+
+                    if (isDuplicating) {
+                        // --- DUPLICATION LOGIC ---
+                        const newSelectedPoints = new Set();
+                        let maxKey = -1;
+                        if (Object.keys(movePoints).length > 0) {
+                            maxKey = Math.max(...Object.keys(movePoints).map(Number));
+                        }
+
+                        // Duplicate each selected point
+                        for (const key of selectedPoints) {
+                            const originalData = movePoints[key];
+                            if (originalData) {
+                                const newKey = ++maxKey;
+                                // Create a duplicate point at the same location
+                                movePoints[newKey] = {
+                                    color: originalData.color,
+                                    pos: new Point(originalData.pos.x, originalData.pos.y) // New Point object
+                                };
+                                newSelectedPoints.add(newKey);
+                            }
+                        }
+
+                        // The new duplicated points are now the selection
+                        selectedPoints = newSelectedPoints;
+
+                        // Set up the move operation to act on the new points
                         moveOriginalState = Object.fromEntries(
-                            Array.from(selectedPoints).map(key => [key, movePoints[key].pos])
+                            Array.from(selectedPoints).map(key => [key, new Point(movePoints[key].pos.x, movePoints[key].pos.y)])
                         );
                         moveOriginalSelected = new Set(selectedPoints);
+
+                        onProjectModified(); // Mark as modified since we added data
+
                     } else {
-                        moveOriginalState = { ...faceColors };
-                        moveOriginalSelected = new Set(selectedFaces);
+                        // --- REGULAR MOVE LOGIC ---
+                        if (movePoints) {
+                            moveOriginalState = Object.fromEntries(
+                                Array.from(selectedPoints).map(key => [key, movePoints[key].pos])
+                            );
+                            moveOriginalSelected = new Set(selectedPoints);
+                        } else { // moving faces
+                            moveOriginalState = { ...faceColors };
+                            moveOriginalSelected = new Set(selectedFaces);
+                        }
                     }
                 } else { // Start selection or pan canvas if no selection/gizmo clicked
                     isSelecting = true;
@@ -2182,18 +2225,23 @@
             const mouseX = event.clientX - rect.left;
             const mouseY = event.clientY - rect.top;
 
-            // Calculate mouse position in the current "viewport" coordinates (after base transform, before user pan/zoom)
-            // screen_x = (model_x_after_base * zoom) + panOffset.x
-            // screen_y = (model_y_after_base * zoom) + panOffset.y
-            const modelX = (mouseX - panOffset.x) / zoom;
-            const modelY = (mouseY - panOffset.y) / zoom;
-
             const factor = event.deltaY > 0 ? 0.9 : 1.1; // Adjust zoom speed here
+
+            // Model-space coordinates of the mouse
+            const [invT, ok] = computeTransform().inverted();
+            if (!ok) return;
+
+            const mouseModel = invT.map(new Point(mouseX, mouseY));
+
             zoom *= factor;
 
-            // Update panOffset to keep the model point under the mouse cursor
-            panOffset.x = mouseX - (modelX * zoom);
-            panOffset.y = mouseY - (modelY * zoom);
+            // Recalculate transform and find where the mouse position *would* be with the new zoom
+            const T2 = computeTransform();
+            const mouseScreenNew = T2.map(mouseModel);
+
+            // Adjust pan offset by the difference
+            panOffset.x -= (mouseScreenNew.x - mouseX);
+            panOffset.y -= (mouseScreenNew.y - mouseY);
 
             requestRedraw(); // Use requestRedraw
         }
@@ -2721,19 +2769,14 @@
 
         colors.forEach((col, index) => {
             const button = document.createElement('button');
-            button.textContent = translations[currentLanguage][`color${col.name}`]; // Set initial translated text
-            button.className = `flex flex-col items-center justify-center p-2 rounded-md transition duration-200 text-white text-sm`;
+            button.textContent = translations[currentLanguage][`color${col.name}`];
+            // increase vertical padding to make buttons taller
+            button.className = `flex flex-col items-center justify-center py-4 px-2 rounded-md transition duration-200 text-white text-sm`;
             button.style.backgroundColor = col.color;
-            // Adjust text color for light backgrounds
             if (['White', 'Yellow', 'Cyan'].includes(col.name)) {
-                button.style.color = 'rgba(60, 60, 60, 1)'; // Darker text for light colors
+                button.style.color = 'rgba(60, 60, 60, 1)';
             }
-            if (col.name === 'Red') { // Default selected color
-                button.classList.add('border-2', 'border-yellow-400');
-                fillColor = col.color;
-            } else {
-                button.classList.add('border-2', 'border-transparent', 'hover:border-gray-600');
-            }
+            button.classList.add('border-2', 'border-transparent', 'hover:border-gray-600');
             button.addEventListener('click', () => {
                 fillColor = col.color;
                 document.querySelectorAll('#color-palette button').forEach(btn => {
