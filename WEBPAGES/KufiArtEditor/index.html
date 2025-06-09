@@ -15,6 +15,39 @@
             /* Prevent body scroll */
         }
 
+        /* Styles for the widget */
+        #obj-generator-widget {
+            /*MODIFIED: Use flexbox for centering */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            padding: 2rem;
+            /* Optional: adds space on small screens */
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6);
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+        }
+
+        /* MODIFIED: Renamed from .widget-content to match the class in your JS */
+        .obj-generator-widget-content {
+            width: 90%;
+            max-width: 900px;
+            /* This prevents the widget from growing too large on wide screens */
+        }
+
+        .widget-content {
+            width: 90%;
+            max-width: 900px;
+        }
+
         canvas {
             touch-action: none;
             /* Disable default touch actions for custom pan/zoom */
@@ -52,6 +85,16 @@
                 </path>
             </svg>
             <span data-lang-key="loadObj">Load OBJ</span>
+        </button>
+        <button id="generate-obj-button"
+            class="flex items-center px-3 py-2 rounded-md hover:bg-gray-600 transition duration-200">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                </path>
+            </svg>
+            <span data-lang-key="generateObj">Generate OBJ</span>
         </button>
         <input id="load-obj-input" type="file" accept=".obj" class="hidden">
 
@@ -545,7 +588,7 @@
                 };
 
                 const handleCancel = () => {
-                    modalContainer.classList.add('hidden');
+                    messageBoxContainer.classList.add('hidden');
                     messageBoxOkBtn.removeEventListener('click', handleOk);
                     messageBoxCancelBtn.removeEventListener('click', handleCancel);
                     resolve({ confirmed: false, checkboxChecked: messageBoxCheckbox.checked });
@@ -659,6 +702,9 @@
 
         const loadObjButton = document.getElementById('load-obj-button'); // Get the button
         const loadObjInput = document.getElementById('load-obj-input');
+
+        const generateObjButton = document.getElementById('generate-obj-button'); // Get the button
+
         const openProjectButton = document.getElementById('open-project-button'); // Get the button
         const openProjectInput = document.getElementById('open-project-input');
         const saveProjectBtn = document.getElementById('save-project-btn');
@@ -702,6 +748,7 @@
         const translations = {
             en: {
                 loadObj: 'Load OBJ',
+                generateObj: 'Generate OBJ',
                 openProject: 'Open Project',
                 saveProject: 'Save Project',
                 saveProjectAs: 'Save Project As',
@@ -769,6 +816,7 @@
             },
             tr: {
                 loadObj: 'OBJ Yükle',
+                generateObj: 'OBJ Oluştur',
                 openProject: 'Proje Aç',
                 saveProject: 'Projeyi Kaydet',
                 saveProjectAs: 'Projeyi Farklı Kaydet',
@@ -836,6 +884,7 @@
             },
             ar: {
                 loadObj: 'تحميل OBJ',
+                generateObj: 'إنشاء OBJ',
                 openProject: 'فتح مشروع',
                 saveProject: 'حفظ المشروع',
                 saveProjectAs: 'حفظ المشروع باسم',
@@ -902,7 +951,237 @@
                 // colorGray: 'رمادي', // Removed
             }
         };
+        function showObjGenerator() {
+            return new Promise((resolve, reject) => {
+                // --- 1. Create Widget HTML ---
+                const widgetContainer = document.createElement('div');
+                widgetContainer.id = 'obj-generator-widget'; // For identification
+                widgetContainer.className = 'obj-generator-widget-container';
+                widgetContainer.innerHTML = `
+                <div class="obj-generator-widget-content bg-gray-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-700">
+                    <div class="flex justify-between items-center p-5 border-b border-gray-700">
+                        <h2 class="text-xl font-semibold text-white">Mesh Generator</h2>
+                        <button class="widget-close-btn text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
+                    </div>
+                    <div class="flex flex-col md:flex-row p-6 gap-6 overflow-y-auto">
+                        <div class="w-full md:w-1/3 space-y-6">
+                            <div>
+                                <label for="widget-shapeType" class="block text-sm font-medium text-gray-400 mb-2">Shape Type</label>
+                                <select id="widget-shapeType" class="widget-shape-select w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-cyan-500 focus:border-cyan-500">
+                                    <option value="grid" selected>Grid</option>
+                                    <option value="circle">Circle</option>
+                                    <option value="triangle">Triangle</option>
+                                    <option value="isoCube">Isometric Cube (2D)</option>
+                                    <option value="interlinkedSquares">Interlinked Squares</option>
+                                </select>
+                            </div>
+                            <!-- Parameter Groups -->
+                            <div data-param-group="grid" class="space-y-4">
+                                <h3 class="font-semibold border-b border-gray-700 pb-2">Grid Parameters</h3>
+                                <div><label for="widget-widthSegments" class="block text-sm font-medium text-gray-400">Width Segments</label><input type="number" id="widget-widthSegments" data-input="widthSegments" value="10" min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg mt-1 p-2 text-white"></div>
+                                <div><label for="widget-heightSegments" class="block text-sm font-medium text-gray-400">Height Segments</label><input type="number" id="widget-heightSegments" data-input="heightSegments" value="10" min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg mt-1 p-2 text-white"></div>
+                            </div>
+                            <div data-param-group="circle" class="hidden space-y-4">
+                                <h3 class="font-semibold border-b border-gray-700 pb-2">Circle Parameters</h3>
+                                <div><label for="widget-thetaSegments" class="block text-sm font-medium text-gray-400">Edge Segments</label><input type="number" id="widget-thetaSegments" data-input="thetaSegments" value="32" min="3" class="w-full bg-gray-700 border border-gray-600 rounded-lg mt-1 p-2 text-white"></div>
+                                <div><label for="widget-phiSegments" class="block text-sm font-medium text-gray-400">Radial Segments</label><input type="number" id="widget-phiSegments" data-input="phiSegments" value="5" min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg mt-1 p-2 text-white"></div>
+                            </div>
+                            <div data-param-group="triangle" class="hidden space-y-4">
+                                <h3 class="font-semibold border-b border-gray-700 pb-2">Triangle Parameters</h3>
+                                <div><label for="widget-triangleLoops" class="block text-sm font-medium text-gray-400">Loop Segments</label><input type="number" id="widget-triangleLoops" data-input="triangleLoops" value="4" min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg mt-1 p-2 text-white"></div>
+                                <div><label for="widget-triangleRadial" class="block text-sm font-medium text-gray-400">Radial Segments</label><input type="number" id="widget-triangleRadial" data-input="triangleRadial" value="4" min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg mt-1 p-2 text-white"></div>
+                            </div>
+                            <div data-param-group="isoCube" class="hidden space-y-4">
+                                <h3 class="font-semibold border-b border-gray-700 pb-2">Isometric Cube Parameters</h3>
+                                <div><label for="widget-isoSegments" class="block text-sm font-medium text-gray-400">Segments</label><input type="number" id="widget-isoSegments" data-input="isoSegments" value="2" min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg mt-1 p-2 text-white"></div>
+                            </div>
+                             <div data-param-group="interlinkedSquares" class="hidden space-y-4">
+                                <h3 class="font-semibold border-b border-gray-700 pb-2">Interlinked Squares</h3>
+                                <div><label for="widget-squaresHorizontalSegments" class="block text-sm font-medium text-gray-400">Horizontal Segments</label><input type="number" id="widget-squaresHorizontalSegments" data-input="squaresHorizontalSegments" value="40" min="2" class="w-full bg-gray-700 border border-gray-600 rounded-lg mt-1 p-2 text-white"></div>
+                                <div><label for="widget-squaresVerticalSegments" class="block text-sm font-medium text-gray-400">Vertical Segments</label><input type="number" id="widget-squaresVerticalSegments" data-input="squaresVerticalSegments" value="40" min="2" class="w-full bg-gray-700 border border-gray-600 rounded-lg mt-1 p-2 text-white"></div>
+                                <div><label for="widget-squaresThickness" class="block text-sm font-medium text-gray-400">Thickness (in segments)</label><input type="number" id="widget-squaresThickness" data-input="squaresThickness" value="5" min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg mt-1 p-2 text-white"></div>
+                                <div><label for="widget-squaresOffset" class="block text-sm font-medium text-gray-400">Offset (in segments)</label><input type="number" id="widget-squaresOffset" data-input="squaresOffset" value="4" min="0" class="w-full bg-gray-700 border border-gray-600 rounded-lg mt-1 p-2 text-white"></div>
+                            </div>
+                        </div>
+                        <div class="w-full md:w-2/3 flex items-center justify-center bg-gray-900 rounded-lg p-2 min-h-[300px]">
+                            <canvas class="widget-preview-canvas"></canvas>
+                        </div>
+                    </div>
+                    <div class="flex justify-end items-center p-5 border-t border-gray-700 bg-gray-800/50">
+                        <button class="widget-cancel-btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg transition duration-300 mr-4">Cancel</button>
+                        <button class="widget-accept-btn bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">Accept</button>
+                    </div>
+                </div>
+            `;
+                document.body.appendChild(widgetContainer);
+                document.body.style.overflow = 'hidden';
 
+                // --- 2. Create Widget Logic ---
+                const widgetLogic = {
+                    // DOM Elements
+                    closeBtn: widgetContainer.querySelector('.widget-close-btn'),
+                    cancelBtn: widgetContainer.querySelector('.widget-cancel-btn'),
+                    acceptBtn: widgetContainer.querySelector('.widget-accept-btn'),
+                    shapeSelect: widgetContainer.querySelector('.widget-shape-select'),
+                    canvas: widgetContainer.querySelector('.widget-preview-canvas'),
+                    ctx: widgetContainer.querySelector('.widget-preview-canvas').getContext('2d'),
+                    paramGroups: widgetContainer.querySelectorAll('[data-param-group]'),
+                    inputs: widgetContainer.querySelectorAll('input[type="number"]'),
+
+                    // State
+                    currentObjData: '',
+
+                    // --- Methods ---
+                    init() {
+                        this.closeBtn.onclick = () => this.destroy(false);
+                        this.cancelBtn.onclick = () => this.destroy(false);
+                        this.acceptBtn.onclick = () => this.destroy(true);
+                        widgetContainer.onclick = (e) => {
+                            if (e.target === widgetContainer) this.destroy(false);
+                        };
+                        this.shapeSelect.onchange = () => this.updateUI();
+
+                        this.inputs.forEach(input => {
+                            input.oninput = () => this.generate();
+                            input.onwheel = (e) => {
+                                e.preventDefault();
+                                const step = e.deltaY < 0 ? 1 : -1;
+                                const currentValue = parseInt(input.value, 10);
+                                const min = parseInt(input.min, 10);
+                                let newValue = currentValue + step;
+                                if (!isNaN(min) && newValue < min) newValue = min;
+                                input.value = newValue;
+                                input.dispatchEvent(new Event('input', { bubbles: true }));
+                            };
+                        });
+
+                        setTimeout(() => this.setupCanvas(), 0);
+                        this.updateUI();
+                    },
+
+                    destroy(isAccepted) {
+                        document.body.style.overflow = 'auto';
+                        document.body.removeChild(widgetContainer);
+                        if (isAccepted) {
+                            resolve(this.currentObjData);
+                        } else {
+                            reject(new Error('User cancelled.'));
+                        }
+                    },
+
+                    setupCanvas() {
+                        const container = this.canvas.parentElement;
+                        const size = Math.min(container.clientWidth, container.clientHeight) * 0.95;
+                        this.canvas.width = size;
+                        this.canvas.height = size;
+                        this.generate();
+                    },
+
+                    updateUI() {
+                        const selectedType = this.shapeSelect.value;
+                        this.paramGroups.forEach(group => {
+                            group.classList.toggle('hidden', group.dataset.paramGroup !== selectedType);
+                        });
+                        this.generate();
+                    },
+
+                    generate() {
+                        if (!this.canvas.width) return;
+                        try {
+                            const shapeType = this.shapeSelect.value;
+                            const values = {};
+                            this.inputs.forEach(input => values[input.dataset.input] = input.value);
+
+                            let data;
+                            if (shapeType === 'grid') data = this.generateGrid(values);
+                            else if (shapeType === 'circle') data = this.generateCircle(values);
+                            else if (shapeType === 'triangle') data = this.generateTriangle(values);
+                            else if (shapeType === 'isoCube') data = this.generateIsoCube(values);
+                            else if (shapeType === 'interlinkedSquares') data = this.generateInterlinkedSquares(values);
+
+                            this.currentObjData = data.obj;
+                            this.drawPreview(data.vertices, data.faces);
+                        } catch (error) {
+                            console.error("Generation Error:", error);
+                            this.currentObjData = '';
+                            if (this.ctx) this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                        }
+                    },
+
+                    drawPreview(vertices, faces) {
+                        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                        this.ctx.strokeStyle = '#22d3ee'; this.ctx.lineWidth = 1.5; this.ctx.lineCap = 'round';
+                        if (vertices.length === 0) return;
+                        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+                        vertices.forEach(v => { minX = Math.min(minX, v.x); maxX = Math.max(maxX, v.x); minY = Math.min(minY, v.y); maxY = Math.max(maxY, v.y); });
+                        const shapeW = maxX - minX, shapeH = maxY - minY, shapeCX = minX + shapeW / 2, shapeCY = minY + shapeH / 2;
+                        const scale = Math.min((this.canvas.width - 40) / shapeW, (this.canvas.height - 40) / shapeH);
+                        const transform = (v) => ({ x: (v.x - shapeCX) * scale + this.canvas.width / 2, y: -(v.y - shapeCY) * scale + this.canvas.height / 2 });
+                        this.ctx.beginPath();
+                        const drawnEdges = new Set();
+                        faces.forEach(face => {
+                            for (let i = 0; i < face.length; i++) {
+                                const i1 = face[i], i2 = face[(i + 1) % face.length], v1 = vertices[i1], v2 = vertices[i2];
+                                const edgeKey = [i1, i2].sort().join('-');
+                                if (v1 && v2 && !drawnEdges.has(edgeKey)) {
+                                    drawnEdges.add(edgeKey);
+                                    const p1 = transform(v1), p2 = transform(v2);
+                                    this.ctx.moveTo(p1.x, p1.y); this.ctx.lineTo(p2.x, p2.y);
+                                }
+                            }
+                        });
+                        this.ctx.stroke();
+                    },
+
+                    // --- Generation Functions (FIX: COORDINATE SYSTEM) ---
+                    generateInterlinkedSquares(v) {
+                        const hSegs = parseInt(v.squaresHorizontalSegments), vSegs = parseInt(v.squaresVerticalSegments);
+                        const thicknessInSegs = parseInt(v.squaresThickness), offsetInSegs = parseInt(v.squaresOffset);
+                        const totalHSegs = hSegs + Math.abs(offsetInSegs) * 2, totalVSegs = vSegs + Math.abs(offsetInSegs) * 2;
+                        let vertices = [], faces = [], gridMap = Array(totalVSegs + 1).fill(null).map(() => Array(totalHSegs + 1).fill(-1));
+                        let vertCounter = 0;
+                        const isInsideRing = (p, o, s, t) => { const cX = Math.abs(p.x - totalHSegs / 2 - o.x), cY = Math.abs(p.y - totalVSegs / 2 - o.y); return Math.max(cX, cY) <= s && Math.max(cX, cY) > s - t; };
+                        const size = Math.min(hSegs, vSegs) / 2, r1Off = { x: 0, y: 0 }, r2Off = { x: offsetInSegs, y: offsetInSegs };
+                        const angle45 = Math.PI / 4, cos45 = Math.cos(angle45), sin45 = Math.sin(angle45);
+                        for (let i = 0; i <= totalVSegs; i++) for (let j = 0; j <= totalHSegs; j++) if (isInsideRing({ x: j, y: i }, r1Off, size, thicknessInSegs) || isInsideRing({ x: j, y: i }, r2Off, size, thicknessInSegs)) { const wX = (j / totalHSegs) * 2 - 1, wY = (i / totalVSegs) * 2 - 1; vertices.push({ x: wX * cos45 + wY * sin45, y: -wX * sin45 + wY * cos45 }); gridMap[i][j] = vertCounter++; }
+                        for (let i = 0; i < totalVSegs; i++) for (let j = 0; j < totalHSegs; j++) { const i1 = gridMap[i][j], i2 = gridMap[i][j + 1], i3 = gridMap[i + 1][j + 1], i4 = gridMap[i + 1][j]; if (i1 !== -1 && i2 !== -1 && i3 !== -1 && i4 !== -1) faces.push([i1, i2, i3, i4]); }
+                        vertices = vertices.map(v => ({ x: v.y, y: -v.x }));
+                        let obj = `# Interlinked Squares\n`; vertices.forEach(v => obj += `v ${v.x.toFixed(6)} 0.000000 ${v.y.toFixed(6)}\n`); faces.forEach(f => obj += `f ${f.map(i => i + 1).join(' ')}\n`); return { vertices, faces, obj };
+                    },
+                    generateGrid(v) {
+                        const wSegs = parseInt(v.widthSegments), hSegs = parseInt(v.heightSegments); let vertices = [], faces = [];
+                        for (let i = 0; i <= hSegs; i++)for (let j = 0; j <= wSegs; j++)vertices.push({ x: j / wSegs, y: i / hSegs });
+                        for (let i = 0; i < hSegs; i++)for (let j = 0; j < wSegs; j++)faces.push([i * (wSegs + 1) + j, i * (wSegs + 1) + j + 1, (i + 1) * (wSegs + 1) + j + 1, (i + 1) * (wSegs + 1) + j]);
+                        let obj = `# Grid\n`; vertices.forEach(v => obj += `v ${v.x.toFixed(6)} 0.000000 ${v.y.toFixed(6)}\n`); faces.forEach(f => obj += `f ${f.map(i => i + 1).join(' ')}\n`); return { vertices, faces, obj };
+                    },
+                    generateCircle(v) {
+                        const tSegs = parseInt(v.thetaSegments), pSegs = parseInt(v.phiSegments); let vertices = [], faces = [];
+                        for (let i = 0; i <= pSegs; i++) { const r = (i / pSegs) * 0.5; for (let j = 0; j < tSegs; j++)vertices.push({ x: Math.cos((j / tSegs) * Math.PI * 2) * r, y: Math.sin((j / tSegs) * Math.PI * 2) * r }); }
+                        for (let i = 0; i < pSegs; i++)for (let j = 0; j < tSegs; j++)faces.push([i * tSegs + j, i * tSegs + ((j + 1) % tSegs), (i + 1) * tSegs + ((j + 1) % tSegs), (i + 1) * tSegs + j]);
+                        let obj = `# Circle\n`; vertices.forEach(v => obj += `v ${v.x.toFixed(6)} 0.000000 ${v.y.toFixed(6)}\n`); faces.forEach(f => obj += `f ${f.map(i => i + 1).join(' ')}\n`); return { vertices, faces, obj };
+                    },
+                    generateTriangle(v) {
+                        const l = parseInt(v.triangleLoops), r = parseInt(v.triangleRadial); let vertices = [], faces = [], m = new Map();
+                        const gV = (v) => { const k = `${v.x.toFixed(5)}_${v.y.toFixed(5)}`; if (m.has(k)) return m.get(k); const i = vertices.length; m.set(k, i); vertices.push(v); return i; };
+                        const c = [{ x: 0, y: 0.5 }, { x: Math.sqrt(3) / 4, y: -0.25 }, { x: -Math.sqrt(3) / 4, y: -0.25 }], ce = { x: 0, y: 0 };
+                        const d = [[ce, c[0], c[1]], [ce, c[1], c[2]], [ce, c[2], c[0]]];
+                        const le = (p1, p2, t) => ({ x: p1.x * (1 - t) + p2.x * t, y: p1.y * (1 - t) + p2.y * t });
+                        d.forEach(([c1, c2, c3]) => { for (let i = 0; i < r; i++) { const p1 = le(c1, c2, i / r), p2 = le(c1, c3, i / r), p3 = le(c1, c2, (i + 1) / r), p4 = le(c1, c3, (i + 1) / r); for (let j = 0; j < l; j++)faces.push([gV(le(p1, p2, j / l)), gV(le(p1, p2, (j + 1) / l)), gV(le(p3, p4, (j + 1) / l)), gV(le(p3, p4, j / l))]); } });
+                        let obj = `# Triangle\n`; vertices.forEach(v => obj += `v ${v.x.toFixed(6)} 0.000000 ${v.y.toFixed(6)}\n`); faces.forEach(f => obj += `f ${f.map(i => i + 1).join(' ')}\n`); return { vertices, faces, obj };
+                    },
+                    generateIsoCube(v) {
+                        const s = parseInt(v.isoSegments); let vertices = [], faces = [], m = new Map();
+                        const gV = (v) => { const k = `${v.x.toFixed(5)}_${v.y.toFixed(5)}`; if (m.has(k)) return m.get(k); const i = vertices.length; m.set(k, i); vertices.push(v); return i; };
+                        const h = 0.5, w = Math.sqrt(3) / 4, c = { t: { x: 0, y: h }, tr: { x: w, y: h / 2 }, tl: { x: -w, y: h / 2 }, c: { x: 0, y: 0 }, br: { x: w, y: -h / 2 }, bl: { x: -w, y: -h / 2 }, b: { x: 0, y: -h } };
+                        const d = [[c.c, c.tr, c.t, c.tl], [c.b, c.c, c.tl, c.bl], [c.b, c.br, c.tr, c.c]];
+                        const le = (p1, p2, t) => ({ x: p1.x * (1 - t) + p2.x * t, y: p1.y * (1 - t) + p2.y * t });
+                        d.forEach(([p0, p1, p11, p01]) => { for (let i = 0; i < s; i++)for (let j = 0; j < s; j++) { faces.push([gV(le(le(p0, p01, i / s), le(p1, p11, i / s), j / s)), gV(le(le(p0, p01, i / s), le(p1, p11, i / s), (j + 1) / s)), gV(le(le(p0, p01, (i + 1) / s), le(p1, p11, (i + 1) / s), (j + 1) / s)), gV(le(le(p0, p01, (i + 1) / s), le(p1, p11, (i + 1) / s), j / s))]); } });
+                        let obj = `# Iso Cube\n`; vertices.forEach(v => obj += `v ${v.x.toFixed(6)} 0.000000 ${v.y.toFixed(6)}\n`); faces.forEach(f => obj += `f ${f.map(i => i + 1).join(' ')}\n`); return { vertices, faces, obj };
+                    }
+                };
+                widgetLogic.init();
+            });
+        }
         function setLanguage(lang) {
             currentLanguage = lang;
             localStorage.setItem('appLanguage', lang);
@@ -1078,8 +1357,8 @@
             redoStack = [];
             zoom = 1.0;
             panOffset = new Point(0, 0);
-            currentFilePath = null;
-            isModified = true;
+            currentFilePath = null; // Generated/newly loaded files don't have a path
+            isModified = true; // They are an unsaved modification
             computeFaceCenters();
             cacheFacePolygons();
             requestRedraw(); // Use requestRedraw
@@ -1116,9 +1395,16 @@
             const modelHeight = max_z - min_z;
 
             let s = 1.0;
-            if (modelWidth > 0 && modelHeight > 0) {
+            if (modelWidth > 0 || modelHeight > 0) {
                 s = Math.min((w - 2 * margin) / modelWidth, (h - 2 * margin) / modelHeight);
             }
+            if (modelWidth === 0 && modelHeight > 0) {
+                s = (h - 2 * margin) / modelHeight;
+            }
+            if (modelHeight === 0 && modelWidth > 0) {
+                s = (w - 2 * margin) / modelWidth;
+            }
+
 
             // Base transform to fit model into canvas with Y-axis flip
             const baseTransform = new Transform(s, 0, 0, -s, margin - s * min_x, margin + s * max_z);
@@ -2026,29 +2312,54 @@
             loadObjInput.click();
         });
 
+        generateObjButton.addEventListener('click', () => {
+            const proceed = async () => {
+                try {
+                    const objContent = await showObjGenerator();
+                    if (objContent) {
+                        loadObjFileContent(objContent);
+                    }
+                } catch (error) {
+                    console.log("OBJ generation was cancelled by the user:", error.message);
+                }
+            };
+
+            if (isModified) {
+                showMessageBox(translations[currentLanguage].unsavedChangesTitle, translations[currentLanguage].unsavedChangesMessage, 'question', true)
+                    .then(({ confirmed }) => {
+                        if (confirmed) { // User wants to save.
+                            saveProject(false, proceed);
+                        } else { // User clicked "Cancel", meaning "Don't Save". Proceed.
+                            proceed();
+                        }
+                    });
+            } else {
+                proceed();
+            }
+        });
+
+
         loadObjInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (!file) return;
+
+            const proceed = () => {
+                const reader = new FileReader();
+                reader.onload = (e) => loadObjFileContent(e.target.result);
+                reader.readAsText(file);
+            }
 
             if (isModified) {
                 showMessageBox(translations[currentLanguage].unsavedChangesTitle, translations[currentLanguage].unsavedChangesMessage, 'question', true)
                     .then(({ confirmed }) => {
                         if (confirmed) {
-                            saveProject(true, () => { // Pass true to force save-as behavior for initial save
-                                const reader = new FileReader();
-                                reader.onload = (e) => loadObjFileContent(e.target.result);
-                                reader.readAsText(file);
-                            });
+                            saveProject(false, proceed);
                         } else {
-                            const reader = new FileReader();
-                            reader.onload = (e) => loadObjFileContent(e.target.result);
-                            reader.readAsText(file);
+                            proceed();
                         }
                     });
             } else {
-                const reader = new FileReader();
-                reader.onload = (e) => loadObjFileContent(e.target.result);
-                reader.readAsText(file);
+                proceed();
             }
             // Clear the input's value to allow loading the same file again if needed
             event.target.value = '';
@@ -2063,7 +2374,7 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            const loadFileContent = (fileToLoad) => {
+            const proceed = () => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     try {
@@ -2083,7 +2394,7 @@
                         redoStack = [];
                         movePoints = null;
                         selectedPoints = new Set();
-                        currentFilePath = fileToLoad.name;
+                        currentFilePath = file.name;
                         isModified = false;
                         computeFaceCenters();
                         cacheFacePolygons();
@@ -2094,20 +2405,20 @@
                         showMessageBox(translations[currentLanguage].errorTitle, `${translations[currentLanguage].projectLoadErrorMessage}: ${error.message}`, 'error');
                     }
                 };
-                reader.readAsText(fileToLoad);
+                reader.readAsText(file);
             };
 
             if (isModified) {
                 showMessageBox(translations[currentLanguage].unsavedChangesTitle, translations[currentLanguage].unsavedChangesMessage, 'question', true)
                     .then(({ confirmed }) => {
                         if (confirmed) {
-                            saveProject(true, () => loadFileContent(file)); // Pass true to force save-as behavior
+                            saveProject(false, proceed);
                         } else {
-                            loadFileContent(file);
+                            proceed();
                         }
                     });
             } else {
-                loadFileContent(file);
+                proceed();
             }
             // Clear the input's value to allow loading the same file again if needed
             event.target.value = '';
@@ -2189,9 +2500,16 @@
 
             let s = 1.0;
             const margin = 20;
-            if (modelWidth > 0 && modelHeight > 0) {
+            if (modelWidth > 0 || modelHeight > 0) {
                 s = Math.min((svg_width - 2 * margin) / modelWidth, (svg_height - 2 * margin) / modelHeight);
             }
+            if (modelWidth === 0 && modelHeight > 0) {
+                s = (svg_height - 2 * margin) / modelHeight;
+            }
+            if (modelHeight === 0 && modelWidth > 0) {
+                s = (svg_width - 2 * margin) / modelWidth;
+            }
+
 
             let svgContent = `<?xml version="1.0" encoding="UTF-8" ?>\n`;
             svgContent += `<svg xmlns="http://www.w3.org/2000/svg" width="${svg_width}" height="${svg_height}" version="1.1">\n`;
@@ -2293,12 +2611,19 @@
 
             let s = 1.0;
             const margin = 20;
-            if (modelWidth > 0 && modelHeight > 0) {
+            if (modelWidth > 0 || modelHeight > 0) {
                 s = Math.min(
                     (userWidth - 2 * margin) / modelWidth,
                     (userHeight - 2 * margin) / modelHeight
                 );
             }
+            if (modelWidth === 0 && modelHeight > 0) {
+                s = (userHeight - 2 * margin) / modelHeight;
+            }
+            if (modelHeight === 0 && modelWidth > 0) {
+                s = (userWidth - 2 * margin) / modelWidth;
+            }
+
 
             const center_model_x = (min_x + max_x) / 2;
             const center_model_z = (min_z + max_z) / 2;
@@ -2505,7 +2830,7 @@
                 const file = files[0];
                 const fileName = file.name.toLowerCase();
 
-                const processFile = (fileToProcess) => {
+                const proceed = () => {
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         if (fileName.endsWith('.obj')) {
@@ -2528,7 +2853,7 @@
                                 redoStack = [];
                                 movePoints = null;
                                 selectedPoints = new Set();
-                                currentFilePath = fileToProcess.name;
+                                currentFilePath = file.name;
                                 isModified = false;
                                 computeFaceCenters();
                                 cacheFacePolygons();
@@ -2542,20 +2867,20 @@
                             showMessageBox(translations[currentLanguage].errorTitle, "Unsupported file type. Please drop .obj or .kufi files.", 'error');
                         }
                     };
-                    reader.readAsText(fileToProcess);
+                    reader.readAsText(file);
                 };
 
                 if (isModified) {
                     showMessageBox(translations[currentLanguage].unsavedChangesTitle, translations[currentLanguage].unsavedChangesMessage, 'question', true)
                         .then(({ confirmed }) => {
                             if (confirmed) {
-                                saveProject(true, () => processFile(file));
+                                saveProject(false, proceed);
                             } else {
-                                processFile(file);
+                                proceed();
                             }
                         });
                 } else {
-                    processFile(file);
+                    proceed();
                 }
             }
         });
@@ -2597,6 +2922,7 @@
             flagTr.addEventListener('click', () => setLanguage('tr'));
             flagAr.addEventListener('click', () => setLanguage('ar'));
         };
+
 
     </script>
 </body>
