@@ -42,6 +42,7 @@
 
 <body class="flex flex-col h-screen bg-gray-200">
 
+    <!-- Top Toolbar -->
     <div class="bg-gray-700 text-white shadow-md py-2 px-4 flex items-center space-x-4">
         <button id="load-obj-button"
             class="flex items-center px-3 py-2 rounded-md hover:bg-gray-600 transition duration-200">
@@ -123,8 +124,11 @@
         </button>
     </div>
 
+    <!-- Main Content Area -->
     <div class="flex flex-1 overflow-hidden">
+        <!-- Left Sidebar -->
         <div class="w-48 bg-gray-800 text-white shadow-lg p-4 flex flex-col space-y-4">
+            <!-- Tools -->
             <div class="flex flex-col space-y-2">
                 <button id="tool-paint"
                     class="flex flex-col items-center justify-center p-2 rounded-md transition duration-200 bg-blue-600 border-2 border-yellow-400">
@@ -159,10 +163,12 @@
             </div>
 
             <div class="h-px bg-gray-600 my-4"></div>
+            <!-- Colors -->
             <h3 class="text-sm font-bold text-gray-400 mb-2" data-lang-key="colorsTitle">Colors:</h3>
             <div class="grid grid-cols-2 gap-2" id="color-palette">
             </div>
 
+            <!-- Undo/Redo -->
             <div class="flex-grow"></div> <button id="undo-btn"
                 class="flex flex-col items-center justify-center p-2 rounded-md bg-gray-700 hover:bg-gray-600 transition duration-200">
                 <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -185,15 +191,18 @@
             </button>
         </div>
 
+        <!-- Canvas Area -->
         <div class="flex-1 p-4 flex items-center justify-center overflow-hidden">
             <canvas id="objCanvas" class="bg-white rounded-lg shadow-inner w-full h-full"></canvas>
         </div>
     </div>
 
+    <!-- Status Bar -->
     <div id="status-bar" class="bg-gray-700 text-white text-sm py-2 px-4 shadow-inner">
         <span data-lang-key="readyStatus">Ready</span>
     </div>
 
+    <!-- Language Flags -->
     <div class="absolute bottom-4 right-4 flex space-x-2 z-50">
         <div id="flag-en" class="flag-icon" data-lang="en" title="English">
             <svg viewBox="0 0 60 30" width="100%" height="100%">
@@ -231,6 +240,7 @@
     </div>
 
 
+    <!-- Modal Dialog -->
     <div id="modal-container"
         class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
         <div id="modal-content" class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
@@ -249,6 +259,7 @@
         </div>
     </div>
 
+    <!-- Message Box Dialog -->
     <div id="message-box-container"
         class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
         <div id="message-box-content" class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
@@ -714,7 +725,7 @@
                 undo: 'Undo',
                 redo: 'Redo',
                 readyStatus: 'Ready',
-                canvasPlaceholder: 'Load a 3D OBJ file to start...',
+                canvasPlaceholder: 'Load a 3D OBJ file or use the default grid to start...',
                 unsavedChangesTitle: 'Unsaved Changes',
                 unsavedChangesMessage: 'There are unsaved changes. Do you want to save them now?',
                 errorTitle: 'Error',
@@ -737,7 +748,7 @@
                 canvasAlreadyEmpty: 'Canvas is already empty.',
                 usageInstructionsTitle: 'Usage Instructions',
                 usageInstructionsMessage: `Instructions:\n\n` +
-                    `1) Load a 3D OBJ file with 'Load OBJ' (Ctrl+L).\n` +
+                    `1) Use the default 100x100 grid or load a 3D OBJ file with 'Load OBJ' (Ctrl+L).\n` +
                     `   The file is shown in top-down view (orthonormal projection).\n` +
                     `2) Paint/erase faces in 'Paint' or 'Erase' mode.\n` +
                     `3) Switch to 'Move' mode: painted faces convert to points.\n` +
@@ -781,7 +792,7 @@
                 undo: 'Geri Al',
                 redo: 'Yinele',
                 readyStatus: 'Hazır',
-                canvasPlaceholder: 'Başlamak için bir 3D OBJ dosyası yükleyin...',
+                canvasPlaceholder: 'Başlamak için varsayılan ızgarayı kullanın veya bir 3D OBJ dosyası yükleyin...',
                 unsavedChangesTitle: 'Kaydedilmemiş Değişiklikler',
                 unsavedChangesMessage: 'Kaydedilmemiş değişiklikler var. Şimdi kaydetmek ister misiniz?',
                 errorTitle: 'Hata',
@@ -804,7 +815,7 @@
                 canvasAlreadyEmpty: 'Tuval zaten boş.',
                 usageInstructionsTitle: 'Kullanım Talimatları',
                 usageInstructionsMessage: `Talimatlar:\n\n` +
-                    `1) 'OBJ Yükle' (Ctrl+L) ile bir 3D OBJ dosyası yükleyin.\n` +
+                    `1) Varsayılan 100x100 ızgarayı kullanın veya 'OBJ Yükle' (Ctrl+L) ile bir 3D OBJ dosyası yükleyin.\n` +
                     `   Dosya yukarıdan aşağıya görünümde (ortogonal projeksiyon) gösterilir.\n` +
                     `2) 'Boyama' veya 'Silgi' modunda yüzeyleri boyayın/silin.\n` +
                     `3) 'Taşı' moduna geçin: boyalı yüzeyler noktalara dönüşür.\n` +
@@ -848,7 +859,7 @@
                 undo: 'تراجع',
                 redo: 'إعادة',
                 readyStatus: 'جاهز',
-                canvasPlaceholder: 'قم بتحميل ملف OBJ ثلاثي الأبعاد للبدء...',
+                canvasPlaceholder: 'استخدم الشبكة الافتراضية أو قم بتحميل ملف OBJ ثلاثي الأبعاد للبدء...',
                 unsavedChangesTitle: 'تغييرات غير محفوظة',
                 unsavedChangesMessage: 'هناك تغييرات غير محفوظة. هل تريد حفظها الآن؟',
                 errorTitle: 'خطأ',
@@ -871,7 +882,7 @@
                 canvasAlreadyEmpty: 'اللوحة فارغة بالفعل.',
                 usageInstructionsTitle: 'تعليمات الاستخدام',
                 usageInstructionsMessage: `التعليمات:\n\n` +
-                    `1) قم بتحميل ملف OBJ ثلاثي الأبعاد باستخدام "تحميل OBJ" (Ctrl+L).\n` +
+                    `1) استخدم الشبكة الافتراضية 100x100 أو قم بتحميل ملف OBJ ثلاثي الأبعاد باستخدام "تحميل OBJ" (Ctrl+L).\n` +
                     `   يتم عرض الملف في عرض من الأعلى (إسقاط متعامد).\n` +
                     `2) قم بطلاء/مسح الوجوه في وضع "الطلاء" أو "المسح".\n` +
                     `3) قم بالتبديل إلى وضع "النقل": تتحول الوجوه المطلية إلى نقاط.\n` +
@@ -942,14 +953,6 @@
             });
             document.getElementById(`flag-${currentLanguage}`).classList.add('active');
 
-            // Removed: Adjust text direction for Arabic
-            // if (currentLanguage === 'ar') {
-            //     document.body.style.direction = 'rtl';
-            //     document.body.style.textAlign = 'right';
-            // } else {
-            //     document.body.style.direction = 'ltr';
-            //     document.body.style.textAlign = 'left';
-            // }
         }
 
         // --- Functions ---
@@ -1872,9 +1875,11 @@
                 ctx.font = '20px Inter, sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(translations[currentLanguage].canvasPlaceholder, canvas.width / 2, canvas.height / 2);
+                const placeholderText = translations[currentLanguage] ? translations[currentLanguage].canvasPlaceholder : 'Load a 3D OBJ file or use the default grid to start...';
+                ctx.fillText(placeholderText, canvas.width / 2, canvas.height / 2);
                 return;
             }
+
 
             const T = computeTransform();
             ctx.save();
@@ -2329,7 +2334,6 @@
         // Color palette buttons
         const colors = [
             { name: 'Black', color: 'rgba(60, 60, 60, 1)' },
-            // { name: 'White', color: 'rgba(240, 240, 240, 1)' }, // Removed
             { name: 'Red', color: 'rgba(255, 104, 104, 1)' },
             { name: 'Green', color: 'rgba(96, 160, 96, 1)' },
             { name: 'Blue', color: 'rgba(104, 136, 200, 1)' },
@@ -2339,16 +2343,16 @@
             { name: 'Orange', color: 'rgba(255, 165, 0, 1)' },
             { name: 'Purple', color: 'rgba(128, 0, 128, 1)' },
             { name: 'Brown', color: 'rgba(139, 69, 19, 1)' },
-            // { name: 'Gray', color: 'rgba(128, 128, 128, 1)' }, // Removed
         ];
 
         colors.forEach((col, index) => {
             const button = document.createElement('button');
-            button.textContent = translations[currentLanguage][`color${col.name}`]; // Set initial translated text
+            const colorNameKey = `color${col.name}`;
+            button.textContent = translations[currentLanguage][colorNameKey] || col.name;
             button.className = `flex flex-col items-center justify-center p-2 rounded-md transition duration-200 text-white text-sm`;
             button.style.backgroundColor = col.color;
             // Adjust text color for light backgrounds
-            if (['White', 'Yellow', 'Cyan'].includes(col.name)) {
+            if (['Yellow', 'Cyan'].includes(col.name)) {
                 button.style.color = 'rgba(60, 60, 60, 1)'; // Darker text for light colors
             }
             if (col.name === 'Red') { // Default selected color
@@ -2360,8 +2364,8 @@
             button.addEventListener('click', () => {
                 fillColor = col.color;
                 document.querySelectorAll('#color-palette button').forEach(btn => {
-                    btn.classList.remove('border-2', 'border-yellow-400');
-                    btn.classList.add('border-2', 'border-transparent', 'hover:border-gray-600');
+                    btn.classList.remove('border-yellow-400');
+                    btn.classList.add('border-transparent', 'hover:border-gray-600');
                 });
                 button.classList.add('border-2', 'border-yellow-400');
                 button.classList.remove('border-transparent', 'hover:border-gray-600');
@@ -2526,13 +2530,68 @@
             }
         }
 
-        // Initial setup
+        // --- Initial setup ---
         window.onload = () => {
             // Add a span for the canvas placeholder text to be translatable
             const canvasPlaceholderSpan = document.createElement('span');
             canvasPlaceholderSpan.id = 'canvas-placeholder-text';
             canvasPlaceholderSpan.style.display = 'none'; // Hidden, only used for text content
             document.body.appendChild(canvasPlaceholderSpan);
+
+            // --- Default Template Generation ---
+            function createGrid(gridWidth, gridHeight) {
+                const newVertices = [];
+                const newFaces = [];
+                const scale = 10; // Adjust the size of each grid cell
+
+                // Generate vertices, centering the grid
+                for (let j = 0; j <= gridHeight; j++) {
+                    for (let i = 0; i <= gridWidth; i++) {
+                        const x = (i - gridWidth / 2) * scale;
+                        const z = (j - gridHeight / 2) * scale;
+                        newVertices.push([x, 0, z]); // Create a flat plane on XZ
+                    }
+                }
+
+                // Generate quad faces
+                for (let j = 0; j < gridHeight; j++) {
+                    for (let i = 0; i < gridWidth; i++) {
+                        const row1 = j * (gridWidth + 1);
+                        const row2 = (j + 1) * (gridWidth + 1);
+
+                        // Define vertices for a quad face
+                        const v1 = row1 + i;
+                        const v2 = row1 + i + 1;
+                        const v3 = row2 + i + 1;
+                        const v4 = row2 + i;
+
+                        newFaces.push([v1, v2, v3, v4]);
+                    }
+                }
+                return { vertices: newVertices, faces: newFaces };
+            }
+
+            function loadDefaultGrid() {
+                const gridData = createGrid(100, 100);
+                vertices = gridData.vertices;
+                faces = gridData.faces;
+                faceColors = {};
+                selectedFaces = new Set();
+                movePoints = null;
+                selectedPoints = new Set();
+                undoStack = [];
+                redoStack = [];
+                zoom = 3.0; // Set initial zoom to 3x as requested
+                panOffset = new Point(0, 0);
+                currentFilePath = null;
+                isModified = false; // Start unmodified
+                computeFaceCenters();
+                cacheFacePolygons();
+                updateTitle();
+            }
+            // --- End Default Template Generation ---
+
+            loadDefaultGrid(); // Load the grid on startup
 
             setLanguage(currentLanguage); // Set initial language and update UI
             requestRedraw(); // Initial draw
