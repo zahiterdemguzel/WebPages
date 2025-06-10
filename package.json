@@ -15,6 +15,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.2.4",
     "node-cron": "^4.1.0",
+    "node-fetch": "^3.3.2",
     "sib-api-v3-sdk": "^8.5.0"
   },
   "devDependencies": {
