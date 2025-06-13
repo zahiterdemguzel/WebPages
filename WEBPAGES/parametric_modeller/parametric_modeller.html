@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parametric Modeling Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .controls {
+            position: absolute;
+            top: 5rem;
+            left: 1rem;
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-height: calc(100vh - 6rem);
+            overflow-y: auto;
+            width: 380px;
+            /* Transition properties for smooth fade */
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+            transform: translateX(0);
+        }
+
+        .controls.is-hidden {
+            opacity: 0;
+            transform: translateX(-20px);
+            pointer-events: none;
+        }
+
+        .control-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .control-group h3 {
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .control-item label {
+            font-size: 0.875rem;
+            color: #4a5568;
+            white-space: nowrap;
+            margin-right: 1rem;
+        }
+
+        .control-item input[type="range"] {
+            width: 160px;
+        }
+
+        .control-item input[type="checkbox"] {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        .control-item output {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #2d3748;
+            background-color: #edf2f7;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .radio-group button,
+        .download-btn {
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+
+    <header class="absolute top-0 left-0 right-0 bg-white shadow-md z-10 p-2 flex justify-center items-center">
+        <div class="flex space-x-2 bg-gray-200 p-1 rounded-lg">
+            <button id="btn-bottle" class="px-4 py-2 text-sm font-medium rounded-md">Bottle</button>
+            <button id="btn-shelf" class="px-4 py-2 text-sm font-medium rounded-md">Shelf Organizer</button>
+            <button id="btn-drawer" class="px-4 py-2 text-sm font-medium rounded-md">Drawer Organizer</button>
+        </div>
+    </header>
+
+    <div id="container"></div>
+
+    <!-- Controls Panels -->
+    <div id="controls-container">
+        <!-- Bottle Controls -->
+        <div id="controls-bottle" class="controls is-hidden">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Bottle Designer</h2>
+            <div class="control-group">
+                <h3>Body</h3>
+                <div class="control-item"><label for="bottle-bodyHeight">Height</label><input type="range"
+                        id="bottle-bodyHeight" min="1" max="20" value="10" step="0.1"><output>10.0</output></div>
+                <div class="control-item"><label for="bottle-bodyRadius">Radius</label><input type="range"
+                        id="bottle-bodyRadius" min="1" max="8" value="4" step="0.1"><output>4.0</output></div>
+                <div class="control-item"><label for="bottle-bodyTaper">Taper</label><input type="range"
+                        id="bottle-bodyTaper" min="-0.9" max="0.9" value="0" step="0.05"><output>0.0</output></div>
+            </div>
+            <div class="control-group">
+                <h3>Shoulder</h3>
+                <div class="control-item"><label for="bottle-shoulderHeight">Height</label><input type="range"
+                        id="bottle-shoulderHeight" min="0.5" max="8" value="3" step="0.1"><output>3.0</output></div>
+                <div class="control-item"><label for="bottle-shoulderCurve">Curve</label><input type="range"
+                        id="bottle-shoulderCurve" min="0.1" max="5" value="1" step="0.1"><output>1.0</output></div>
+            </div>
+            <div class="control-group">
+                <h3>Neck</h3>
+                <div class="control-item"><label for="bottle-neckHeight">Height</label><input type="range"
+                        id="bottle-neckHeight" min="0.5" max="5" value="2" step="0.1"><output>2.0</output></div>
+                <div class="control-item"><label for="bottle-neckRadius">Radius</label><input type="range"
+                        id="bottle-neckRadius" min="0.5" max="4" value="1.5" step="0.1"><output>1.5</output></div>
+            </div>
+            <div class="control-group">
+                <h3>General</h3>
+                <div class="control-item"><label for="bottle-smoothness">Smoothness</label><input type="range"
+                        id="bottle-smoothness" min="8" max="128" value="64" step="1"><output>64</output></div>
+            </div>
+            <div class="mt-6 border-t pt-4"><button id="download-bottle"
+                    class="download-btn w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Download
+                    .STL</button></div>
+        </div>
+
+        <!-- Shelf Organizer Controls -->
+        <div id="controls-shelf" class="controls is-hidden">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Shelf Organizer</h2>
+            <div class="control-group">
+                <h3>Dimensions</h3>
+                <div class="control-item"><label for="shelf-width">Width</label><input type="range" id="shelf-width"
+                        min="5" max="50" value="30" step="1"><output>30</output></div>
+                <div class="control-item"><label for="shelf-height">Height</label><input type="range" id="shelf-height"
+                        min="5" max="50" value="25" step="1"><output>25</output></div>
+                <div class="control-item"><label for="shelf-depth">Depth</label><input type="range" id="shelf-depth"
+                        min="5" max="30" value="15" step="1"><output>15</output></div>
+                <div class="control-item"><label for="shelf-thickness">Wall Thickness</label><input type="range"
+                        id="shelf-thickness" min="0.1" max="2" value="0.5" step="0.1"><output>0.5</output></div>
+            </div>
+            <div class="control-group">
+                <h3>Compartments</h3>
+                <div class="control-item"><label for="shelf-dividersX">Vertical Dividers</label><input type="range"
+                        id="shelf-dividersX" min="0" max="10" value="2" step="1"><output>2</output></div>
+                <div class="control-item"><label for="shelf-dividersY">Horizontal Shelves</label><input type="range"
+                        id="shelf-dividersY" min="0" max="10" value="1" step="1"><output>1</output></div>
+                <div class="control-item"><label for="shelf-lipHeight">Shelf Lip Height</label><input type="range"
+                        id="shelf-lipHeight" min="0" max="5" value="1" step="0.1"><output>1.0</output></div>
+            </div>
+            <div class="control-group">
+                <h3>Construction</h3>
+                <div class="control-item"><label for="shelf-hasBack">Back Wall</label><input type="checkbox"
+                        id="shelf-hasBack" checked></div>
+                <div class="control-item"><label for="shelf-hasTopWall">Top Wall</label><input type="checkbox"
+                        id="shelf-hasTopWall" checked></div>
+                <div class="control-item"><label for="shelf-hasFloor">Floor</label><input type="checkbox"
+                        id="shelf-hasFloor" checked></div>
+                <div class="control-item"><label for="shelf-hasLeftWall">Left Wall</label><input type="checkbox"
+                        id="shelf-hasLeftWall" checked></div>
+                <div class="control-item"><label for="shelf-hasRightWall">Right Wall</label><input type="checkbox"
+                        id="shelf-hasRightWall" checked></div>
+            </div>
+            <div class="mt-6 border-t pt-4"><button id="download-shelf"
+                    class="download-btn w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Download
+                    .STL</button></div>
+        </div>
+
+        <!-- Drawer Organizer Controls -->
+        <div id="controls-drawer" class="controls">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Drawer Organizer</h2>
+            <div class="control-group">
+                <h3>Overall Dimensions</h3>
+                <div class="control-item"><label for="drawer-width">Width</label><input type="range" id="drawer-width"
+                        min="10" max="60" value="40" step="1"><output>40</output></div>
+                <div class="control-item"><label for="drawer-depth">Depth</label><input type="range" id="drawer-depth"
+                        min="10" max="60" value="30" step="1"><output>30</output></div>
+                <div class="control-item"><label for="drawer-height">Height</label><input type="range"
+                        id="drawer-height" min="2" max="15" value="5" step="0.5"><output>5.0</output></div>
+                <div class="control-item"><label for="drawer-thickness">Wall Thickness</label><input type="range"
+                        id="drawer-thickness" min="0.1" max="3" value="0.5" step="0.1"><output>0.5</output></div>
+            </div>
+            <div class="control-group">
+                <h3>Main Compartments</h3>
+                <div class="control-item"><label for="drawer-cols">Columns</label><input type="range" id="drawer-cols"
+                        min="1" max="10" value="4" step="1"><output>4</output></div>
+                <div class="control-item"><label for="drawer-rows">Rows</label><input type="range" id="drawer-rows"
+                        min="1" max="10" value="3" step="1"><output>3</output></div>
+            </div>
+            <div class="control-group">
+                <h3>Sub-divisions</h3>
+                <div class="control-item"><label for="drawer-subdivide2">Cells to Split in 2</label><input type="range"
+                        id="drawer-subdivide2" min="0" max="100" value="2" step="1"><output>2</output></div>
+                <div class="control-item"><label for="drawer-subdivide3">Cells to Split in 3</label><input type="range"
+                        id="drawer-subdivide3" min="0" max="100" value="1" step="1"><output>1</output></div>
+                <div class="control-item radio-group" data-target="drawer-subdivide-orientation"><label>Split
+                        Orientation</label>
+                    <div class="flex space-x-1 bg-gray-300 p-0.5 rounded-md"><button data-value="vertical"
+                            class="px-2 py-1 text-xs rounded-md">Vertical</button><button data-value="horizontal"
+                            class="px-2 py-1 text-xs rounded-md">Horizontal</button><button data-value="mixed"
+                            class="px-2 py-1 text-xs rounded-md">Mixed</button></div><input type="hidden"
+                        id="drawer-subdivide-orientation" value="vertical">
+                </div>
+            </div>
+            <div class="mt-6 border-t pt-4"><button id="download-drawer"
+                    class="download-btn w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Download
+                    .STL</button></div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+
+        let scene, camera, renderer, controls, activeMesh;
+        let activeObjectType = null;
+        let isTransitioning = false;
+
+        const container = document.getElementById('container');
+        const controlPanels = {
+            bottle: document.getElementById('controls-bottle'),
+            shelf: document.getElementById('controls-shelf'),
+            drawer: document.getElementById('controls-drawer'),
+        };
+        const navButtons = {
+            bottle: document.getElementById('btn-bottle'),
+            shelf: document.getElementById('btn-shelf'),
+            drawer: document.getElementById('btn-drawer'),
+        }
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf1f5f9);
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            const keyLight = new THREE.DirectionalLight(new THREE.Color('hsl(30, 100%, 75%)'), 1.0);
+            keyLight.position.set(-100, 50, 100);
+            scene.add(keyLight);
+            const fillLight = new THREE.DirectionalLight(new THREE.Color('hsl(240, 100%, 75%)'), 0.75);
+            fillLight.position.set(100, 50, 100);
+            scene.add(fillLight);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            setupEventListeners();
+            switchObject('shelf', true); // Start with shelf organizer
+            animate();
+        }
+
+        function switchObject(type, isInitial = false) {
+            if (isTransitioning || type === activeObjectType) return;
+            isTransitioning = true;
+            activeObjectType = type;
+
+            Object.values(controlPanels).forEach(panel => panel.classList.add('is-hidden'));
+            if (controlPanels[type]) {
+                controlPanels[type].classList.remove('is-hidden');
+            }
+
+            for (const key in navButtons) {
+                navButtons[key].style.backgroundColor = (key === type) ? '#fff' : '';
+                navButtons[key].style.color = (key === type) ? '#000' : '';
+                navButtons[key].style.boxShadow = (key === type) ? 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)' : '';
+            }
+
+            const transitionOut = () => {
+                if (!activeMesh) return Promise.resolve();
+                return new Promise(resolve => {
+                    gsap.to(activeMesh.scale, {
+                        x: 0.001, y: 0.001, z: 0.001,
+                        duration: 0.4,
+                        ease: 'power2.in',
+                        onComplete: () => {
+                            if (activeMesh) {
+                                scene.remove(activeMesh);
+                                if (activeMesh.isGroup) {
+                                    activeMesh.traverse(child => { if (child.isMesh) { child.geometry.dispose(); child.material.dispose(); } });
+                                } else {
+                                    activeMesh.geometry.dispose(); activeMesh.material.dispose();
+                                }
+                            }
+                            resolve();
+                        }
+                    });
+                });
+            };
+
+            const transitionIn = () => {
+                updateModel(true);
+
+                let camPos, camTarget;
+                if (type === 'bottle') {
+                    camPos = { x: 0, y: 10, z: 30 };
+                    camTarget = { x: 0, y: 8, z: 0 };
+                } else if (type === 'shelf') {
+                    camPos = { x: 35, y: 30, z: 45 };
+                    camTarget = { x: 0, y: 0, z: 0 };
+                } else { // drawer
+                    camPos = { x: 0, y: 45, z: 50 };
+                    camTarget = { x: 0, y: 0, z: 0 };
+                }
+
+                gsap.to(camera.position, { ...camPos, duration: 0.5, ease: 'power2.out' });
+                gsap.to(controls.target, { ...camTarget, duration: 0.5, ease: 'power2.out' });
+
+                gsap.to(activeMesh.scale, {
+                    x: 1, y: 1, z: 1,
+                    duration: 0.5, ease: 'power2.out', delay: 0.2,
+                    onComplete: () => { isTransitioning = false; }
+                });
+            };
+
+            if (isInitial) {
+                updateModel(false);
+                let camPos;
+                if (type === 'shelf') camPos = { x: 35, y: 30, z: 45 };
+                else if (type === 'drawer') camPos = { x: 0, y: 45, z: 50 };
+                else camPos = { x: 0, y: 10, z: 30 };
+                camera.position.set(camPos.x, camPos.y, camPos.z);
+                isTransitioning = false;
+            } else {
+                transitionOut().then(transitionIn);
+            }
+        }
+
+        function setupEventListeners() {
+            navButtons.bottle.addEventListener('click', () => switchObject('bottle'));
+            navButtons.shelf.addEventListener('click', () => switchObject('shelf'));
+            navButtons.drawer.addEventListener('click', () => switchObject('drawer'));
+
+            document.querySelectorAll('input[type="range"], input[type="checkbox"]').forEach(input => {
+                input.addEventListener('input', () => {
+                    if (input.type === 'range') {
+                        const output = input.nextElementSibling;
+                        if (output && output.tagName === 'OUTPUT') { output.value = parseFloat(input.value).toFixed(input.step.includes('.') ? 1 : 0); }
+                    }
+                    if (!isTransitioning) updateModel(false);
+                });
+            });
+
+            document.querySelectorAll('.radio-group').forEach(group => {
+                const hiddenInput = document.getElementById(group.dataset.target);
+                const buttons = group.querySelectorAll('button');
+                const updateButtons = () => {
+                    const currentValue = hiddenInput.value;
+                    buttons.forEach(button => {
+                        button.style.backgroundColor = button.dataset.value === currentValue ? '#fff' : '';
+                        button.style.boxShadow = button.dataset.value === currentValue ? 'inset 0 1px 2px 0 rgb(0 0 0 / 0.05)' : '';
+                    });
+                };
+                buttons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        hiddenInput.value = button.dataset.value;
+                        updateButtons();
+                        if (!isTransitioning) updateModel(false);
+                    });
+                });
+                updateButtons();
+            });
+
+            document.getElementById('download-bottle').addEventListener('click', () => downloadSTL('bottle.stl'));
+            document.getElementById('download-shelf').addEventListener('click', () => downloadSTL('shelf_organizer.stl'));
+            document.getElementById('download-drawer').addEventListener('click', () => downloadSTL('drawer_organizer.stl'));
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function updateModel(isScaledDown = false) {
+            if (activeMesh) {
+                scene.remove(activeMesh);
+                if (activeMesh.isGroup) { activeMesh.traverse(c => { if (c.isMesh) { c.geometry.dispose(); c.material.dispose(); } }); }
+                else { activeMesh.geometry.dispose(); activeMesh.material.dispose(); }
+            }
+
+            if (activeObjectType === 'bottle') {
+                activeMesh = new THREE.Mesh(createBottleGeometry(), new THREE.MeshStandardMaterial({ color: 0x60a5fa, metalness: 0.1, roughness: 0.2, transparent: true, opacity: 0.85, side: THREE.DoubleSide }));
+            } else if (activeObjectType === 'shelf') {
+                activeMesh = createShelfOrganizerGroup();
+            } else if (activeObjectType === 'drawer') {
+                activeMesh = createDrawerOrganizerGroup();
+            }
+
+            if (isScaledDown) activeMesh.scale.set(0.001, 0.001, 0.001);
+
+            scene.add(activeMesh);
+        }
+
+        function downloadSTL(filename) {
+            if (!activeMesh) return;
+            const exporter = new STLExporter();
+            const result = exporter.parse(activeMesh, { binary: true });
+            const blob = new Blob([result], { type: 'application/octet-stream' });
+            const link = document.createElement('a');
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function createBottleGeometry() {
+            const bodyH = parseFloat(document.getElementById('bottle-bodyHeight').value);
+            const bodyR = parseFloat(document.getElementById('bottle-bodyRadius').value);
+            const bodyTaperR = bodyR * (1 - parseFloat(document.getElementById('bottle-bodyTaper').value));
+            const shoulderH = parseFloat(document.getElementById('bottle-shoulderHeight').value);
+            const shoulderCurve = parseFloat(document.getElementById('bottle-shoulderCurve').value);
+            const neckH = parseFloat(document.getElementById('bottle-neckHeight').value);
+            const neckR = parseFloat(document.getElementById('bottle-neckRadius').value);
+            const radialSegments = parseInt(document.getElementById('bottle-smoothness').value);
+            const points = [];
+            let currentY = 0;
+            points.push(new THREE.Vector2(bodyR, currentY));
+            points.push(new THREE.Vector2(bodyTaperR, currentY + bodyH));
+            currentY += bodyH;
+            const shoulderStart = new THREE.Vector2(bodyTaperR, currentY);
+            const shoulderEnd = new THREE.Vector2(neckR, currentY + shoulderH);
+            const controlPoint = new THREE.Vector2((bodyTaperR + neckR) / 2 * shoulderCurve, currentY + shoulderH / 2);
+            points.push(...new THREE.QuadraticBezierCurve(shoulderStart, controlPoint, shoulderEnd).getPoints(20));
+            currentY += shoulderH;
+            points.push(new THREE.Vector2(neckR, currentY + neckH));
+            return new THREE.LatheGeometry(points, radialSegments, 0, Math.PI * 2);
+        }
+
+        function createShelfOrganizerGroup() {
+            const width = parseFloat(document.getElementById('shelf-width').value);
+            const height = parseFloat(document.getElementById('shelf-height').value);
+            const depth = parseFloat(document.getElementById('shelf-depth').value);
+            const dividersX = parseInt(document.getElementById('shelf-dividersX').value);
+            const dividersY = parseInt(document.getElementById('shelf-dividersY').value);
+            const t = parseFloat(document.getElementById('shelf-thickness').value);
+            const lipH = parseFloat(document.getElementById('shelf-lipHeight').value);
+            const hasBack = document.getElementById('shelf-hasBack').checked;
+            const hasFloor = document.getElementById('shelf-hasFloor').checked;
+            const hasLeft = document.getElementById('shelf-hasLeftWall').checked;
+            const hasRight = document.getElementById('shelf-hasRightWall').checked;
+            const hasTop = document.getElementById('shelf-hasTopWall').checked;
+
+            const group = new THREE.Group();
+            const material = new THREE.MeshStandardMaterial({ color: 0xad8b73, roughness: 0.8, side: THREE.DoubleSide });
+
+            if (hasFloor) { const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, t, depth), material); mesh.position.y = t / 2; group.add(mesh); }
+            if (hasTop) { const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, t, depth), material); mesh.position.y = height - t / 2; group.add(mesh); }
+            if (hasBack) { const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, t), material); mesh.position.set(0, height / 2, -depth / 2 + t / 2); group.add(mesh); }
+            if (hasLeft) { const mesh = new THREE.Mesh(new THREE.BoxGeometry(t, height, depth), material); mesh.position.set(-width / 2 + t / 2, height / 2, 0); group.add(mesh); }
+            if (hasRight) { const mesh = new THREE.Mesh(new THREE.BoxGeometry(t, height, depth), material); mesh.position.set(width / 2 - t / 2, height / 2, 0); group.add(mesh); }
+
+            const innerWidth = width - (hasLeft ? t : 0) - (hasRight ? t : 0);
+            const vDividerHeight = height - (hasFloor ? t : 0) - (hasTop ? t : 0);
+            const vDividerY = (hasFloor ? t : 0) + vDividerHeight / 2;
+            const cellWidth = (innerWidth - (dividersX * t)) / (dividersX + 1);
+            for (let i = 0; i < dividersX; i++) {
+                const mesh = new THREE.Mesh(new THREE.BoxGeometry(t, vDividerHeight, depth), material);
+                mesh.position.set(-innerWidth / 2 + cellWidth + t / 2 + i * (cellWidth + t), vDividerY, 0);
+                group.add(mesh);
+            }
+
+            const innerHeight = height - (hasFloor ? t : 0) - (hasTop ? t : 0);
+            const cellHeight = (innerHeight - (dividersY * t)) / (dividersY + 1);
+            for (let i = 0; i < dividersY; i++) {
+                const shelfY = (hasFloor ? t : 0) + cellHeight + t / 2 + i * (cellHeight + t);
+                const shelf = new THREE.Mesh(new THREE.BoxGeometry(innerWidth, t, depth), material);
+                shelf.position.y = shelfY;
+                group.add(shelf);
+                if (lipH > 0) {
+                    const lip = new THREE.Mesh(new THREE.BoxGeometry(innerWidth, lipH, t), material);
+                    lip.position.set(0, shelfY - t / 2 + lipH / 2, depth / 2 - t / 2);
+                    group.add(lip);
+                }
+            }
+
+            const box = new THREE.Box3().setFromObject(group);
+            const center = box.getCenter(new THREE.Vector3());
+            group.position.sub(center);
+            return group;
+        }
+
+        function createDrawerOrganizerGroup() {
+            const width = parseFloat(document.getElementById('drawer-width').value);
+            const depth = parseFloat(document.getElementById('drawer-depth').value);
+            const height = parseFloat(document.getElementById('drawer-height').value);
+            const cols = parseInt(document.getElementById('drawer-cols').value);
+            const rows = parseInt(document.getElementById('drawer-rows').value);
+            const t = parseFloat(document.getElementById('drawer-thickness').value);
+            let subdivide2 = parseInt(document.getElementById('drawer-subdivide2').value);
+            let subdivide3 = parseInt(document.getElementById('drawer-subdivide3').value);
+            const subdivideOrientation = document.getElementById('drawer-subdivide-orientation').value;
+
+            const group = new THREE.Group();
+            const material = new THREE.MeshStandardMaterial({ color: 0xcacaca, roughness: 0.7, side: THREE.DoubleSide });
+
+            const cellW = (width - (cols + 1) * t) / cols;
+            const cellD = (depth - (rows + 1) * t) / rows;
+
+            const floor = new THREE.Mesh(new THREE.BoxGeometry(width, t, depth), material);
+            const frontWall = new THREE.Mesh(new THREE.BoxGeometry(width, height, t), material);
+            const backWall = new THREE.Mesh(new THREE.BoxGeometry(width, height, t), material);
+            const leftWall = new THREE.Mesh(new THREE.BoxGeometry(t, height, depth), material);
+            const rightWall = new THREE.Mesh(new THREE.BoxGeometry(t, height, depth), material);
+
+            floor.position.y = t / 2;
+            frontWall.position.set(0, height / 2, depth / 2 - t / 2);
+            backWall.position.set(0, height / 2, -depth / 2 + t / 2);
+            leftWall.position.set(-width / 2 + t / 2, height / 2, 0);
+            rightWall.position.set(width / 2 - t / 2, height / 2, 0);
+            group.add(floor, frontWall, backWall, leftWall, rightWall);
+
+            for (let i = 1; i < cols; i++) {
+                const vDivider = new THREE.Mesh(new THREE.BoxGeometry(t, height, depth), material);
+                vDivider.position.set(-width / 2 + i * (cellW + t) + t / 2, height / 2, 0);
+                group.add(vDivider);
+            }
+            for (let i = 1; i < rows; i++) {
+                const hDivider = new THREE.Mesh(new THREE.BoxGeometry(width, height, t), material);
+                hDivider.position.set(0, height / 2, -depth / 2 + i * (cellD + t) + t / 2);
+                group.add(hDivider);
+            }
+
+            const maxSubdivisions = Math.min(cols * rows, subdivide2 + subdivide3);
+            let cellsSplit = 0;
+            for (let r = 0; r < rows && cellsSplit < maxSubdivisions; r++) {
+                for (let c = 0; c < cols && cellsSplit < maxSubdivisions; c++) {
+                    let numSplits = 0;
+                    if (subdivide3 > 0) { numSplits = 3; subdivide3--; }
+                    else if (subdivide2 > 0) { numSplits = 2; subdivide2--; }
+
+                    if (numSplits > 0) {
+                        const cellX = -width / 2 + t + c * (cellW + t);
+                        const cellZ = -depth / 2 + t + r * (cellD + t);
+                        let orientation = subdivideOrientation;
+                        if (orientation === 'mixed') orientation = (r + c) % 2 === 0 ? 'vertical' : 'horizontal';
+
+                        for (let i = 1; i < numSplits; i++) {
+                            let divider;
+                            if (orientation === 'vertical') {
+                                divider = new THREE.Mesh(new THREE.BoxGeometry(t, height, cellD), material);
+                                divider.position.set(cellX + i * (cellW / numSplits) + (i - 0.5) * t, height / 2, cellZ + cellD / 2);
+                            } else {
+                                divider = new THREE.Mesh(new THREE.BoxGeometry(cellW, height, t), material);
+                                divider.position.set(cellX + cellW / 2, height / 2, cellZ + i * (cellD / numSplits) + (i - 0.5) * t);
+                            }
+                            group.add(divider);
+                        }
+                    }
+                    cellsSplit++;
+                }
+            }
+
+            const box = new THREE.Box3().setFromObject(group);
+            const center = box.getCenter(new THREE.Vector3());
+            group.position.sub(center);
+            return group;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
