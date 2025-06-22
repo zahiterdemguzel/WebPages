@@ -158,16 +158,21 @@ if (RENDER_EXTERNAL_HOSTNAME) {
     console.log('Self-ping not enabled (RENDER_EXTERNAL_HOSTNAME not found, likely running locally).');
 }
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-    console.log('Detected pages:', detectedPages.map(p => p.name).join(', ') || 'None');
-    console.log('----------------------------------------------------');
-    console.log('To add a new website:');
-    console.log('1. Create a new folder (e.g., "my-new-site") inside the "WEBPAGES" folder.');
-    console.log('2. Inside "my-new-site", add an "index.html" file for the frontend (or a single other .html file).');
-    console.log('3. (Optional) For a backend, add a "backend.js" file that exports an Express Router (e.g., `module.exports = router;`).');
-    console.log('   Alternatively, if no `backend.js` is present, a single other `.js` file will be used as backend.');
-    console.log('4. Commit changes and trigger a new deploy on Render.');
-    console.log('----------------------------------------------------');
-});
+
+// Start the server only if this file is run directly
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server is running on http://localhost:${PORT}`);
+        console.log('Detected pages:', detectedPages.map(p => p.name).join(', ') || 'None');
+        console.log('----------------------------------------------------');
+        console.log('To add a new website:');
+        console.log('1. Create a new folder (e.g., "my-new-site") inside the "WEBPAGES" folder.');
+        console.log('2. Inside "my-new-site", add an "index.html" file for the frontend (or a single other .html file).');
+        console.log('3. (Optional) For a backend, add a "backend.js" file that exports an Express Router (e.g., `module.exports = router;`).');
+        console.log('   Alternatively, if no `backend.js` is present, a single other `.js` file will be used as backend.');
+        console.log('4. Commit changes and trigger a new deploy on Render.');
+        console.log('----------------------------------------------------');
+    });
+}
+
+module.exports = app;
