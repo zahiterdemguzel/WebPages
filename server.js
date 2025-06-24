@@ -2,7 +2,6 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const fetch = require('node-fetch'); // Make sure to have 'node-fetch' installed: npm install node-fetch
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -135,28 +134,6 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Self-ping feature for Render.com free tier
-const RENDER_EXTERNAL_HOSTNAME = process.env.RENDER_EXTERNAL_HOSTNAME;
-if (RENDER_EXTERNAL_HOSTNAME) {
-    const PING_INTERVAL = 5 * 60 * 1000; // Ping every 5 minutes
-    setInterval(() => {
-        const url = `https://${RENDER_EXTERNAL_HOSTNAME}/api/pages`; // Use https for Render
-        fetch(url)
-            .then(res => {
-                if (res.ok) {
-                    console.log(`Self-ping successful to ${url} at ${new Date().toLocaleString()}`);
-                } else {
-                    console.error(`Self-ping failed to ${url} with status: ${res.status}`);
-                }
-            })
-            .catch(error => {
-                console.error(`Error during self-ping to ${url}:`, error.message);
-            });
-    }, PING_INTERVAL);
-    console.log(`Self-ping enabled to ${RENDER_EXTERNAL_HOSTNAME} every ${PING_INTERVAL / 1000 / 60} minutes.`);
-} else {
-    console.log('Self-ping not enabled (RENDER_EXTERNAL_HOSTNAME not found, likely running locally).');
-}
 
 
 // Start the server only if this file is run directly
